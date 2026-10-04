@@ -194,6 +194,28 @@
 /* root: white ring to separate it visually */
 .pk-badge.is-root { box-shadow: 0 0 0 2px #fff, 0 0 0 3px var(--pk-frame); }
 
+/* black keys stack their marks vertically at the bottom of the key */
+.pk-black { flex-direction: column; justify-content: flex-end; align-items: center; }
+
+/* root on a black key: R circle on the key, above the note-name circle */
+.pk-key-badge {
+  order: -1;
+  box-sizing: border-box;
+  width: 20px;
+  height: 20px;
+  margin-bottom: 4px;
+  border-radius: 50%;
+  background: var(--pk-badge-bg, #555);
+  color: var(--pk-badge-fg, #fff);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 20px;
+  text-align: center;
+  box-shadow: 0 0 0 2px #fff;
+  pointer-events: none;
+}
+.pk-black .pk-key-badge:last-child { margin-bottom: 8px; }
+
 /* --- octave controls (compact mode only) --------------------------------- */
 .pk-controls {
   display: flex;

@@ -302,6 +302,7 @@ export async function renderPianoKeyboard(target = 'piano-keyboard', opts = {}) 
     for (const btn of keyMap.values()) {
       btn.classList.remove('is-marked', 'is-tone');
       btn.querySelector('.pk-mark-label')?.remove();
+      btn.querySelector('.pk-key-badge')?.remove();
       btn.style.removeProperty('--pk-tone');
       btn.style.removeProperty('--pk-mark-bg');
       btn.style.removeProperty('--pk-mark-fg');
@@ -332,7 +333,17 @@ export async function renderPianoKeyboard(target = 'piano-keyboard', opts = {}) 
         btn.style.setProperty('--pk-tone', color);
       }
 
-      if (mark.badge) {
+      if (mark.badge && mark.root && btn.classList.contains('pk-black')) {
+        // root on a black key: R circle sits on the key, above the note-name circle
+        const kb = document.createElement('span');
+        kb.className = 'pk-key-badge';
+        kb.textContent = mark.badge;
+        if (color) {
+          kb.style.setProperty('--pk-badge-bg', color);
+          kb.style.setProperty('--pk-badge-fg', fg);
+        }
+        btn.append(kb);
+      } else if (mark.badge) {
         const badge = document.createElement('span');
         badge.className = `pk-badge${mark.root ? ' is-root' : ''}`;
         badge.textContent = mark.badge;

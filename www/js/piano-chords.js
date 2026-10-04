@@ -160,6 +160,11 @@ export function renderChordControls(opts = {}) {
     return list;
   }
 
+  function showChordOnKeys(tones) {
+    piano.showChord(tones.map((t) => t.pc));
+    piano.markNotes(chordMarks(tones));
+  }
+
   // --- chord detail panel ------------------------------------------------------
   function renderPanel(chord, tones) {
     // Resolve #chord-data on every click so it works even if the element is added after render
@@ -173,9 +178,16 @@ export function renderChordControls(opts = {}) {
     panel.replaceChildren();
     panel.hidden = false;
 
-    const name = document.createElement('div');
+    // Chord name badge: click re-highlights the whole chord on the keyboard
+    const name = document.createElement('button');
+    name.type = 'button';
     name.className = 'cd-name';
     name.textContent = chord.name;
+    name.setAttribute('aria-label', `Highlight ${chord.name} on the keyboard`);
+    name.addEventListener('click', () => {
+      panel.querySelectorAll('.cd-circle.is-active').forEach((b) => b.classList.remove('is-active'));
+      showChordOnKeys(tones);
+    });
 
     const row = document.createElement('div');
     row.className = 'cd-tones';
@@ -250,8 +262,7 @@ export function renderChordControls(opts = {}) {
     btn.setAttribute('aria-pressed', 'true');
 
     const tones = voice(chord);
-    piano.showChord(tones.map((t) => t.pc));
-    piano.markNotes(chordMarks(tones));
+    showChordOnKeys(tones);
     renderPanel(chord, tones);
     audio.playChord(tones.map((t) => t.note), velocity, strumMs);
 

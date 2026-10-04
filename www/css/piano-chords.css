@@ -24,9 +24,14 @@
   --cc-group-gap: 6px;
 
   /* chord detail panel */
-  --cd-bg: #2b2b2e;
-  --cd-fg: #f2f2f2;
-  --cd-muted: #bbb;
+  --cd-bg: #ffffff;
+  --cd-fg: #1d1d1f;
+  --cd-muted: #6b6b70;
+  --cd-border: #e3e3e6;
+  --cd-name-bg: #1d1d1f;
+  --cd-name-fg: #ffffff;
+  --cd-name-hover: #3a3a3e;
+  --cd-margin-top: 28px;
   --cd-circle: 52px;
 }
 
@@ -105,8 +110,10 @@
 
 /* --- chord detail panel (#chord-data) ---------------------------------------- */
 .cd {
-  padding: 14px 16px 16px;
+  margin-top: var(--cd-margin-top);
+  padding: 14px 16px 18px;
   border-radius: 10px;
+  border: 1px solid var(--cd-border);
   background: var(--cd-bg);
   color: var(--cd-fg);
   box-sizing: border-box;
@@ -116,10 +123,25 @@
 .cd[hidden] { display: none; }
 
 .cd-name {
-  font-size: 22px;
+  appearance: none;
+  -webkit-appearance: none;
+  display: inline-block;
+  min-height: 44px;
+  padding: 0 18px;
+  margin-bottom: 14px;
+  border: none;
+  border-radius: 22px;
+  background: var(--cd-name-bg);
+  color: var(--cd-name-fg);
+  font: inherit;
+  font-size: 20px;
   font-weight: 600;
-  margin-bottom: 12px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color 80ms linear;
 }
+.cd-name:hover { background: var(--cd-name-hover); }
+.cd-name:focus-visible { outline: 3px solid var(--cc-focus); outline-offset: 2px; }
 
 .cd-tones {
   display: flex;
@@ -154,14 +176,14 @@
   font-size: 17px;
   font-weight: 700;
   cursor: pointer;
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.15);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.12);
   -webkit-tap-highlight-color: transparent;
   transition: transform 80ms ease-out;
 }
 
-/* root: white ring, matching the root badge on the keyboard */
-.cd-circle.is-root { box-shadow: 0 0 0 3px #fff; }
-.cd-circle.is-active { transform: scale(1.1); box-shadow: 0 0 0 3px var(--cc-active-bg), 0 0 0 6px rgba(255, 255, 255, 0.25); }
+/* root: white ring (with dark outline so it reads on the white panel), matching the keyboard root badge */
+.cd-circle.is-root { box-shadow: 0 0 0 3px #fff, 0 0 0 5px #1d1d1f; }
+.cd-circle.is-active { transform: scale(1.1); box-shadow: 0 0 0 3px #fff, 0 0 0 6px var(--cc-focus); }
 .cd-circle:focus-visible { outline: 3px solid var(--cc-focus); outline-offset: 4px; }
 
 /* =============================================================================
@@ -175,6 +197,7 @@
 @media (max-width: 768px) {
   .cc-group { padding: 10px 8px; border-radius: 8px; }
   .cd { padding: 12px; border-radius: 8px; }
+  :root { --cd-margin-top: 20px; }
 }
 
 @media (max-width: 430px) {
