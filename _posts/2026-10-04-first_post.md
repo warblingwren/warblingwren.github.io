@@ -8,7 +8,7 @@ tags: [Warbling Wren]
     <div id="body">
         <div class="container main">
             <div class="row">
-                <div class="col-md-9">
+                <div class="col-md-12">
 					<div id="piano-chords"></div>
 				</div>
 			</div>
@@ -18,6 +18,9 @@ tags: [Warbling Wren]
 				</div>
 			</div>
             <div class="row">
+                <div class="col-md-9">
+					<div id="piano-progressions"></div>
+				</div>
                 <div class="col-md-3">
 					<div id="chord-data"></div>
                 </div>
