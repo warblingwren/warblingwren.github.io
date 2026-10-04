@@ -292,3 +292,5 @@ var material_colors = {
         "900": "#263238"
     }
 }
+
+window.material_colors = material_colors;
