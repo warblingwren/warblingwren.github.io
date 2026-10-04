@@ -29,7 +29,8 @@ const el = document.getElementById('piano-keyboard');
 el.addEventListener('piano:press',   (e) => audio.play(e.detail.note));
 el.addEventListener('piano:release', (e) => audio.release(e.detail.note));
 
-const chords = renderChordControls({ piano, audio });
+//const chords = renderChordControls({ piano, audio });
+const chords = renderChordControls({ piano, audio, target: 'piano-chords' });
 
 /*
 const el = document.getElementById('piano-keyboard');

@@ -133,6 +133,45 @@
 .pk-key.is-played[data-played-dark] .pk-label { color: #fff; }
 .pk-key.is-played:not([data-played-dark]) .pk-label { color: rgba(0, 0, 0, 0.7); }
 
+/* --- chord marks: spelled note name on the key + degree badge below it ---- */
+.pk-key.is-marked .pk-label { display: none; }
+
+.pk-mark-label {
+  pointer-events: none;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
+  padding-bottom: 8px;
+  color: rgba(0, 0, 0, 0.75);
+}
+.pk-key[data-chord-dark] .pk-mark-label,
+.pk-black .pk-mark-label { color: #fff; }
+.pk-black .pk-mark-label { font-size: 10px; }
+
+.pk-rail {
+  position: relative;
+  height: 34px;
+  min-width: calc(var(--pk-white-count) * var(--pk-white-min));  /* stays aligned with .pk-board */
+}
+
+.pk-badge {
+  position: absolute;
+  top: 6px;
+  left: calc(var(--pk-center) * (100% / var(--pk-white-count)));
+  transform: translateX(-50%);
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--pk-badge-bg, #555);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 24px;
+  text-align: center;
+  box-shadow: 0 0 0 2px var(--pk-frame);
+  pointer-events: none;
+}
+
 /* --- octave controls (compact mode only) --------------------------------- */
 .pk-controls {
   display: flex;

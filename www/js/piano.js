@@ -116,7 +116,8 @@ function sliceRange(all, from, to) {
  * Last played key stays colored (octave family, darker toward the root) until the next key.
  * @param {object}  opts.palette        palette override (default window.material_colors)
  * @returns {Promise<object>} API: highlight, clear, shiftOctave, isCompact, keys(), octaveColors(),
- *          showChord(pitchClasses), clearChord(), lastPlayed(), clearPlayed(), destroy
+ *          showChord(pitchClasses), clearChord(), markNotes(list), clearMarks(),
+ *          lastPlayed(), clearPlayed(), destroy
  * Emits on container: 'piano:press' / 'piano:release'  detail {note, index, file}
  *                     'piano:rerender'                 detail {from, to, compact}
  */
@@ -171,6 +172,8 @@ export async function renderPianoKeyboard(target = 'piano-keyboard', opts = {}) 
   const pressed = new Set();
   let lastPlayed = null;        // note_ref of the last key played (persists across re-renders)
   let chordPCs = new Set();     // pitch classes of the displayed chord
+  const marks = new Map();      // note -> {label, badge}  (played chord tones)
+  let rail = null;              // badge row under the keys
 
   container.classList.add('pk');
 
@@ -190,6 +193,7 @@ export async function renderPianoKeyboard(target = 'piano-keyboard', opts = {}) 
     if (lastPlayed) keyMap.get(lastPlayed)?.classList.remove('is-played');
     lastPlayed = btn.dataset.note;
     btn.classList.add('is-played');
+    if (marks.size) { marks.clear(); refreshMarks(); } // single key replaces the sounding chord's marks
     emit('piano:press', keyDetail(btn));
   };
   const release = (btn) => {
@@ -237,6 +241,8 @@ export async function renderPianoKeyboard(target = 'piano-keyboard', opts = {}) 
     btn.dataset.file = noteToFileStem(k.note_ref);
     btn.setAttribute('aria-label', k.note_ref);
     if (k.color === 'black') btn.style.setProperty('--pk-pos', String(whiteIdx));
+    // key center in white-key units — used to place degree badges under the key
+    btn.dataset.center = String(k.color === 'white' ? whiteIdx - 0.5 : whiteIdx);
 
     const octave = octaveOf(k.note_ref);
     btn.dataset.octave = String(octave);
@@ -269,6 +275,34 @@ export async function renderPianoKeyboard(target = 'piano-keyboard', opts = {}) 
     if (k.note_ref === lastPlayed) btn.classList.add('is-played');
     if (chordPCs.has(Number(btn.dataset.pc))) btn.classList.add('is-chord');
     return btn;
+  }
+
+  // --- marks: note-name label on the key + degree badge below it -------------
+  function refreshMarks() {
+    for (const btn of keyMap.values()) {
+      btn.classList.remove('is-marked');
+      btn.querySelector('.pk-mark-label')?.remove();
+    }
+    if (!rail) return;
+    rail.replaceChildren();
+    for (const [note, mark] of marks) {
+      const btn = keyMap.get(note);
+      if (!btn) continue; // outside the visible range
+      btn.classList.add('is-marked');
+      const lbl = document.createElement('span');
+      lbl.className = 'pk-mark-label';
+      lbl.textContent = mark.label;
+      btn.append(lbl);
+
+      const badge = document.createElement('span');
+      badge.className = 'pk-badge';
+      badge.textContent = mark.badge;
+      badge.setAttribute('aria-label', `${note} ${mark.badge}`);
+      badge.style.setProperty('--pk-center', btn.dataset.center);
+      const color = btn.style.getPropertyValue('--pk-chord');
+      if (color) badge.style.setProperty('--pk-badge-bg', color);
+      rail.append(badge);
+    }
   }
 
   function buildControls() {
@@ -336,8 +370,14 @@ export async function renderPianoKeyboard(target = 'piano-keyboard', opts = {}) 
     board.addEventListener('keyup', onKeyUp);
     board.addEventListener('contextmenu', onContextMenu);
 
-    scroller.append(board);
+    rail = document.createElement('div');
+    rail.className = 'pk-rail';
+    rail.setAttribute('aria-hidden', 'true');
+    rail.style.setProperty('--pk-white-count', String(whiteCount));
+
+    scroller.append(board, rail);
     container.append(scroller);
+    refreshMarks();
 
     if (!compact) {
       const anchor = keyMap.get(scrollTo);
@@ -372,6 +412,16 @@ export async function renderPianoKeyboard(target = 'piano-keyboard', opts = {}) 
     clearChord() {
       chordPCs = new Set();
       for (const btn of keyMap.values()) btn.classList.remove('is-chord');
+    },
+    /** @param {{note:string, label:string, badge:string}[]} list  e.g. [{note:'D4', label:'D', badge:'R'}] */
+    markNotes(list) {
+      marks.clear();
+      for (const m of list) marks.set(m.note, { label: String(m.label), badge: String(m.badge) });
+      refreshMarks();
+    },
+    clearMarks() {
+      marks.clear();
+      refreshMarks();
     },
     lastPlayed: () => lastPlayed,
     clearPlayed() {
