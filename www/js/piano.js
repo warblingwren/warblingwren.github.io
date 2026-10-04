@@ -17,6 +17,15 @@ const COLORS = new Set(['white', 'black']);
 export const noteToFileStem = (note) => note.replace('#', 's');
 const octaveOf = (note) => Number(note.slice(-1));
 
+const PC = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
+export const pitchClassOf = (note) => (PC[note[0]] + (note[1] === '#' ? 1 : 0)) % 12;
+
+// Played-key shade by position in the octave (C = root = darkest … B = 7th = lightest).
+// Black keys take the shade of the scale degree directly below them.
+//                   C     C#    D     D#    E     F     F#    G     G#    A     A#    B
+const DEGREE_SHADES = ['900', '900', '800', '800', '700', '600', '600', '500', '500', '400', '400', '300'];
+const DARK_SHADES = new Set(['900', '800', '700', '600']); // white label text on these
+
 // Octave color families (index = scientific octave 0–8). Interleaved around the
 // hue wheel so adjacent octaves never share a neighbouring hue.
 // SYNC POINT: family keys must exist in www/js/colors.js (material_colors)
@@ -43,7 +52,9 @@ function buildOctaveColors(palette, families, lightShade, accentShade) {
     const light = palette[fam]?.[lightShade];
     const accent = palette[fam]?.[accentShade];
     if (HEX_RE.test(light ?? '') && HEX_RE.test(accent ?? '')) {
-      map.set(octave, { family: fam, light, accent });
+      // shade(s): validated lookup of any shade in this family ('' if invalid)
+      const shade = (s) => (HEX_RE.test(palette[fam]?.[s] ?? '') ? palette[fam][s] : '');
+      map.set(octave, { family: fam, light, accent, shade });
     } else {
       console.warn(`piano-keyboard: invalid color family '${fam}' for octave ${octave}`);
     }
@@ -101,8 +112,11 @@ function sliceRange(all, from, to) {
  * @param {string[]} opts.octaveFamilies material_colors family per octave 0–8
  * @param {string}  opts.octaveShade    light shade for white keys (default '100')
  * @param {string}  opts.accentShade    shade for black-key stripe (default '300')
+ * @param {string}  opts.chordShade     shade for chord-tone keys (default '700')
+ * Last played key stays colored (octave family, darker toward the root) until the next key.
  * @param {object}  opts.palette        palette override (default window.material_colors)
- * @returns {Promise<object>} API: highlight, clear, shiftOctave, isCompact, keys(), octaveColors(), destroy
+ * @returns {Promise<object>} API: highlight, clear, shiftOctave, isCompact, keys(), octaveColors(),
+ *          showChord(pitchClasses), clearChord(), lastPlayed(), clearPlayed(), destroy
  * Emits on container: 'piano:press' / 'piano:release'  detail {note, index, file}
  *                     'piano:rerender'                 detail {from, to, compact}
  */
@@ -120,6 +134,7 @@ export async function renderPianoKeyboard(target = 'piano-keyboard', opts = {}) 
     octaveFamilies = OCTAVE_FAMILIES,
     octaveShade = '100',
     accentShade = '300',
+    chordShade = '700',
     palette = null,
   } = opts;
 
@@ -154,6 +169,8 @@ export async function renderPianoKeyboard(target = 'piano-keyboard', opts = {}) 
   let scroller = null;
   const highlights = new Map(); // note -> Set(cls)  (persist across re-renders)
   const pressed = new Set();
+  let lastPlayed = null;        // note_ref of the last key played (persists across re-renders)
+  let chordPCs = new Set();     // pitch classes of the displayed chord
 
   container.classList.add('pk');
 
@@ -170,6 +187,9 @@ export async function renderPianoKeyboard(target = 'piano-keyboard', opts = {}) 
     if (!btn || pressed.has(btn)) return;
     pressed.add(btn);
     btn.classList.add('is-pressed');
+    if (lastPlayed) keyMap.get(lastPlayed)?.classList.remove('is-played');
+    lastPlayed = btn.dataset.note;
+    btn.classList.add('is-played');
     emit('piano:press', keyDetail(btn));
   };
   const release = (btn) => {
@@ -224,6 +244,18 @@ export async function renderPianoKeyboard(target = 'piano-keyboard', opts = {}) 
     if (oc) {
       btn.style.setProperty('--pk-oct', oc.light);
       btn.style.setProperty('--pk-oct-accent', oc.accent);
+
+      const pc = pitchClassOf(k.note_ref);
+      btn.dataset.pc = String(pc);
+      const playedShade = DEGREE_SHADES[pc];
+      const played = oc.shade(playedShade);
+      const chord = oc.shade(chordShade);
+      if (played) btn.style.setProperty('--pk-played', played);
+      if (chord) btn.style.setProperty('--pk-chord', chord);
+      if (DARK_SHADES.has(playedShade)) btn.dataset.playedDark = '1';
+      if (DARK_SHADES.has(chordShade)) btn.dataset.chordDark = '1';
+    } else {
+      btn.dataset.pc = String(pitchClassOf(k.note_ref));
     }
 
     const isC = /^C\d$/.test(k.note_ref);
@@ -234,6 +266,8 @@ export async function renderPianoKeyboard(target = 'piano-keyboard', opts = {}) 
       btn.append(lbl);
     }
     for (const cls of highlights.get(k.note_ref) ?? []) btn.classList.add(cls);
+    if (k.note_ref === lastPlayed) btn.classList.add('is-played');
+    if (chordPCs.has(Number(btn.dataset.pc))) btn.classList.add('is-chord');
     return btn;
   }
 
@@ -326,6 +360,21 @@ export async function renderPianoKeyboard(target = 'piano-keyboard', opts = {}) 
     keys: () => keyMap,
     isCompact: () => mql.matches,
     octaveColors: () => new Map(octaveColorMap), // octave -> {family, light, accent} (for legends)
+    showChord(pitchClasses) {
+      chordPCs = new Set(pitchClasses.map((p) => ((Number(p) % 12) + 12) % 12));
+      for (const btn of keyMap.values()) {
+        btn.classList.toggle('is-chord', chordPCs.has(Number(btn.dataset.pc)));
+      }
+    },
+    clearChord() {
+      chordPCs = new Set();
+      for (const btn of keyMap.values()) btn.classList.remove('is-chord');
+    },
+    lastPlayed: () => lastPlayed,
+    clearPlayed() {
+      if (lastPlayed) keyMap.get(lastPlayed)?.classList.remove('is-played');
+      lastPlayed = null;
+    },
     highlight(notes, cls = 'is-highlight') {
       for (const n of notes) {
         if (!highlights.has(n)) highlights.set(n, new Set());

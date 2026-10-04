@@ -122,6 +122,17 @@
 .pk-black.is-highlight { background: var(--pk-highlight-black); }
 .pk-key.is-highlight .pk-label { color: #fff; }
 
+/* chord tones: darker variation of the octave color (--pk-chord set per key) */
+.pk-key.is-chord { background: var(--pk-chord, var(--pk-highlight)); }
+.pk-black.is-chord { box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.55); }
+.pk-key.is-chord[data-chord-dark] .pk-label { color: #fff; }
+
+/* last played key: octave shade by scale position (root darkest) — wins over chord */
+.pk-key.is-played { background: var(--pk-played, var(--pk-highlight)); }
+.pk-black.is-played { box-shadow: inset 0 0 0 2px var(--pk-oct-accent, #fff); }
+.pk-key.is-played[data-played-dark] .pk-label { color: #fff; }
+.pk-key.is-played:not([data-played-dark]) .pk-label { color: rgba(0, 0, 0, 0.7); }
+
 /* --- octave controls (compact mode only) --------------------------------- */
 .pk-controls {
   display: flex;
