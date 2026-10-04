@@ -2,6 +2,9 @@
 // piano-audio.js — Web Audio sampler for piano keyboard
 // Plays DATA/piano/<stem>.<ext>; missing samples are pitch-shifted from the
 // nearest available sample within ±maxShift semitones.
+//
+// Default behaviour (ringUntilNext: true): a played key or chord rings until the
+// next key or chord is played; key-up does not cut the sound.
 // =============================================================================
 //
 // SYNC POINT (note_ref -> sample filename): '#' -> 's'   e.g. 'C#4' -> 'Cs4'
@@ -26,13 +29,13 @@ const fileStem = (note) => note.replace('#', 's');
 
 /**
  * @param {object} opts
- * @param {string} opts.baseUrl     sample directory (default 'DATA/piano/')
- * @param {string} opts.ext         sample extension (default 'mp3')
- * @param {number} opts.volume      master gain 0–1 (default 0.8)
- * @param {number} opts.releaseSec  fade on key release (default 0.6)
- * @param {boolean} opts.sustain    true = ignore release, let notes ring (default false)
- * @param {number} opts.maxShift    max semitones to pitch-shift a fallback sample (default 3)
- * @param {string[]} opts.missing   note_refs with no sample file — skipped without a request
+ * @param {string} opts.baseUrl        sample directory (default 'DATA/piano/')
+ * @param {string} opts.ext            sample extension (default 'mp3')
+ * @param {number} opts.volume         master gain 0–1 (default 0.8)
+ * @param {number} opts.releaseSec     fade when a sound is stopped (default 0.6)
+ * @param {boolean} opts.ringUntilNext true = sound rings until the next play; key-up ignored (default true)
+ * @param {number} opts.maxShift       max semitones to pitch-shift a fallback sample (default 3)
+ * @param {string[]} opts.missing      note_refs with no sample file — skipped without a request
  */
 export function createPianoAudio(opts = {}) {
   const {
@@ -40,7 +43,7 @@ export function createPianoAudio(opts = {}) {
     ext = 'mp3',
     volume = 0.8,
     releaseSec = 0.6,
-    sustain = false,
+    ringUntilNext = true,
     maxShift = 3,
     missing = [],
   } = opts;
@@ -53,11 +56,13 @@ export function createPianoAudio(opts = {}) {
   master.gain.value = volume;
   master.connect(ctx.destination);
 
-  const buffers = new Map();   // midi -> Promise<AudioBuffer|null>
-  const voices = new Map();    // note -> [{src, gain}]
-
   const missingSet = new Set(missing);
+  const buffers = new Map();   // midi -> Promise<AudioBuffer|null>
+  const voices = new Set();    // {note, src, gain}
+  const held = new Set();      // ringUntilNext=false only: keys currently down
+  let generation = 0;          // newest play wins if samples load out of order
 
+  // --- loading ------------------------------------------------------------
   function loadMidi(midi) {
     if (missingSet.has(midiToNote(midi))) return Promise.resolve(null); // known gap: no 404
     if (!buffers.has(midi)) {
@@ -71,7 +76,7 @@ export function createPianoAudio(opts = {}) {
     return buffers.get(midi);
   }
 
-  // Exact sample, else nearest within ±maxShift (prefer sample above — less timbre smear going down)
+  // Exact sample, else nearest within ±maxShift (prefer sample above)
   async function resolve(midi) {
     const exact = await loadMidi(midi);
     if (exact) return { buffer: exact, rate: 1 };
@@ -85,53 +90,77 @@ export function createPianoAudio(opts = {}) {
     return null;
   }
 
-  const held = new Set(); // keys currently down (release may arrive before sample loads)
+  // --- voices -------------------------------------------------------------
+  function fade(voice, sec) {
+    const t = ctx.currentTime;
+    voice.gain.gain.cancelScheduledValues(t);
+    voice.gain.gain.setValueAtTime(Math.max(voice.gain.gain.value, 0.0001), t);
+    voice.gain.gain.exponentialRampToValueAtTime(0.0001, t + sec);
+    try { voice.src.stop(t + sec + 0.02); } catch { /* already stopped */ }
+    voices.delete(voice);
+  }
 
-  async function play(note, velocity = 1) {
-    const midi = noteToMidi(note);
-    if (midi === null) return;
-    held.add(note);
-    if (ctx.state === 'suspended') await ctx.resume(); // must follow a user gesture
-
-    const res = await resolve(midi);
-    if (!res) return;
-
+  function startVoice(note, res, velocity, when) {
     const src = ctx.createBufferSource();
     src.buffer = res.buffer;
     src.playbackRate.value = res.rate;
-
     const gain = ctx.createGain();
     gain.gain.value = Math.max(0, Math.min(1, velocity));
-
     src.connect(gain).connect(master);
-    src.start();
-
-    const voice = { src, gain };
-    if (!voices.has(note)) voices.set(note, []);
-    voices.get(note).push(voice);
-    src.onended = () => {
-      const list = voices.get(note);
-      if (!list) return;
-      const i = list.indexOf(voice);
-      if (i >= 0) list.splice(i, 1);
-      if (!list.length) voices.delete(note);
-    };
-
-    if (!held.has(note)) release(note); // key already up while sample was loading
+    src.start(when);
+    const voice = { note, src, gain };
+    voices.add(voice);
+    src.onended = () => voices.delete(voice);
+    return voice;
   }
 
+  /**
+   * Strike one or more notes together (fresh attack every time).
+   * @param {string[]} notes
+   * @param {number} velocity  0–1
+   * @param {number} strumMs   delay between notes
+   */
+  async function strike(notes, velocity = 1, strumMs = 0) {
+    const midis = notes.map(noteToMidi).filter((m) => m !== null);
+    if (!midis.length) return;
+    const my = ++generation;
+
+    // Stop what is ringing now — the new strike replaces it
+    if (ringUntilNext) [...voices].forEach((v) => fade(v, releaseSec));
+    if (ctx.state === 'suspended') await ctx.resume(); // must follow a user gesture
+
+    const resolved = await Promise.all(midis.map(resolve));
+    if (ringUntilNext && my !== generation) return; // a newer strike superseded this one
+
+    const t0 = ctx.currentTime;
+    resolved.forEach((res, i) => {
+      if (!res) return;
+      const note = midiToNote(midis[i]);
+      startVoice(note, res, velocity, t0 + (i * strumMs) / 1000);
+      // ringUntilNext=false: key already up while the sample was loading
+      if (!ringUntilNext && !held.has(note)) release(note);
+    });
+  }
+
+  function play(note, velocity = 1) {
+    if (!ringUntilNext) held.add(note);
+    return strike([note], velocity);
+  }
+
+  function playChord(notes, velocity = 0.7, strumMs = 0) {
+    return strike(notes, velocity, strumMs);
+  }
+
+  // Key-up. Ignored when ringUntilNext (sound rings until the next strike).
   function release(note) {
+    if (ringUntilNext) return;
     held.delete(note);
-    if (sustain) return;
-    const list = voices.get(note);
-    if (!list) return;
-    const t = ctx.currentTime;
-    for (const { src, gain } of list) {
-      gain.gain.cancelScheduledValues(t);
-      gain.gain.setValueAtTime(gain.gain.value, t);
-      gain.gain.exponentialRampToValueAtTime(0.0001, t + releaseSec);
-      src.stop(t + releaseSec + 0.02);
-    }
+    for (const v of [...voices]) if (v.note === note) fade(v, releaseSec);
+  }
+
+  function stopAll(sec = releaseSec) {
+    generation += 1;
+    [...voices].forEach((v) => fade(v, sec));
   }
 
   function preload(notes) {
@@ -142,9 +171,10 @@ export function createPianoAudio(opts = {}) {
 
   return {
     play,
+    playChord,
     release,
     preload,
-    stopAll: () => [...voices.keys()].forEach(release),
+    stopAll,
     setVolume: (v) => { master.gain.value = Math.max(0, Math.min(1, v)); },
     context: ctx,
   };

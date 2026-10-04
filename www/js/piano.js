@@ -361,6 +361,9 @@ export async function renderPianoKeyboard(target = 'piano-keyboard', opts = {}) 
     isCompact: () => mql.matches,
     octaveColors: () => new Map(octaveColorMap), // octave -> {family, light, accent} (for legends)
     showChord(pitchClasses) {
+      // A chord replaces the last played key; it keeps color only if it is a chord tone
+      if (lastPlayed) keyMap.get(lastPlayed)?.classList.remove('is-played');
+      lastPlayed = null;
       chordPCs = new Set(pitchClasses.map((p) => ((Number(p) % 12) + 12) % 12));
       for (const btn of keyMap.values()) {
         btn.classList.toggle('is-chord', chordPCs.has(Number(btn.dataset.pc)));

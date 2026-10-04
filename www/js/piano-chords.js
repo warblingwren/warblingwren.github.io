@@ -1,7 +1,7 @@
 // =============================================================================
 // chord-controls.js — major chord buttons below the piano keyboard
 // Click: highlights root/3rd/5th in every octave (piano.showChord) and plays the
-// root-position triad. Click the active chord again to clear it.
+// root-position triad. Clicking the same chord again re-strikes it.
 // =============================================================================
 
 import { midiToNote } from './piano-audio.js';
@@ -12,16 +12,16 @@ export const MAJOR_TRIAD = [0, 4, 7];
 // Display names use the conventional major-key spelling
 export const MAJOR_CHORDS = [
   { name: 'C', root: 0 },
-  { name: 'Db', root: 1 },
+  { name: 'D♭', root: 1 },
   { name: 'D', root: 2 },
-  { name: 'Eb', root: 3 },
+  { name: 'E♭', root: 3 },
   { name: 'E', root: 4 },
   { name: 'F', root: 5 },
-  { name: 'F#', root: 6 },
+  { name: 'F♯', root: 6 },
   { name: 'G', root: 7 },
-  { name: 'Ab', root: 8 },
+  { name: 'A♭', root: 8 },
   { name: 'A', root: 9 },
-  { name: 'Bb', root: 10 },
+  { name: 'B♭', root: 10 },
   { name: 'B', root: 11 },
 ];
 
@@ -65,24 +65,18 @@ export function renderChordControls(opts = {}) {
   grid.className = 'cc-grid';
 
   let active = null;      // active button
-  let sounding = [];      // notes of the chord currently ringing
-
-  const stopSounding = () => {
-    sounding.forEach((n) => audio.release(n));
-    sounding = [];
-  };
 
   const clear = () => {
     active?.classList.remove('is-active');
     active?.setAttribute('aria-pressed', 'false');
     active = null;
-    stopSounding();
+    audio.stopAll();
     piano.clearChord();
     wrap.dispatchEvent(new CustomEvent('chord:clear', { bubbles: true }));
   };
 
+  // Clicking the same chord again re-strikes it from the beginning
   const select = (chord, btn) => {
-    if (active === btn) return clear();
     active?.classList.remove('is-active');
     active?.setAttribute('aria-pressed', 'false');
     active = btn;
@@ -92,14 +86,9 @@ export function renderChordControls(opts = {}) {
     const pcs = MAJOR_TRIAD.map((i) => (chord.root + i) % 12);
     piano.showChord(pcs);
 
-    stopSounding();
     const rootMidi = (octave + 1) * 12 + chord.root;
     const notes = MAJOR_TRIAD.map((i) => midiToNote(rootMidi + i));
-    notes.forEach((n, i) => {
-      if (strumMs > 0) setTimeout(() => audio.play(n, velocity), i * strumMs);
-      else audio.play(n, velocity);
-    });
-    sounding = notes;
+    audio.playChord(notes, velocity, strumMs);
 
     wrap.dispatchEvent(
       new CustomEvent('chord:select', { bubbles: true, detail: { name: chord.name, root: chord.root, notes } }),
