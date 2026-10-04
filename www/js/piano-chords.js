@@ -36,27 +36,27 @@ const MAJOR_ROOTS = ['C', 'D♭', 'D', 'E♭', 'E', 'F', 'F♯', 'G', 'A♭', 'A
 const MINOR_ROOTS = ['C', 'C♯', 'D', 'E♭', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'B♭', 'B'];
 const DIM_ROOTS   = ['C', 'C♯', 'D', 'D♯', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B'];
 
-// Sections alternate panel tone; each group is one row of 12 chord buttons
+// Sections become <optgroup>s in the chord-type dropdown; each group is one row of 12 chord buttons
 export const CHORD_SECTIONS = [
-  { id: 'major', tone: 'dark', groups: [
+  { id: 'major', title: 'Major', groups: [
     { id: 'major', title: 'Major chords',     suffix: '',     quality: 'major',     intervals: [R, M3, P5],     roots: MAJOR_ROOTS },
     { id: 'maj7',  title: 'Major 7th chords', suffix: 'maj7', quality: 'major 7th', intervals: [R, M3, P5, M7], roots: MAJOR_ROOTS },
   ] },
-  { id: 'minor', tone: 'light', groups: [
+  { id: 'minor', title: 'Minor', groups: [
     { id: 'minor', title: 'Minor chords',     suffix: 'm',    quality: 'minor',     intervals: [R, m3, P5],     roots: MINOR_ROOTS },
     { id: 'min7',  title: 'Minor 7th chords', suffix: 'm7',   quality: 'minor 7th', intervals: [R, m3, P5, m7], roots: MINOR_ROOTS },
   ] },
-  { id: 'diminished', tone: 'dark', groups: [
+  { id: 'diminished', title: 'Diminished', groups: [
     { id: 'dim',   title: 'Diminished chords',      suffix: 'dim',  quality: 'diminished',      intervals: [R, m3, d5],     roots: DIM_ROOTS },
     { id: 'dim7',  title: 'Diminished 7th chords',  suffix: 'dim7', quality: 'diminished 7th',  intervals: [R, m3, d5, d7], roots: DIM_ROOTS },
     { id: 'm7b5',  title: 'Half-diminished chords', suffix: 'm7♭5', quality: 'half-diminished', intervals: [R, m3, d5, m7], roots: DIM_ROOTS },
   ] },
-  { id: 'augmented-dominant', tone: 'light', groups: [
+  { id: 'augmented-dominant', title: 'Augmented & dominant', groups: [
     { id: 'aug',   title: 'Augmented chords',     suffix: 'aug',  quality: 'augmented',     intervals: [R, M3, A5],     roots: MAJOR_ROOTS },
     { id: 'aug7',  title: 'Augmented 7th chords', suffix: 'aug7', quality: 'augmented 7th', intervals: [R, M3, A5, m7], roots: MAJOR_ROOTS },
     { id: 'dom7',  title: 'Dominant 7th chords',  suffix: '7',    quality: 'dominant 7th',  intervals: [R, M3, P5, m7], roots: MAJOR_ROOTS },
   ] },
-  { id: 'suspended-sixth', tone: 'dark', groups: [
+  { id: 'suspended-sixth', title: 'Suspended & 6th', groups: [
     { id: 'sus2',  title: 'Suspended 2nd chords', suffix: 'sus2', quality: 'suspended 2nd', intervals: [R, M2, P5],     roots: MAJOR_ROOTS },
     { id: 'sus4',  title: 'Suspended 4th chords', suffix: 'sus4', quality: 'suspended 4th', intervals: [R, P4, P5],     roots: MAJOR_ROOTS },
     { id: 'maj6',  title: 'Major 6th chords',     suffix: '6',    quality: 'major 6th',     intervals: [R, M3, P5, M6], roots: MAJOR_ROOTS },
@@ -103,7 +103,9 @@ const getHost = (id) => {
  * @param {number} opts.velocity    chord volume 0–1 (default 0.7)
  * @returns {{select:Function, clear:Function, destroy:Function, element:HTMLDivElement}}
  *          select('C'), select('Cdim7'), select('Bm7♭5') …
+ *          showType('maj7') switches the button row (dropdown values = group ids)
  * Emits on the controls element: 'chord:select' detail {name, quality, root, notes, spelled}
+ *                                'chord:type'   detail {type, title}
  *                                'chord:tone'   detail {chord, note, spelled, degree} | 'chord:clear'
  */
 export function renderChordControls(opts = {}) {
@@ -132,9 +134,8 @@ export function renderChordControls(opts = {}) {
   panel.className = 'cd';
   panel.hidden = true;
 
-  let active = null;                 // active chord button (one across all groups)
   let activeChord = null;
-  const byName = new Map();          // chord name -> {chord, btn}
+  const byName = new Map();          // chord name -> chord
 
   const emit = (type, detail) => wrap.dispatchEvent(new CustomEvent(type, { bubbles: true, detail }));
 
@@ -240,12 +241,37 @@ export function renderChordControls(opts = {}) {
     emit('chord:tone', { chord: chord.name, note: t.note, spelled: t.spelled, degree: t.degree });
   }
 
+  // --- chord data (all types, built once) -----------------------------------------
+  const groups = CHORD_SECTIONS.flatMap((sec) => sec.groups);
+  const chordsByGroup = new Map();   // group id -> chord[]
+  for (const group of groups) {
+    const list = group.roots.map((rootName, root) => ({
+      name: `${rootName}${group.suffix}`,
+      rootName,
+      root,
+      group: group.id,
+      quality: group.quality,
+      intervals: group.intervals,
+    }));
+    chordsByGroup.set(group.id, list);
+    for (const chord of list) byName.set(chord.name, chord);
+  }
+
   // --- chord selection ---------------------------------------------------------
+  const markButtons = () => {
+    for (const b of grid.children) {
+      const isActive = activeChord && b.dataset.group === activeChord.group && Number(b.dataset.root) === activeChord.root;
+      // same root, different type: outlined to show the matching root
+      const isRelated = activeChord && !isActive && Number(b.dataset.root) === activeChord.root;
+      b.classList.toggle('is-active', Boolean(isActive));
+      b.classList.toggle('is-related', Boolean(isRelated));
+      b.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+    }
+  };
+
   const clear = () => {
-    active?.classList.remove('is-active');
-    active?.setAttribute('aria-pressed', 'false');
-    active = null;
     activeChord = null;
+    markButtons();
     audio.stopAll();
     piano.clearChord();
     piano.clearMarks();
@@ -255,13 +281,10 @@ export function renderChordControls(opts = {}) {
   };
 
   // Clicking the same chord again re-strikes it from the beginning
-  const select = (chord, btn) => {
-    active?.classList.remove('is-active');
-    active?.setAttribute('aria-pressed', 'false');
-    active = btn;
+  const select = (chord) => {
+    if (chord.group !== typeSelect.value) showType(chord.group);
     activeChord = chord;
-    btn.classList.add('is-active');
-    btn.setAttribute('aria-pressed', 'true');
+    markButtons();
 
     const tones = voice(chord);
     showChordOnKeys(tones);
@@ -277,52 +300,56 @@ export function renderChordControls(opts = {}) {
     });
   };
 
-  // --- build buttons -----------------------------------------------------------
-  for (const section of CHORD_SECTIONS) {
-    const sec = document.createElement('div');
-    sec.className = `cc-section cc-section--${section.tone}`;
-    sec.dataset.section = section.id;
+  // --- build: one panel = chord-type dropdown + one row of 12 buttons ------------
+  const box = document.createElement('div');
+  box.className = 'cc-group';
+  box.setAttribute('role', 'group');
 
-    for (const group of section.groups) {
-      const g = document.createElement('div');
-      g.className = 'cc-group';
-      g.dataset.group = group.id;
-      g.setAttribute('role', 'group');
-      g.setAttribute('aria-label', group.title);
-
-      const title = document.createElement('div');
-      title.className = 'cc-title';
-      title.textContent = group.title;
-
-      const grid = document.createElement('div');
-      grid.className = 'cc-grid';
-
-      group.roots.forEach((rootName, root) => {
-        const chord = {
-          name: `${rootName}${group.suffix}`,
-          rootName,
-          root,
-          quality: group.quality,
-          intervals: group.intervals,
-        };
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'cc-btn';
-        btn.dataset.root = String(root);
-        btn.dataset.group = group.id;
-        btn.setAttribute('aria-pressed', 'false');
-        btn.setAttribute('aria-label', `${rootName} ${group.quality}`);
-        btn.textContent = chord.name;
-        btn.addEventListener('click', () => select(chord, btn));
-        grid.append(btn);
-        byName.set(chord.name, { chord, btn });
-      });
-
-      g.append(title, grid);
-      sec.append(g);
+  const typeSelect = document.createElement('select');
+  typeSelect.className = 'cc-type';
+  typeSelect.setAttribute('aria-label', 'Chord type');
+  for (const sec of CHORD_SECTIONS) {
+    const og = document.createElement('optgroup');
+    og.label = sec.title;
+    for (const group of sec.groups) {
+      const opt = document.createElement('option');
+      opt.value = group.id;
+      opt.textContent = group.title;
+      og.append(opt);
     }
-    wrap.append(sec);
+    typeSelect.append(og);
   }
+
+  const grid = document.createElement('div');
+  grid.className = 'cc-grid';
+
+  // Swap the button row for a chord type; the current chord stays on the keyboard
+  function showType(groupId) {
+    const group = groups.find((g) => g.id === groupId) ?? groups[0];
+    typeSelect.value = group.id;
+    box.dataset.group = group.id;
+    box.setAttribute('aria-label', group.title);
+    grid.replaceChildren();
+    for (const chord of chordsByGroup.get(group.id)) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'cc-btn';
+      btn.dataset.root = String(chord.root);
+      btn.dataset.group = group.id;
+      btn.setAttribute('aria-label', `${chord.rootName} ${group.quality}`);
+      btn.textContent = chord.name;
+      btn.addEventListener('click', () => select(chord));
+      grid.append(btn);
+    }
+    markButtons();
+    emit('chord:type', { type: group.id, title: group.title });
+  }
+
+  typeSelect.addEventListener('change', () => showType(typeSelect.value));
+
+  box.append(typeSelect, grid);
+  wrap.append(box);
+  showType('major'); // default: Major chords
 
   if (target) host.append(wrap);                     // inside the given column
   else host.insertAdjacentElement('afterend', wrap); // directly below the piano
@@ -330,9 +357,10 @@ export function renderChordControls(opts = {}) {
   return {
     element: wrap,
     select: (name) => {
-      const entry = byName.get(name);
-      if (entry) select(entry.chord, entry.btn);
+      const chord = byName.get(name);
+      if (chord) select(chord);
     },
+    showType,
     active: () => activeChord?.name ?? null,
     clear,
     destroy() {

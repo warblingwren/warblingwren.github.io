@@ -333,10 +333,11 @@ export async function renderPianoKeyboard(target = 'piano-keyboard', opts = {}) 
         btn.style.setProperty('--pk-tone', color);
       }
 
-      if (mark.badge && mark.root && btn.classList.contains('pk-black')) {
-        // root on a black key: R circle sits on the key, above the note-name circle
+      if (mark.badge && btn.classList.contains('pk-black')) {
+        // black key: degree circle sits on the key, above the note-name circle
+        // (keeps the rail below free for white keys — no overlapping circles)
         const kb = document.createElement('span');
-        kb.className = 'pk-key-badge';
+        kb.className = `pk-key-badge${mark.root ? ' is-root' : ''}`;
         kb.textContent = mark.badge;
         if (color) {
           kb.style.setProperty('--pk-badge-bg', color);

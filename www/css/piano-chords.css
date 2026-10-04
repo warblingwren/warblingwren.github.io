@@ -3,25 +3,18 @@
    ========================================================================== */
 
 :root {
-  /* dark sections */
-  --cc-dark-bg: #2b2b2e;
-  --cc-dark-btn-bg: #3a3a3e;
-  --cc-dark-btn-hover: #4a4a50;
-  --cc-dark-btn-border: #555;
-
-  /* light sections — slightly lighter to imply grouping */
-  --cc-light-bg: #3d3d42;
-  --cc-light-btn-bg: #4d4d53;
-  --cc-light-btn-hover: #5c5c63;
-  --cc-light-btn-border: #66666d;
-
+  /* chord controls panel — lighter grey */
+  --cc-bg: #3d3d42;
+  --cc-btn-bg: #4d4d53;
+  --cc-btn-hover: #5c5c63;
+  --cc-btn-border: #66666d;
   --cc-btn-fg: #f2f2f2;
   --cc-active-bg: #f2f2f2;
   --cc-active-fg: #1d1d1f;
-  --cc-title: #bbb;
+  --cc-related: #f2f2f2;          /* outline: same root as the active chord, other type */
+  --cc-select-bg: #2b2b2e;
+  --cc-select-fg: #f2f2f2;
   --cc-focus: #3d7be8;
-  --cc-section-gap: 20px;
-  --cc-group-gap: 6px;
 
   /* chord detail panel */
   --cd-bg: #ffffff;
@@ -35,49 +28,41 @@
   --cd-circle: 52px;
 }
 
-/* --- chord buttons ---------------------------------------------------------- */
-.cc {
-  margin-top: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: var(--cc-section-gap);
-}
-
-.cc-section {
-  display: flex;
-  flex-direction: column;
-  gap: var(--cc-group-gap);
-}
-
-.cc-section--dark {
-  --cc-group-bg: var(--cc-dark-bg);
-  --cc-btn-bg: var(--cc-dark-btn-bg);
-  --cc-btn-hover: var(--cc-dark-btn-hover);
-  --cc-btn-border: var(--cc-dark-btn-border);
-}
-
-.cc-section--light {
-  --cc-group-bg: var(--cc-light-bg);
-  --cc-btn-bg: var(--cc-light-btn-bg);
-  --cc-btn-hover: var(--cc-light-btn-hover);
-  --cc-btn-border: var(--cc-light-btn-border);
-}
+/* --- chord controls: type dropdown + one row of 12 buttons ------------------ */
+.cc { margin-top: 12px; }
 
 .cc-group {
   padding: 12px;
   border-radius: 10px;
-  background: var(--cc-group-bg);
+  background: var(--cc-bg);
   box-sizing: border-box;
 }
 
-.cc-title {
-  color: var(--cc-title);
-  font-size: 13px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+.cc-type {
+  display: block;
+  min-height: 44px;
+  max-width: 100%;
   margin-bottom: 10px;
-  text-align: left;
+  padding: 0 40px 0 12px;
+  border: 1px solid var(--cc-btn-border);
+  border-radius: 8px;
+  background-color: var(--cc-select-bg);
+  /* chevron: inline SVG data URI (no external request) */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23f2f2f2' stroke-width='2'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  color: var(--cc-select-fg);
+  font: inherit;
+  font-size: 15px;
+  letter-spacing: 0.02em;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
 }
+.cc-type:hover { border-color: var(--cc-btn-fg); }
+.cc-type:focus-visible { outline: 3px solid var(--cc-focus); outline-offset: 2px; }
+.cc-type option,
+.cc-type optgroup { background: var(--cc-select-bg); color: var(--cc-select-fg); }
 
 .cc-grid {
   display: grid;
@@ -107,6 +92,7 @@
 .cc-btn:hover { background: var(--cc-btn-hover); }
 .cc-btn:focus-visible { outline: 3px solid var(--cc-focus); outline-offset: 2px; }
 .cc-btn.is-active { background: var(--cc-active-bg); color: var(--cc-active-fg); border-color: var(--cc-active-bg); }
+.cc-btn.is-related { box-shadow: inset 0 0 0 2px var(--cc-related); }
 
 /* --- chord detail panel (#chord-data) ---------------------------------------- */
 .cd {
@@ -196,6 +182,7 @@
 
 @media (max-width: 768px) {
   .cc-group { padding: 10px 8px; border-radius: 8px; }
+  .cc-type { width: 100%; }
   .cd { padding: 12px; border-radius: 8px; }
   :root { --cd-margin-top: 20px; }
 }

@@ -197,7 +197,7 @@
 /* black keys stack their marks vertically at the bottom of the key */
 .pk-black { flex-direction: column; justify-content: flex-end; align-items: center; }
 
-/* root on a black key: R circle on the key, above the note-name circle */
+/* black keys: degree circle on the key, above the note-name circle (root gets a white ring) */
 .pk-key-badge {
   order: -1;
   box-sizing: border-box;
@@ -211,9 +211,10 @@
   font-weight: 700;
   line-height: 20px;
   text-align: center;
-  box-shadow: 0 0 0 2px #fff;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.6);
   pointer-events: none;
 }
+.pk-key-badge.is-root { box-shadow: 0 0 0 2px #fff; }
 .pk-black .pk-key-badge:last-child { margin-bottom: 8px; }
 
 /* --- octave controls (compact mode only) --------------------------------- */
