@@ -1,5 +1,5 @@
 /* =============================================================================
-   piano-keyboard.css
+   piano.css
    ========================================================================== */
 
 :root {
@@ -144,9 +144,28 @@
   padding-bottom: 8px;
   color: rgba(0, 0, 0, 0.75);
 }
-.pk-key[data-chord-dark] .pk-mark-label,
-.pk-black .pk-mark-label { color: #fff; }
-.pk-black .pk-mark-label { font-size: 10px; }
+.pk-key[data-chord-dark] .pk-mark-label { color: #fff; }
+
+/* single-tone highlight: key filled with its chord-role shade */
+.pk-key.is-tone { background: var(--pk-tone); }
+.pk-white.is-tone .pk-mark-label { color: var(--pk-mark-fg, #fff); }
+
+/* black keys: note name in a circle colored by chord role (root darkest → 7th lightest) */
+.pk-black .pk-mark-label {
+  box-sizing: border-box;
+  min-width: 20px;
+  height: 20px;
+  margin-bottom: 6px;
+  padding: 0 3px;
+  border-radius: 10px;
+  background: var(--pk-mark-bg, #555);
+  color: var(--pk-mark-fg, #fff);
+  font-size: 10px;
+  line-height: 20px;
+  text-align: center;
+  white-space: nowrap;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.6);
+}
 
 .pk-rail {
   position: relative;
@@ -163,7 +182,7 @@
   height: 24px;
   border-radius: 50%;
   background: var(--pk-badge-bg, #555);
-  color: #fff;
+  color: var(--pk-badge-fg, #fff);
   font-size: 11px;
   font-weight: 700;
   line-height: 24px;
@@ -171,6 +190,9 @@
   box-shadow: 0 0 0 2px var(--pk-frame);
   pointer-events: none;
 }
+
+/* root: white ring to separate it visually */
+.pk-badge.is-root { box-shadow: 0 0 0 2px #fff, 0 0 0 3px var(--pk-frame); }
 
 /* --- octave controls (compact mode only) --------------------------------- */
 .pk-controls {
@@ -216,7 +238,7 @@
   }
 }
 
-/* SYNC POINT: must match opts.mobileQuery in www/js/piano-keyboard.js */
+/* SYNC POINT: must match opts.mobileQuery in www/js/piano.js */
 @media (max-width: 768px) {
   :root {
     --pk-white-min: 0px;    /* compact mode fits width — no horizontal scroll */

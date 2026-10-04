@@ -1,5 +1,5 @@
 // =============================================================================
-// piano-keyboard.js — data-driven piano renderer
+// piano.js — data-driven piano renderer
 // Source of truth: DATA/piano_tuning.json (layout) — keys sorted by piano_key_index
 // Desktop: full range (default A0–C8). Responsive (<= breakpoint): N octaves + octave shift.
 // =============================================================================
@@ -8,7 +8,7 @@
 //   Must match: Python backend (future), any Jinja template, DATA/piano/*.m4a
 //
 // SYNC POINT (breakpoint): opts.mobileQuery must match the responsive
-//   @media rule at the end of www/css/piano-keyboard.css
+//   @media rule at the end of www/css/piano.css
 // =============================================================================
 
 const NOTE_RE = /^[A-G]#?[0-8]$/;
@@ -25,6 +25,19 @@ export const pitchClassOf = (note) => (PC[note[0]] + (note[1] === '#' ? 1 : 0)) 
 //                   C     C#    D     D#    E     F     F#    G     G#    A     A#    B
 const DEGREE_SHADES = ['900', '900', '800', '800', '700', '600', '600', '500', '500', '400', '400', '300'];
 const DARK_SHADES = new Set(['900', '800', '700', '600']); // white label text on these
+
+// Chord-role shades (rank = position in the chord): root darkest, stepping lighter
+//   rank 0 root, 1 = 3rd/2nd/4th, 2 = 5th, 3 = 7th/6th
+export const ROLE_SHADES = ['900', '700', '500', '300'];
+
+// Readable text color on a hex background (WCAG relative luminance)
+export function textOn(hex) {
+  const m = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(hex ?? '');
+  if (!m) return '#fff';
+  const lin = (v) => { const c = parseInt(v, 16) / 255; return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4; };
+  const L = 0.2126 * lin(m[1]) + 0.7152 * lin(m[2]) + 0.0722 * lin(m[3]);
+  return L > 0.4 ? '#1d1d1f' : '#fff';
+}
 
 // Octave color families (index = scientific octave 0–8). Interleaved around the
 // hue wheel so adjacent octaves never share a neighbouring hue.
@@ -117,6 +130,7 @@ function sliceRange(all, from, to) {
  * @param {object}  opts.palette        palette override (default window.material_colors)
  * @returns {Promise<object>} API: highlight, clear, shiftOctave, isCompact, keys(), octaveColors(),
  *          showChord(pitchClasses), clearChord(), markNotes(list), clearMarks(),
+ *          notesWithPitchClass(pc), roleColor(note, rank),
  *          lastPlayed(), clearPlayed(), destroy
  * Emits on container: 'piano:press' / 'piano:release'  detail {note, index, file}
  *                     'piano:rerender'                 detail {from, to, compact}
@@ -278,30 +292,58 @@ export async function renderPianoKeyboard(target = 'piano-keyboard', opts = {}) 
   }
 
   // --- marks: note-name label on the key + degree badge below it -------------
+  // Role color for a key: its octave family at the chord-role shade
+  function roleColor(note, rank) {
+    const oc = octaveColorMap.get(octaveOf(note));
+    return oc?.shade(ROLE_SHADES[Math.min(Math.max(rank, 0), ROLE_SHADES.length - 1)]) || '';
+  }
+
   function refreshMarks() {
     for (const btn of keyMap.values()) {
-      btn.classList.remove('is-marked');
+      btn.classList.remove('is-marked', 'is-tone');
       btn.querySelector('.pk-mark-label')?.remove();
+      btn.style.removeProperty('--pk-tone');
+      btn.style.removeProperty('--pk-mark-bg');
+      btn.style.removeProperty('--pk-mark-fg');
     }
     if (!rail) return;
     rail.replaceChildren();
     for (const [note, mark] of marks) {
       const btn = keyMap.get(note);
       if (!btn) continue; // outside the visible range
-      btn.classList.add('is-marked');
-      const lbl = document.createElement('span');
-      lbl.className = 'pk-mark-label';
-      lbl.textContent = mark.label;
-      btn.append(lbl);
+      const color = roleColor(note, mark.rank);
+      const fg = textOn(color);
 
-      const badge = document.createElement('span');
-      badge.className = 'pk-badge';
-      badge.textContent = mark.badge;
-      badge.setAttribute('aria-label', `${note} ${mark.badge}`);
-      badge.style.setProperty('--pk-center', btn.dataset.center);
-      const color = btn.style.getPropertyValue('--pk-chord');
-      if (color) badge.style.setProperty('--pk-badge-bg', color);
-      rail.append(badge);
+      if (mark.label) {
+        btn.classList.add('is-marked');
+        // black keys render the label in a role-colored circle (see .pk-black .pk-mark-label)
+        if (color) {
+          btn.style.setProperty('--pk-mark-bg', color);
+          btn.style.setProperty('--pk-mark-fg', fg);
+        }
+        const lbl = document.createElement('span');
+        lbl.className = 'pk-mark-label';
+        lbl.textContent = mark.label;
+        btn.append(lbl);
+      }
+
+      if (mark.fill && color) {
+        btn.classList.add('is-tone');
+        btn.style.setProperty('--pk-tone', color);
+      }
+
+      if (mark.badge) {
+        const badge = document.createElement('span');
+        badge.className = `pk-badge${mark.root ? ' is-root' : ''}`;
+        badge.textContent = mark.badge;
+        badge.setAttribute('aria-label', `${note} ${mark.badge}`);
+        badge.style.setProperty('--pk-center', btn.dataset.center);
+        if (color) {
+          badge.style.setProperty('--pk-badge-bg', color);
+          badge.style.setProperty('--pk-badge-fg', fg);
+        }
+        rail.append(badge);
+      }
     }
   }
 
@@ -413,12 +455,28 @@ export async function renderPianoKeyboard(target = 'piano-keyboard', opts = {}) 
       chordPCs = new Set();
       for (const btn of keyMap.values()) btn.classList.remove('is-chord');
     },
-    /** @param {{note:string, label:string, badge:string}[]} list  e.g. [{note:'D4', label:'D', badge:'R'}] */
+    /**
+     * @param {{note:string, label?:string, badge?:string, rank?:number, root?:boolean, fill?:boolean}[]} list
+     *   label: text on the key (black keys: in a role-colored circle)
+     *   badge: degree circle below the key     rank: chord role 0=root … 3=7th (sets shade)
+     *   root: white-bordered badge             fill: color the key itself with the role shade
+     */
     markNotes(list) {
       marks.clear();
-      for (const m of list) marks.set(m.note, { label: String(m.label), badge: String(m.badge) });
+      for (const m of list) {
+        marks.set(m.note, {
+          label: m.label ? String(m.label) : '',
+          badge: m.badge ? String(m.badge) : '',
+          rank: Number.isInteger(m.rank) ? m.rank : 0,
+          root: Boolean(m.root),
+          fill: Boolean(m.fill),
+        });
+      }
       refreshMarks();
     },
+    // Every layout note (visible or not) with this pitch class, e.g. 0 -> ['C1', … 'C8']
+    notesWithPitchClass: (pc) => all.filter((k) => pitchClassOf(k.note_ref) === ((pc % 12) + 12) % 12).map((k) => k.note_ref),
+    roleColor,
     clearMarks() {
       marks.clear();
       refreshMarks();

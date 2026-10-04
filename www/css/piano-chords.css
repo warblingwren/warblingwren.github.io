@@ -1,53 +1,68 @@
 /* =============================================================================
-   piano-chords.css
+   piano-chords.css — chord buttons (.cc) + chord detail panel (.cd)
    ========================================================================== */
 
 :root {
-  /* major groups — dark panel */
-  --cc-major-bg: #2b2b2e;
-  --cc-major-btn-bg: #3a3a3e;
-  --cc-major-btn-hover: #4a4a50;
-  --cc-major-btn-border: #555;
+  /* dark sections */
+  --cc-dark-bg: #2b2b2e;
+  --cc-dark-btn-bg: #3a3a3e;
+  --cc-dark-btn-hover: #4a4a50;
+  --cc-dark-btn-border: #555;
 
-  /* minor groups — slightly lighter panel */
-  --cc-minor-bg: #3d3d42;
-  --cc-minor-btn-bg: #4d4d53;
-  --cc-minor-btn-hover: #5c5c63;
-  --cc-minor-btn-border: #66666d;
+  /* light sections — slightly lighter to imply grouping */
+  --cc-light-bg: #3d3d42;
+  --cc-light-btn-bg: #4d4d53;
+  --cc-light-btn-hover: #5c5c63;
+  --cc-light-btn-border: #66666d;
 
   --cc-btn-fg: #f2f2f2;
   --cc-active-bg: #f2f2f2;
   --cc-active-fg: #1d1d1f;
   --cc-title: #bbb;
   --cc-focus: #3d7be8;
-  --cc-gap: 12px;
+  --cc-section-gap: 20px;
+  --cc-group-gap: 6px;
+
+  /* chord detail panel */
+  --cd-bg: #2b2b2e;
+  --cd-fg: #f2f2f2;
+  --cd-muted: #bbb;
+  --cd-circle: 52px;
 }
 
+/* --- chord buttons ---------------------------------------------------------- */
 .cc {
-  margin-top: var(--cc-gap);
+  margin-top: 12px;
   display: flex;
   flex-direction: column;
-  gap: var(--cc-gap);
+  gap: var(--cc-section-gap);
+}
+
+.cc-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cc-group-gap);
+}
+
+.cc-section--dark {
+  --cc-group-bg: var(--cc-dark-bg);
+  --cc-btn-bg: var(--cc-dark-btn-bg);
+  --cc-btn-hover: var(--cc-dark-btn-hover);
+  --cc-btn-border: var(--cc-dark-btn-border);
+}
+
+.cc-section--light {
+  --cc-group-bg: var(--cc-light-bg);
+  --cc-btn-bg: var(--cc-light-btn-bg);
+  --cc-btn-hover: var(--cc-light-btn-hover);
+  --cc-btn-border: var(--cc-light-btn-border);
 }
 
 .cc-group {
   padding: 12px;
   border-radius: 10px;
+  background: var(--cc-group-bg);
   box-sizing: border-box;
-}
-
-.cc-group--major {
-  background: var(--cc-major-bg);
-  --cc-btn-bg: var(--cc-major-btn-bg);
-  --cc-btn-hover: var(--cc-major-btn-hover);
-  --cc-btn-border: var(--cc-major-btn-border);
-}
-
-.cc-group--minor {
-  background: var(--cc-minor-bg);
-  --cc-btn-bg: var(--cc-minor-btn-bg);
-  --cc-btn-hover: var(--cc-minor-btn-hover);
-  --cc-btn-border: var(--cc-minor-btn-border);
 }
 
 .cc-title {
@@ -88,6 +103,67 @@
 .cc-btn:focus-visible { outline: 3px solid var(--cc-focus); outline-offset: 2px; }
 .cc-btn.is-active { background: var(--cc-active-bg); color: var(--cc-active-fg); border-color: var(--cc-active-bg); }
 
+/* --- chord detail panel (#chord-data) ---------------------------------------- */
+.cd {
+  padding: 14px 16px 16px;
+  border-radius: 10px;
+  background: var(--cd-bg);
+  color: var(--cd-fg);
+  box-sizing: border-box;
+  text-align: left;
+}
+
+.cd[hidden] { display: none; }
+
+.cd-name {
+  font-size: 22px;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.cd-tones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.cd-tone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.cd-degree {
+  color: var(--cd-muted);
+  font-size: 13px;
+  font-weight: 600;
+  min-height: 16px;
+}
+
+.cd-circle {
+  appearance: none;
+  -webkit-appearance: none;
+  width: var(--cd-circle);
+  height: var(--cd-circle);
+  border-radius: 50%;
+  border: none;
+  background: var(--cd-circle-bg, #555);
+  color: var(--cd-circle-fg, #fff);
+  font: inherit;
+  font-size: 17px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.15);
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 80ms ease-out;
+}
+
+/* root: white ring, matching the root badge on the keyboard */
+.cd-circle.is-root { box-shadow: 0 0 0 3px #fff; }
+.cd-circle.is-active { transform: scale(1.1); box-shadow: 0 0 0 3px var(--cc-active-bg), 0 0 0 6px rgba(255, 255, 255, 0.25); }
+.cd-circle:focus-visible { outline: 3px solid var(--cc-focus); outline-offset: 4px; }
+
 /* =============================================================================
    BREAKPOINTS — keep at end of file
    ========================================================================== */
@@ -98,9 +174,12 @@
 
 @media (max-width: 768px) {
   .cc-group { padding: 10px 8px; border-radius: 8px; }
+  .cd { padding: 12px; border-radius: 8px; }
 }
 
 @media (max-width: 430px) {
   .cc-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
   .cc-btn { font-size: 14px; }
+  :root { --cd-circle: 48px; }
+  .cd-tones { gap: 12px; }
 }

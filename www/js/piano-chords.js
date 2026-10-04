@@ -1,48 +1,74 @@
 // =============================================================================
-// piano-chords.js — chord buttons: Major, Major 7th, Minor, Minor 7th
-// Click: highlights the chord tones in every octave (piano.showChord), plays the
-// root-position chord, labels the played keys with their spelled note names and
-// puts a scale-degree badge under each. Clicking the same chord re-strikes it.
+// piano-chords.js — chord buttons + chord detail panel
+//
+// Chord button click:
+//   • highlights the chord tones in every octave (piano.showChord)
+//   • plays the root-position chord (root in `octave`)
+//   • labels the played keys with spelled note names; degree circle under each
+//   • root circle (white ring) under EVERY occurrence of the root
+//   • renders the chord name + tone circles into #chord-data (if present)
+//   Clicking the same chord again re-strikes it.
+// Tone circle click (#chord-data): plays that tone alone and highlights every
+//   key where it occurs, colored by its role in the chord.
+//
+// Color = chord role: root darkest → 3rd → 5th → 7th lightest (piano.js ROLE_SHADES)
 // =============================================================================
 
 import { midiToNote } from './piano-audio.js';
+import { textOn } from './piano.js';
 
-// semis = semitones above the root; letters = letter steps above the root letter
-const R = { semis: 0, letters: 0 };
-const M3 = { semis: 4, letters: 2 };
-const m3 = { semis: 3, letters: 2 };
-const P5 = { semis: 7, letters: 4 };
-const M7 = { semis: 11, letters: 6 };
-const m7 = { semis: 10, letters: 6 };
+// semis = semitones above root; letters = letter steps above root letter; label = degree text
+const R   = { semis: 0,  letters: 0, label: 'R' };
+const M2  = { semis: 2,  letters: 1, label: '2' };
+const m3  = { semis: 3,  letters: 2, label: '♭3' };
+const M3  = { semis: 4,  letters: 2, label: '3' };
+const P4  = { semis: 5,  letters: 3, label: '4' };
+const d5  = { semis: 6,  letters: 4, label: '♭5' };
+const P5  = { semis: 7,  letters: 4, label: '5' };
+const A5  = { semis: 8,  letters: 4, label: '♯5' };
+const M6  = { semis: 9,  letters: 5, label: '6' };
+const d7  = { semis: 9,  letters: 6, label: '𝄫7' };
+const m7  = { semis: 10, letters: 6, label: '♭7' };
+const M7  = { semis: 11, letters: 6, label: '7' };
 
-export const MAJOR_TRIAD = [R, M3, P5];
-export const MAJOR_7TH = [R, M3, P5, M7];
-export const MINOR_TRIAD = [R, m3, P5];
-export const MINOR_7TH = [R, m3, P5, m7];
-
-// Scale-degree badge text by semitones above the root
-export const DEGREE_LABELS = {
-  0: 'R', 1: '♭2', 2: '2', 3: '♭3', 4: '3', 5: '4', 6: '♭5',
-  7: '5', 8: '♯5', 9: '6', 10: '♭7', 11: '7',
-};
-
-// Conventional root spellings: major keys favour flats, minor keys follow their key signatures
+// Conventional root spellings per chord family
 const MAJOR_ROOTS = ['C', 'D♭', 'D', 'E♭', 'E', 'F', 'F♯', 'G', 'A♭', 'A', 'B♭', 'B'];
 const MINOR_ROOTS = ['C', 'C♯', 'D', 'E♭', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'B♭', 'B'];
+const DIM_ROOTS   = ['C', 'C♯', 'D', 'D♯', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B'];
 
-// tone: 'major' groups share the dark panel, 'minor' groups the lighter panel
-export const CHORD_GROUPS = [
-  { id: 'major',  title: 'Major chords',     tone: 'major', suffix: '',     quality: 'major',  intervals: MAJOR_TRIAD, roots: MAJOR_ROOTS },
-  { id: 'maj7',   title: 'Major 7th chords', tone: 'major', suffix: 'maj7', quality: 'major 7th', intervals: MAJOR_7TH, roots: MAJOR_ROOTS },
-  { id: 'minor',  title: 'Minor chords',     tone: 'minor', suffix: 'm',    quality: 'minor',  intervals: MINOR_TRIAD, roots: MINOR_ROOTS },
-  { id: 'min7',   title: 'Minor 7th chords', tone: 'minor', suffix: 'm7',   quality: 'minor 7th', intervals: MINOR_7TH, roots: MINOR_ROOTS },
+// Sections alternate panel tone; each group is one row of 12 chord buttons
+export const CHORD_SECTIONS = [
+  { id: 'major', tone: 'dark', groups: [
+    { id: 'major', title: 'Major chords',     suffix: '',     quality: 'major',     intervals: [R, M3, P5],     roots: MAJOR_ROOTS },
+    { id: 'maj7',  title: 'Major 7th chords', suffix: 'maj7', quality: 'major 7th', intervals: [R, M3, P5, M7], roots: MAJOR_ROOTS },
+  ] },
+  { id: 'minor', tone: 'light', groups: [
+    { id: 'minor', title: 'Minor chords',     suffix: 'm',    quality: 'minor',     intervals: [R, m3, P5],     roots: MINOR_ROOTS },
+    { id: 'min7',  title: 'Minor 7th chords', suffix: 'm7',   quality: 'minor 7th', intervals: [R, m3, P5, m7], roots: MINOR_ROOTS },
+  ] },
+  { id: 'diminished', tone: 'dark', groups: [
+    { id: 'dim',   title: 'Diminished chords',      suffix: 'dim',  quality: 'diminished',      intervals: [R, m3, d5],     roots: DIM_ROOTS },
+    { id: 'dim7',  title: 'Diminished 7th chords',  suffix: 'dim7', quality: 'diminished 7th',  intervals: [R, m3, d5, d7], roots: DIM_ROOTS },
+    { id: 'm7b5',  title: 'Half-diminished chords', suffix: 'm7♭5', quality: 'half-diminished', intervals: [R, m3, d5, m7], roots: DIM_ROOTS },
+  ] },
+  { id: 'augmented-dominant', tone: 'light', groups: [
+    { id: 'aug',   title: 'Augmented chords',     suffix: 'aug',  quality: 'augmented',     intervals: [R, M3, A5],     roots: MAJOR_ROOTS },
+    { id: 'aug7',  title: 'Augmented 7th chords', suffix: 'aug7', quality: 'augmented 7th', intervals: [R, M3, A5, m7], roots: MAJOR_ROOTS },
+    { id: 'dom7',  title: 'Dominant 7th chords',  suffix: '7',    quality: 'dominant 7th',  intervals: [R, M3, P5, m7], roots: MAJOR_ROOTS },
+  ] },
+  { id: 'suspended-sixth', tone: 'dark', groups: [
+    { id: 'sus2',  title: 'Suspended 2nd chords', suffix: 'sus2', quality: 'suspended 2nd', intervals: [R, M2, P5],     roots: MAJOR_ROOTS },
+    { id: 'sus4',  title: 'Suspended 4th chords', suffix: 'sus4', quality: 'suspended 4th', intervals: [R, P4, P5],     roots: MAJOR_ROOTS },
+    { id: 'maj6',  title: 'Major 6th chords',     suffix: '6',    quality: 'major 6th',     intervals: [R, M3, P5, M6], roots: MAJOR_ROOTS },
+    { id: 'min6',  title: 'Minor 6th chords',     suffix: 'm6',   quality: 'minor 6th',     intervals: [R, m3, P5, M6], roots: MINOR_ROOTS },
+  ] },
 ];
 
 const LETTERS = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
 const LETTER_PC = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
 const ACC = { '-2': '𝄫', '-1': '♭', 0: '', 1: '♯', 2: '𝄪' };
 
-// Spell a chord tone from the chord's root name, e.g. ('D♭', 4, 2) -> 'F'
+// Spell a chord tone from the chord's root name, e.g. ('C', 9, 6) -> 'B𝄫'
 export function spellTone(rootName, semis, letterSteps) {
   const rootLetter = rootName[0];
   const rootPc = (LETTER_PC[rootLetter] + (rootName.includes('♯') ? 1 : rootName.includes('♭') ? -1 : 0) + 12) % 12;
@@ -53,18 +79,26 @@ export function spellTone(rootName, semis, letterSteps) {
   return letter + (ACC[diff] ?? '');
 }
 
+const getDiv = (id) => {
+  // DOM-clobbering guard: must be a real <div>
+  const el = id ? document.getElementById(id) : null;
+  return el instanceof HTMLDivElement ? el : null;
+};
+
 /**
  * @param {object} opts
  * @param {object} opts.piano       API returned by renderPianoKeyboard
  * @param {object} opts.audio       API returned by createPianoAudio
- * @param {string} opts.target      id of a <div> to render INTO (e.g. a Bootstrap column). Takes precedence over `after`.
+ * @param {string} opts.target      id of a <div> to render the buttons INTO. Takes precedence over `after`.
  * @param {string} opts.after       id of the piano container; used only when `target` is not given (default 'piano-keyboard')
+ * @param {string} opts.dataTarget  id of the chord detail <div> (default 'chord-data'; skipped if absent)
  * @param {number} opts.octave      octave of the played chord root (default 4)
  * @param {number} opts.strumMs     delay between chord tones, 0 = simultaneous (default 0)
  * @param {number} opts.velocity    chord volume 0–1 (default 0.7)
  * @returns {{select:Function, clear:Function, destroy:Function, element:HTMLDivElement}}
- *          select('C'), select('Cmaj7'), select('Cm'), select('Cm7')
- * Emits on the controls element: 'chord:select' detail {name, quality, root, notes, spelled} | 'chord:clear'
+ *          select('C'), select('Cdim7'), select('Bm7♭5') …
+ * Emits on the controls element: 'chord:select' detail {name, quality, root, notes, spelled}
+ *                                'chord:tone'   detail {chord, note, spelled, degree} | 'chord:clear'
  */
 export function renderChordControls(opts = {}) {
   const {
@@ -72,6 +106,7 @@ export function renderChordControls(opts = {}) {
     audio,
     target = null,
     after = 'piano-keyboard',
+    dataTarget = 'chord-data',
     octave = 4,
     strumMs = 0,
     velocity = 0.7,
@@ -79,25 +114,117 @@ export function renderChordControls(opts = {}) {
 
   if (!piano || !audio) throw new TypeError('piano-chords: piano and audio are required');
 
-  // DOM-clobbering guard: host must be a real <div>
   const hostId = target ?? after;
-  const host = document.getElementById(hostId);
-  if (!(host instanceof HTMLDivElement)) throw new TypeError(`piano-chords: #${hostId} is not a <div>`);
+  const host = getDiv(hostId);
+  if (!host) throw new TypeError(`piano-chords: #${hostId} is not a <div>`);
+  const dataHost = getDiv(dataTarget);
 
   const wrap = document.createElement('div');
   wrap.className = 'cc';
 
-  let active = null;                 // active button (one across all groups)
+  const panel = document.createElement('div');   // chord detail panel (inside #chord-data)
+  panel.className = 'cd';
+  panel.hidden = true;
+
+  let active = null;                 // active chord button (one across all groups)
+  let activeChord = null;
   const byName = new Map();          // chord name -> {chord, btn}
 
+  const emit = (type, detail) => wrap.dispatchEvent(new CustomEvent(type, { bubbles: true, detail }));
+
+  // --- chord voicing ---------------------------------------------------------
+  function voice(chord) {
+    const rootMidi = (octave + 1) * 12 + chord.root;
+    return chord.intervals.map((t, rank) => ({
+      rank,
+      note: midiToNote(rootMidi + t.semis),
+      pc: (chord.root + t.semis) % 12,
+      spelled: spellTone(chord.rootName, t.semis, t.letters),
+      degree: t.label,
+    }));
+  }
+
+  // Played tones: label + degree circle. Root: circle under every occurrence.
+  function chordMarks(tones) {
+    const list = tones.map((t) => ({ note: t.note, label: t.spelled, badge: t.degree, rank: t.rank, root: t.rank === 0 }));
+    const played = new Set(tones.map((t) => t.note));
+    for (const n of piano.notesWithPitchClass(tones[0].pc)) {
+      if (!played.has(n)) list.push({ note: n, badge: 'R', rank: 0, root: true });
+    }
+    return list;
+  }
+
+  // --- chord detail panel ------------------------------------------------------
+  function renderPanel(chord, tones) {
+    if (!dataHost) return;
+    panel.replaceChildren();
+    panel.hidden = false;
+
+    const name = document.createElement('div');
+    name.className = 'cd-name';
+    name.textContent = chord.name;
+
+    const row = document.createElement('div');
+    row.className = 'cd-tones';
+    row.setAttribute('role', 'group');
+    row.setAttribute('aria-label', `${chord.name} chord tones`);
+
+    for (const t of tones) {
+      const item = document.createElement('div');
+      item.className = 'cd-tone';
+
+      const deg = document.createElement('div');
+      deg.className = 'cd-degree';
+      deg.textContent = t.degree;
+
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = `cd-circle${t.rank === 0 ? ' is-root' : ''}`;
+      btn.textContent = t.spelled;
+      btn.setAttribute('aria-label', `Play ${t.spelled} (${t.degree})`);
+      const color = piano.roleColor(t.note, t.rank);
+      if (color) {
+        btn.style.setProperty('--cd-circle-bg', color);
+        btn.style.setProperty('--cd-circle-fg', textOn(color));
+      }
+      btn.addEventListener('click', () => playTone(chord, t, btn));
+
+      item.append(deg, btn);
+      row.append(item);
+    }
+    panel.append(name, row);
+  }
+
+  // Single tone: play it alone, highlight every key where it occurs in its role color
+  function playTone(chord, t, btn) {
+    panel.querySelectorAll('.cd-circle.is-active').forEach((b) => b.classList.remove('is-active'));
+    btn.classList.add('is-active');
+
+    piano.clearChord();
+    piano.markNotes(piano.notesWithPitchClass(t.pc).map((n) => ({
+      note: n,
+      label: t.spelled,
+      badge: t.degree,
+      rank: t.rank,
+      root: t.rank === 0,
+      fill: true,
+    })));
+    audio.play(t.note);
+    emit('chord:tone', { chord: chord.name, note: t.note, spelled: t.spelled, degree: t.degree });
+  }
+
+  // --- chord selection ---------------------------------------------------------
   const clear = () => {
     active?.classList.remove('is-active');
     active?.setAttribute('aria-pressed', 'false');
     active = null;
+    activeChord = null;
     audio.stopAll();
     piano.clearChord();
     piano.clearMarks();
-    wrap.dispatchEvent(new CustomEvent('chord:clear', { bubbles: true }));
+    panel.replaceChildren();
+    panel.hidden = true;
+    emit('chord:clear');
   };
 
   // Clicking the same chord again re-strikes it from the beginning
@@ -105,71 +232,75 @@ export function renderChordControls(opts = {}) {
     active?.classList.remove('is-active');
     active?.setAttribute('aria-pressed', 'false');
     active = btn;
+    activeChord = chord;
     btn.classList.add('is-active');
     btn.setAttribute('aria-pressed', 'true');
 
-    const { intervals } = chord;
-    piano.showChord(intervals.map((t) => (chord.root + t.semis) % 12));
+    const tones = voice(chord);
+    piano.showChord(tones.map((t) => t.pc));
+    piano.markNotes(chordMarks(tones));
+    renderPanel(chord, tones);
+    audio.playChord(tones.map((t) => t.note), velocity, strumMs);
 
-    const rootMidi = (octave + 1) * 12 + chord.root;
-    const notes = intervals.map((t) => midiToNote(rootMidi + t.semis));
-    const spelled = intervals.map((t) => spellTone(chord.rootName, t.semis, t.letters));
-
-    piano.markNotes(notes.map((note, i) => ({
-      note,
-      label: spelled[i],
-      badge: DEGREE_LABELS[intervals[i].semis],
-    })));
-
-    audio.playChord(notes, velocity, strumMs);
-
-    wrap.dispatchEvent(new CustomEvent('chord:select', {
-      bubbles: true,
-      detail: { name: chord.name, quality: chord.quality, root: chord.root, notes, spelled },
-    }));
+    emit('chord:select', {
+      name: chord.name,
+      quality: chord.quality,
+      root: chord.root,
+      notes: tones.map((t) => t.note),
+      spelled: tones.map((t) => t.spelled),
+    });
   };
 
-  for (const group of CHORD_GROUPS) {
-    const section = document.createElement('div');
-    section.className = `cc-group cc-group--${group.tone}`;
-    section.dataset.group = group.id;
-    section.setAttribute('role', 'group');
-    section.setAttribute('aria-label', group.title);
+  // --- build buttons -----------------------------------------------------------
+  for (const section of CHORD_SECTIONS) {
+    const sec = document.createElement('div');
+    sec.className = `cc-section cc-section--${section.tone}`;
+    sec.dataset.section = section.id;
 
-    const title = document.createElement('div');
-    title.className = 'cc-title';
-    title.textContent = group.title;
+    for (const group of section.groups) {
+      const g = document.createElement('div');
+      g.className = 'cc-group';
+      g.dataset.group = group.id;
+      g.setAttribute('role', 'group');
+      g.setAttribute('aria-label', group.title);
 
-    const grid = document.createElement('div');
-    grid.className = 'cc-grid';
+      const title = document.createElement('div');
+      title.className = 'cc-title';
+      title.textContent = group.title;
 
-    group.roots.forEach((rootName, root) => {
-      const chord = {
-        name: `${rootName}${group.suffix}`,
-        rootName,
-        root,
-        quality: group.quality,
-        intervals: group.intervals,
-      };
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'cc-btn';
-      btn.dataset.root = String(root);
-      btn.dataset.group = group.id;
-      btn.setAttribute('aria-pressed', 'false');
-      btn.setAttribute('aria-label', `${rootName} ${group.quality}`);
-      btn.textContent = chord.name;
-      btn.addEventListener('click', () => select(chord, btn));
-      grid.append(btn);
-      byName.set(chord.name, { chord, btn });
-    });
+      const grid = document.createElement('div');
+      grid.className = 'cc-grid';
 
-    section.append(title, grid);
-    wrap.append(section);
+      group.roots.forEach((rootName, root) => {
+        const chord = {
+          name: `${rootName}${group.suffix}`,
+          rootName,
+          root,
+          quality: group.quality,
+          intervals: group.intervals,
+        };
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'cc-btn';
+        btn.dataset.root = String(root);
+        btn.dataset.group = group.id;
+        btn.setAttribute('aria-pressed', 'false');
+        btn.setAttribute('aria-label', `${rootName} ${group.quality}`);
+        btn.textContent = chord.name;
+        btn.addEventListener('click', () => select(chord, btn));
+        grid.append(btn);
+        byName.set(chord.name, { chord, btn });
+      });
+
+      g.append(title, grid);
+      sec.append(g);
+    }
+    wrap.append(sec);
   }
 
   if (target) host.append(wrap);                     // inside the given column
   else host.insertAdjacentElement('afterend', wrap); // directly below the piano
+  if (dataHost) dataHost.append(panel);
 
   return {
     element: wrap,
@@ -177,10 +308,12 @@ export function renderChordControls(opts = {}) {
       const entry = byName.get(name);
       if (entry) select(entry.chord, entry.btn);
     },
+    active: () => activeChord?.name ?? null,
     clear,
     destroy() {
       clear();
       wrap.remove();
+      panel.remove();
     },
   };
 }
