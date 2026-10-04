@@ -2,8 +2,9 @@
    dashboard.js
    ========================================================================== */
 
-//import { renderPianoKeyboard } from './piano.js';
+import './colors.js'
 import { renderPianoKeyboard, OCTAVE_FAMILIES } from './piano.js';
+import { createPianoAudio } from './piano-audio.js';
 
 (function () {
   //javascript code here
@@ -17,10 +18,22 @@ const piano = await renderPianoKeyboard('piano-keyboard', {
   mobileQuery: '(max-width: 768px)', // SYNC: matches @media in piano-keyboard.css
 });
 
+const audio = createPianoAudio({
+  baseUrl: 'DATA/piano/',
+  ext: 'mp3',
+  missing: ['A0', 'A#0', 'B0'], // no files — pitch-shifted down from C1
+});
+
+const el = document.getElementById('piano-keyboard');
+el.addEventListener('piano:press',   (e) => audio.play(e.detail.note));
+el.addEventListener('piano:release', (e) => audio.release(e.detail.note));
+
+/*
 const el = document.getElementById('piano-keyboard');
 el.addEventListener('piano:press',    (e) => console.log('press',   e.detail)); // {note, index, file}
 el.addEventListener('piano:release',  (e) => console.log('release', e.detail));
 el.addEventListener('piano:rerender', (e) => console.log('range',   e.detail)); // {from, to, compact}
+*/
 
 // piano.highlight(['C4','E4','G4']);  // persists across octave shifts / resize
 // piano.shiftOctave(1);  piano.isCompact();  piano.keys();  // keys is now a function
