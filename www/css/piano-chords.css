@@ -29,7 +29,16 @@
 }
 
 /* --- chord controls: type dropdown + one row of 12 buttons ------------------ */
-.cc { margin-top: 12px; }
+/* fill the parent container whatever its display type (block, flex row, grid) */
+.cc {
+  margin-top: 12px;
+  margin-bottom: 15px;
+  width: 100%;
+  min-width: 0;
+  flex: 1 1 100%;
+  grid-column: 1 / -1;
+  box-sizing: border-box;
+}
 
 .cc-group {
   padding: 12px;
@@ -96,6 +105,10 @@
 
 /* --- chord detail panel (#chord-data) ---------------------------------------- */
 .cd {
+  width: 100%;
+  min-width: 0;
+  flex: 1 1 100%;
+  grid-column: 1 / -1;
   margin-top: var(--cd-margin-top);
   padding: 14px 16px 18px;
   border-radius: 10px;
