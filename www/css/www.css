@@ -52,7 +52,8 @@ body {
 }
 
 .header .feature-img {
-    height: 100px;
+    max-height: 90px;
+    height: 90px;
 }
 
 .header .top-left {}
