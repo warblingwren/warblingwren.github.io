@@ -52,15 +52,15 @@ body {
 }
 
 .header .feature-img {
-    height: 200px;
+    height: 100px;
 }
 
 .header .top-left {}
-.header .top-center {}
-.header .top-center .pfp {margin:15px;}
-.header .top-center .title {font-size : 2.5em;}
-.header .top-center .subtitle {font-size : 1.5em;}
+.header .top-left .pfp {margin:5px;}
+.header .top-left .title {font-size : 2em;}
+.header .top-left .subtitle {font-size : 1em;}
 
+.header .top-center {}
 .header .top-right {
     display: inline-table;
     width: 100%;
