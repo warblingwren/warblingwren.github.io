@@ -1,0 +1,19 @@
+permalink: /:year/:month/:day/:title.html
+highlighter: rouge
+
+defaults:
+  -
+    scope:
+      path: ""
+    values:
+      entity: Warbling Wren
+      site_author: Warbling Wren
+      site_description: Warbling Wren
+      title: Warbling Wren
+      subtitle: Data Driven Music
+      quip: Singing Songs With Data
+      logo_url: https://avatars.githubusercontent.com/u/337726381
+      style_css: /www/css/www.css
+      site_js: /www/js/dashboard.js
+      branding_ico: /www/img/branding/brand.ico
+      g_analytics_id: G-0011223344

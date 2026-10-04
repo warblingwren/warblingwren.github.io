@@ -1,0 +1,14 @@
+<!doctype html>
+<html lang="en">
+    {% include html_head.html %}
+    <body>
+        <div class="container-fluid wrapper">
+            {% include site_header.html %}
+            <div class="content">
+                {{ content }}
+            </div>
+            {% include site_footer.html %}
+        </div>
+    </body>
+    <script src="{{ page.site_js }}"></script>
+</html>
