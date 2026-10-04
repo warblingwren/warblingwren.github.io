@@ -5,6 +5,7 @@
 import './colors.js'
 import { renderPianoKeyboard, OCTAVE_FAMILIES } from './piano.js';
 import { createPianoAudio } from './piano-audio.js';
+import { renderChordControls } from './chord-controls.js';
 
 (function () {
   //javascript code here
