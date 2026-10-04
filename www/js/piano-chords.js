@@ -227,6 +227,7 @@ export function renderChordControls(opts = {}) {
     btn.classList.add('is-active');
 
     piano.clearChord();
+    piano.clearPlayed(); // a key played on the piano loses its color unless it is this tone
     piano.markNotes(piano.notesWithPitchClass(t.pc).map((n) => ({
       note: n,
       label: t.spelled,
