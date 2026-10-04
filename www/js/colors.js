@@ -292,33 +292,3 @@ var material_colors = {
         "900": "#263238"
     }
 }
-
-//
-// ***************************************************************************
-//
-//
-//
-// ***************************************************************************
-//
-
-function getColors(length=null){
-
-    color_list = []
-    color_keys = Object.keys(material_colors);
-    random_colors = []
-
-    //
-    // shuffle colors
-    //
-    for (c in color_keys){
-        var rand = color_keys[Math.floor(Math.random()*color_keys.length)];
-        random_colors.push(color_keys[rand])
-        color_list.push(material_colors[color_keys[c]]['300'])
-    }
-
-    random_colors = random_colors.slice(0,length)
-    color_list = color_list.slice(0,length)
-
-    return color_list
-}
-
