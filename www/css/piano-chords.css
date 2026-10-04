@@ -1,25 +1,53 @@
 /* =============================================================================
-   chord-controls.css
+   piano-chords.css
    ========================================================================== */
 
 :root {
-  --cc-bg: #2b2b2e;
-  --cc-btn-bg: #3a3a3e;
+  /* major groups — dark panel */
+  --cc-major-bg: #2b2b2e;
+  --cc-major-btn-bg: #3a3a3e;
+  --cc-major-btn-hover: #4a4a50;
+  --cc-major-btn-border: #555;
+
+  /* minor groups — slightly lighter panel */
+  --cc-minor-bg: #3d3d42;
+  --cc-minor-btn-bg: #4d4d53;
+  --cc-minor-btn-hover: #5c5c63;
+  --cc-minor-btn-border: #66666d;
+
   --cc-btn-fg: #f2f2f2;
-  --cc-btn-border: #555;
-  --cc-btn-hover: #4a4a50;
   --cc-active-bg: #f2f2f2;
   --cc-active-fg: #1d1d1f;
   --cc-title: #bbb;
   --cc-focus: #3d7be8;
+  --cc-gap: 12px;
 }
 
 .cc {
-  margin-top: 12px;
+  margin-top: var(--cc-gap);
+  display: flex;
+  flex-direction: column;
+  gap: var(--cc-gap);
+}
+
+.cc-group {
   padding: 12px;
-  background: var(--cc-bg);
   border-radius: 10px;
   box-sizing: border-box;
+}
+
+.cc-group--major {
+  background: var(--cc-major-bg);
+  --cc-btn-bg: var(--cc-major-btn-bg);
+  --cc-btn-hover: var(--cc-major-btn-hover);
+  --cc-btn-border: var(--cc-major-btn-border);
+}
+
+.cc-group--minor {
+  background: var(--cc-minor-bg);
+  --cc-btn-bg: var(--cc-minor-btn-bg);
+  --cc-btn-hover: var(--cc-minor-btn-hover);
+  --cc-btn-border: var(--cc-minor-btn-border);
 }
 
 .cc-title {
@@ -41,13 +69,16 @@
   appearance: none;
   -webkit-appearance: none;
   min-height: 44px;
-  padding: 0 4px;
+  padding: 0 2px;
   border: 1px solid var(--cc-btn-border);
   border-radius: 8px;
   background: var(--cc-btn-bg);
   color: var(--cc-btn-fg);
   font: inherit;
-  font-size: 16px;
+  font-size: 15px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   transition: background-color 80ms linear;
@@ -61,11 +92,15 @@
    BREAKPOINTS — keep at end of file
    ========================================================================== */
 
-@media (max-width: 768px) {
-  .cc { padding: 10px 8px; border-radius: 8px; }
+@media (max-width: 1280px) {
   .cc-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+}
+
+@media (max-width: 768px) {
+  .cc-group { padding: 10px 8px; border-radius: 8px; }
 }
 
 @media (max-width: 430px) {
   .cc-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+  .cc-btn { font-size: 14px; }
 }

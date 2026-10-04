@@ -1,19 +1,24 @@
 // =============================================================================
-// chord-controls.js — major chord buttons
-// Click: highlights root/3rd/5th in every octave (piano.showChord), plays the
-// root-position triad, labels the played keys with their spelled note names and
-// puts a scale-degree badge (R, 3, 5) under each. Clicking the same chord re-strikes it.
+// piano-chords.js — chord buttons: Major, Major 7th, Minor, Minor 7th
+// Click: highlights the chord tones in every octave (piano.showChord), plays the
+// root-position chord, labels the played keys with their spelled note names and
+// puts a scale-degree badge under each. Clicking the same chord re-strikes it.
 // =============================================================================
 
 import { midiToNote } from './piano-audio.js';
 
-// Major triad = root + 4 semitones (major 3rd) + 7 semitones (perfect 5th)
-// letters: letter steps above the root letter (3rd = 2 letters up, 5th = 4 letters up)
-export const MAJOR_TRIAD = [
-  { semis: 0, letters: 0 },
-  { semis: 4, letters: 2 },
-  { semis: 7, letters: 4 },
-];
+// semis = semitones above the root; letters = letter steps above the root letter
+const R = { semis: 0, letters: 0 };
+const M3 = { semis: 4, letters: 2 };
+const m3 = { semis: 3, letters: 2 };
+const P5 = { semis: 7, letters: 4 };
+const M7 = { semis: 11, letters: 6 };
+const m7 = { semis: 10, letters: 6 };
+
+export const MAJOR_TRIAD = [R, M3, P5];
+export const MAJOR_7TH = [R, M3, P5, M7];
+export const MINOR_TRIAD = [R, m3, P5];
+export const MINOR_7TH = [R, m3, P5, m7];
 
 // Scale-degree badge text by semitones above the root
 export const DEGREE_LABELS = {
@@ -21,20 +26,16 @@ export const DEGREE_LABELS = {
   7: '5', 8: '♯5', 9: '6', 10: '♭7', 11: '7',
 };
 
-// Display names use the conventional major-key spelling
-export const MAJOR_CHORDS = [
-  { name: 'C', root: 0 },
-  { name: 'D♭', root: 1 },
-  { name: 'D', root: 2 },
-  { name: 'E♭', root: 3 },
-  { name: 'E', root: 4 },
-  { name: 'F', root: 5 },
-  { name: 'F♯', root: 6 },
-  { name: 'G', root: 7 },
-  { name: 'A♭', root: 8 },
-  { name: 'A', root: 9 },
-  { name: 'B♭', root: 10 },
-  { name: 'B', root: 11 },
+// Conventional root spellings: major keys favour flats, minor keys follow their key signatures
+const MAJOR_ROOTS = ['C', 'D♭', 'D', 'E♭', 'E', 'F', 'F♯', 'G', 'A♭', 'A', 'B♭', 'B'];
+const MINOR_ROOTS = ['C', 'C♯', 'D', 'E♭', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'B♭', 'B'];
+
+// tone: 'major' groups share the dark panel, 'minor' groups the lighter panel
+export const CHORD_GROUPS = [
+  { id: 'major',  title: 'Major chords',     tone: 'major', suffix: '',     quality: 'major',  intervals: MAJOR_TRIAD, roots: MAJOR_ROOTS },
+  { id: 'maj7',   title: 'Major 7th chords', tone: 'major', suffix: 'maj7', quality: 'major 7th', intervals: MAJOR_7TH, roots: MAJOR_ROOTS },
+  { id: 'minor',  title: 'Minor chords',     tone: 'minor', suffix: 'm',    quality: 'minor',  intervals: MINOR_TRIAD, roots: MINOR_ROOTS },
+  { id: 'min7',   title: 'Minor 7th chords', tone: 'minor', suffix: 'm7',   quality: 'minor 7th', intervals: MINOR_7TH, roots: MINOR_ROOTS },
 ];
 
 const LETTERS = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
@@ -62,7 +63,8 @@ export function spellTone(rootName, semis, letterSteps) {
  * @param {number} opts.strumMs     delay between chord tones, 0 = simultaneous (default 0)
  * @param {number} opts.velocity    chord volume 0–1 (default 0.7)
  * @returns {{select:Function, clear:Function, destroy:Function, element:HTMLDivElement}}
- * Emits on the controls element: 'chord:select' detail {name, root, notes, spelled} | 'chord:clear'
+ *          select('C'), select('Cmaj7'), select('Cm'), select('Cm7')
+ * Emits on the controls element: 'chord:select' detail {name, quality, root, notes, spelled} | 'chord:clear'
  */
 export function renderChordControls(opts = {}) {
   const {
@@ -75,26 +77,18 @@ export function renderChordControls(opts = {}) {
     velocity = 0.7,
   } = opts;
 
-  if (!piano || !audio) throw new TypeError('chord-controls: piano and audio are required');
+  if (!piano || !audio) throw new TypeError('piano-chords: piano and audio are required');
 
   // DOM-clobbering guard: host must be a real <div>
   const hostId = target ?? after;
   const host = document.getElementById(hostId);
-  if (!(host instanceof HTMLDivElement)) throw new TypeError(`chord-controls: #${hostId} is not a <div>`);
+  if (!(host instanceof HTMLDivElement)) throw new TypeError(`piano-chords: #${hostId} is not a <div>`);
 
   const wrap = document.createElement('div');
   wrap.className = 'cc';
-  wrap.setAttribute('role', 'group');
-  wrap.setAttribute('aria-label', 'Major chords');
 
-  const title = document.createElement('div');
-  title.className = 'cc-title';
-  title.textContent = 'Major chords';
-
-  const grid = document.createElement('div');
-  grid.className = 'cc-grid';
-
-  let active = null;      // active button
+  let active = null;                 // active button (one across all groups)
+  const byName = new Map();          // chord name -> {chord, btn}
 
   const clear = () => {
     active?.classList.remove('is-active');
@@ -114,47 +108,74 @@ export function renderChordControls(opts = {}) {
     btn.classList.add('is-active');
     btn.setAttribute('aria-pressed', 'true');
 
-    piano.showChord(MAJOR_TRIAD.map((t) => (chord.root + t.semis) % 12));
+    const { intervals } = chord;
+    piano.showChord(intervals.map((t) => (chord.root + t.semis) % 12));
 
     const rootMidi = (octave + 1) * 12 + chord.root;
-    const notes = MAJOR_TRIAD.map((t) => midiToNote(rootMidi + t.semis));
-    const spelled = MAJOR_TRIAD.map((t) => spellTone(chord.name, t.semis, t.letters));
+    const notes = intervals.map((t) => midiToNote(rootMidi + t.semis));
+    const spelled = intervals.map((t) => spellTone(chord.rootName, t.semis, t.letters));
 
     piano.markNotes(notes.map((note, i) => ({
       note,
       label: spelled[i],
-      badge: DEGREE_LABELS[MAJOR_TRIAD[i].semis],
+      badge: DEGREE_LABELS[intervals[i].semis],
     })));
 
     audio.playChord(notes, velocity, strumMs);
 
     wrap.dispatchEvent(new CustomEvent('chord:select', {
       bubbles: true,
-      detail: { name: chord.name, root: chord.root, notes, spelled },
+      detail: { name: chord.name, quality: chord.quality, root: chord.root, notes, spelled },
     }));
   };
 
-  for (const chord of MAJOR_CHORDS) {
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'cc-btn';
-    btn.dataset.root = String(chord.root);
-    btn.setAttribute('aria-pressed', 'false');
-    btn.setAttribute('aria-label', `${chord.name} major`);
-    btn.textContent = chord.name;
-    btn.addEventListener('click', () => select(chord, btn));
-    grid.append(btn);
+  for (const group of CHORD_GROUPS) {
+    const section = document.createElement('div');
+    section.className = `cc-group cc-group--${group.tone}`;
+    section.dataset.group = group.id;
+    section.setAttribute('role', 'group');
+    section.setAttribute('aria-label', group.title);
+
+    const title = document.createElement('div');
+    title.className = 'cc-title';
+    title.textContent = group.title;
+
+    const grid = document.createElement('div');
+    grid.className = 'cc-grid';
+
+    group.roots.forEach((rootName, root) => {
+      const chord = {
+        name: `${rootName}${group.suffix}`,
+        rootName,
+        root,
+        quality: group.quality,
+        intervals: group.intervals,
+      };
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'cc-btn';
+      btn.dataset.root = String(root);
+      btn.dataset.group = group.id;
+      btn.setAttribute('aria-pressed', 'false');
+      btn.setAttribute('aria-label', `${rootName} ${group.quality}`);
+      btn.textContent = chord.name;
+      btn.addEventListener('click', () => select(chord, btn));
+      grid.append(btn);
+      byName.set(chord.name, { chord, btn });
+    });
+
+    section.append(title, grid);
+    wrap.append(section);
   }
 
-  wrap.append(title, grid);
   if (target) host.append(wrap);                     // inside the given column
   else host.insertAdjacentElement('afterend', wrap); // directly below the piano
 
   return {
     element: wrap,
     select: (name) => {
-      const i = MAJOR_CHORDS.findIndex((c) => c.name === name);
-      if (i >= 0) select(MAJOR_CHORDS[i], grid.children[i]);
+      const entry = byName.get(name);
+      if (entry) select(entry.chord, entry.btn);
     },
     clear,
     destroy() {
