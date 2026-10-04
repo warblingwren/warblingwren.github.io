@@ -183,10 +183,11 @@ export function renderChordControls(opts = {}) {
     name.type = 'button';
     name.className = 'cd-name';
     name.textContent = chord.name;
-    name.setAttribute('aria-label', `Highlight ${chord.name} on the keyboard`);
+    name.setAttribute('aria-label', `Play ${chord.name} and highlight it on the keyboard`);
     name.addEventListener('click', () => {
       panel.querySelectorAll('.cd-circle.is-active').forEach((b) => b.classList.remove('is-active'));
       showChordOnKeys(tones);
+      audio.playChord(tones.map((t) => t.note), velocity, strumMs); // re-strike from the beginning
     });
 
     const row = document.createElement('div');
