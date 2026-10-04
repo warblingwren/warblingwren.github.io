@@ -85,13 +85,19 @@ const getDiv = (id) => {
   return el instanceof HTMLDivElement ? el : null;
 };
 
+// Chord detail host: any real element (div, section, …) — looked up at use time
+const getHost = (id) => {
+  const el = id ? document.getElementById(id) : null;
+  return el instanceof HTMLElement && !(el instanceof HTMLFormElement) ? el : null;
+};
+
 /**
  * @param {object} opts
  * @param {object} opts.piano       API returned by renderPianoKeyboard
  * @param {object} opts.audio       API returned by createPianoAudio
  * @param {string} opts.target      id of a <div> to render the buttons INTO. Takes precedence over `after`.
  * @param {string} opts.after       id of the piano container; used only when `target` is not given (default 'piano-keyboard')
- * @param {string} opts.dataTarget  id of the chord detail <div> (default 'chord-data'; skipped if absent)
+ * @param {string} opts.dataTarget  id of the chord detail element (default 'chord-data'); looked up on every chord click
  * @param {number} opts.octave      octave of the played chord root (default 4)
  * @param {number} opts.strumMs     delay between chord tones, 0 = simultaneous (default 0)
  * @param {number} opts.velocity    chord volume 0–1 (default 0.7)
@@ -117,7 +123,7 @@ export function renderChordControls(opts = {}) {
   const hostId = target ?? after;
   const host = getDiv(hostId);
   if (!host) throw new TypeError(`piano-chords: #${hostId} is not a <div>`);
-  const dataHost = getDiv(dataTarget);
+  let warnedNoData = false;
 
   const wrap = document.createElement('div');
   wrap.className = 'cc';
@@ -156,7 +162,14 @@ export function renderChordControls(opts = {}) {
 
   // --- chord detail panel ------------------------------------------------------
   function renderPanel(chord, tones) {
-    if (!dataHost) return;
+    // Resolve #chord-data on every click so it works even if the element is added after render
+    const dataHost = getHost(dataTarget);
+    if (!dataHost) {
+      if (!warnedNoData) console.warn(`piano-chords: #${dataTarget} not found — chord detail panel not shown`);
+      warnedNoData = true;
+      return;
+    }
+    if (panel.parentElement !== dataHost) dataHost.append(panel);
     panel.replaceChildren();
     panel.hidden = false;
 
@@ -300,7 +313,6 @@ export function renderChordControls(opts = {}) {
 
   if (target) host.append(wrap);                     // inside the given column
   else host.insertAdjacentElement('afterend', wrap); // directly below the piano
-  if (dataHost) dataHost.append(panel);
 
   return {
     element: wrap,

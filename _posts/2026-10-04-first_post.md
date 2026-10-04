@@ -16,7 +16,9 @@ tags: [Warbling Wren]
                 <div class="col-md-9">
 					<div id="piano-chords"></div>
 				</div>
-                <div class="col-md-3"></div>
+                <div class="col-md-3">
+					<div id="chord-data"></div>
+                </div>
 			</div>
 		</div>
 	</div>
