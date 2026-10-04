@@ -17,6 +17,40 @@ const COLORS = new Set(['white', 'black']);
 export const noteToFileStem = (note) => note.replace('#', 's');
 const octaveOf = (note) => Number(note.slice(-1));
 
+// Octave color families (index = scientific octave 0–8). Interleaved around the
+// hue wheel so adjacent octaves never share a neighbouring hue.
+// SYNC POINT: family keys must exist in www/js/colors.js (material_colors)
+export const OCTAVE_FAMILIES = [
+  'red', 'teal', 'amber', 'indigo', 'lightgreen', 'pink', 'cyan', 'orange', 'purple',
+];
+const HEX_RE = /^#[0-9a-f]{6}$/i;
+
+function resolvePalette(palette) {
+  // colors.js is a classic script: `var material_colors` -> window.material_colors
+  const p = palette ?? globalThis.material_colors;
+  // DOM-clobbering guard: an element with id="material_colors" is not a plain object
+  if (!p || Object.getPrototypeOf(p) !== Object.prototype) {
+    console.warn('piano-keyboard: material_colors unavailable — octave colors disabled');
+    return null;
+  }
+  return p;
+}
+
+function buildOctaveColors(palette, families, lightShade, accentShade) {
+  const map = new Map();
+  if (!palette) return map;
+  families.forEach((fam, octave) => {
+    const light = palette[fam]?.[lightShade];
+    const accent = palette[fam]?.[accentShade];
+    if (HEX_RE.test(light ?? '') && HEX_RE.test(accent ?? '')) {
+      map.set(octave, { family: fam, light, accent });
+    } else {
+      console.warn(`piano-keyboard: invalid color family '${fam}' for octave ${octave}`);
+    }
+  });
+  return map;
+}
+
 function resolveContainer(target) {
   // DOM-clobbering guard: accept only a real HTMLDivElement
   const el = typeof target === 'string' ? document.getElementById(target) : target;
@@ -63,7 +97,12 @@ function sliceRange(all, from, to) {
  * @param {string}  opts.scrollTo       desktop: note to center; responsive: starting octave (default 'C4')
  * @param {number}  opts.mobileOctaves  octaves shown in responsive mode (default 2)
  * @param {string}  opts.mobileQuery    responsive media query (default '(max-width: 768px)')
- * @returns {Promise<object>} API: highlight, clear, shiftOctave, isCompact, keys(), destroy
+ * @param {boolean} opts.octaveColors   tint keys by octave (default true)
+ * @param {string[]} opts.octaveFamilies material_colors family per octave 0–8
+ * @param {string}  opts.octaveShade    light shade for white keys (default '100')
+ * @param {string}  opts.accentShade    shade for black-key stripe (default '300')
+ * @param {object}  opts.palette        palette override (default window.material_colors)
+ * @returns {Promise<object>} API: highlight, clear, shiftOctave, isCompact, keys(), octaveColors(), destroy
  * Emits on container: 'piano:press' / 'piano:release'  detail {note, index, file}
  *                     'piano:rerender'                 detail {from, to, compact}
  */
@@ -77,7 +116,16 @@ export async function renderPianoKeyboard(target = 'piano-keyboard', opts = {}) 
     scrollTo = 'C4',
     mobileOctaves = 2,
     mobileQuery = '(max-width: 768px)',
+    octaveColors = true,
+    octaveFamilies = OCTAVE_FAMILIES,
+    octaveShade = '100',
+    accentShade = '300',
+    palette = null,
   } = opts;
+
+  const octaveColorMap = octaveColors
+    ? buildOctaveColors(resolvePalette(palette), octaveFamilies, octaveShade, accentShade)
+    : new Map();
 
   const container = resolveContainer(target);
 
@@ -169,6 +217,14 @@ export async function renderPianoKeyboard(target = 'piano-keyboard', opts = {}) 
     btn.dataset.file = noteToFileStem(k.note_ref);
     btn.setAttribute('aria-label', k.note_ref);
     if (k.color === 'black') btn.style.setProperty('--pk-pos', String(whiteIdx));
+
+    const octave = octaveOf(k.note_ref);
+    btn.dataset.octave = String(octave);
+    const oc = octaveColorMap.get(octave);
+    if (oc) {
+      btn.style.setProperty('--pk-oct', oc.light);
+      btn.style.setProperty('--pk-oct-accent', oc.accent);
+    }
 
     const isC = /^C\d$/.test(k.note_ref);
     if (labels === 'all' || (labels === 'c' && isC)) {
@@ -269,6 +325,7 @@ export async function renderPianoKeyboard(target = 'piano-keyboard', opts = {}) 
   const api = {
     keys: () => keyMap,
     isCompact: () => mql.matches,
+    octaveColors: () => new Map(octaveColorMap), // octave -> {family, light, accent} (for legends)
     highlight(notes, cls = 'is-highlight') {
       for (const n of notes) {
         if (!highlights.has(n)) highlights.set(n, new Set());

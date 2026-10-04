@@ -2,7 +2,8 @@
    dashboard.js
    ========================================================================== */
 
-import { renderPianoKeyboard } from './piano.js';
+//import { renderPianoKeyboard } from './piano.js';
+import { renderPianoKeyboard, OCTAVE_FAMILIES } from './piano.js';
 
 (function () {
   //javascript code here
