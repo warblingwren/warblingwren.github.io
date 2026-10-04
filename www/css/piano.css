@@ -1,0 +1,182 @@
+/* =============================================================================
+piano-keyboard.css
+========================================================================== */
+
+:root {
+--pk-white-bg: #fbfaf7;
+--pk-white-bg-pressed: #e4e0d6;
+--pk-white-border: #c9c4b8;
+--pk-black-bg: #1d1d1f;
+--pk-black-bg-pressed: #3a3a3e;
+--pk-black-border: #000;
+--pk-highlight: #e8a33d;
+--pk-highlight-black: #c7821f;
+--pk-focus: #3d7be8;
+--pk-label: #8a8475;
+--pk-frame: #2b2b2e;
+
+--pk-white-min: 24px;
+--pk-height: 180px;
+--pk-black-h: 62%;
+--pk-black-ratio: 0.6;
+--pk-radius: 0 0 6px 6px;
+}
+
+.pk {
+width: 100%;
+max-width: 100%;
+background: var(--pk-frame);
+border-radius: 10px;
+padding: 10px 8px 8px;
+box-sizing: border-box;
+}
+
+.pk-scroll {
+overflow-x: auto;
+overflow-y: hidden;
+overscroll-behavior-x: contain;
+-webkit-overflow-scrolling: touch;
+scrollbar-width: thin;
+}
+
+.pk-board {
+position: relative;
+display: flex;
+height: var(--pk-height);
+min-width: calc(var(--pk-white-count) * var(--pk-white-min));
+user-select: none;
+-webkit-user-select: none;
+-webkit-touch-callout: none;
+}
+
+.pk-key {
+appearance: none;
+-webkit-appearance: none;
+margin: 0;
+padding: 0;
+font: inherit;
+cursor: pointer;
+touch-action: pan-x;
+-webkit-tap-highlight-color: transparent;
+transition: background-color 60ms linear, transform 60ms linear;
+}
+
+.pk-key:focus-visible {
+outline: 3px solid var(--pk-focus);
+outline-offset: -3px;
+z-index: 3;
+}
+
+.pk-white {
+position: relative;
+flex: 1 1 0;  /* equal widths; --pk-white-count is set per-board, not on :root */
+min-width: var(--pk-white-min);
+height: 100%;
+background: var(--pk-white-bg);
+border: 1px solid var(--pk-white-border);
+border-top: none;
+border-radius: var(--pk-radius);
+z-index: 1;
+display: flex;
+align-items: flex-end;
+justify-content: center;
+}
+
+.pk-black {
+position: absolute;
+top: 0;
+left: calc(var(--pk-pos) * (100% / var(--pk-white-count)));
+width: calc((100% / var(--pk-white-count)) * var(--pk-black-ratio));
+height: var(--pk-black-h);
+transform: translateX(-50%);
+background: var(--pk-black-bg);
+border: 1px solid var(--pk-black-border);
+border-top: none;
+border-radius: 0 0 4px 4px;
+box-shadow: inset 0 -6px 0 rgba(255, 255, 255, 0.08);
+z-index: 2;
+display: flex;
+align-items: flex-end;
+justify-content: center;
+}
+
+.pk-label {
+pointer-events: none;
+font-size: 11px;
+line-height: 1;
+padding-bottom: 8px;
+color: var(--pk-label);
+}
+
+.pk-black .pk-label {
+color: #bbb;
+font-size: 9px;
+}
+
+.pk-white.is-pressed { background: var(--pk-white-bg-pressed); }
+.pk-black.is-pressed { background: var(--pk-black-bg-pressed); box-shadow: none; }
+
+.pk-white.is-highlight { background: var(--pk-highlight); }
+.pk-black.is-highlight { background: var(--pk-highlight-black); }
+.pk-key.is-highlight .pk-label { color: #fff; }
+
+/* --- octave controls (compact mode only) --------------------------------- */
+.pk-controls {
+display: flex;
+align-items: center;
+justify-content: space-between;
+gap: 8px;
+margin-bottom: 8px;
+}
+
+.pk-shift {
+appearance: none;
+-webkit-appearance: none;
+min-width: 44px;
+min-height: 44px;
+border: 1px solid #555;
+border-radius: 8px;
+background: #3a3a3e;
+color: #fff;
+font-size: 24px;
+line-height: 1;
+cursor: pointer;
+-webkit-tap-highlight-color: transparent;
+}
+
+.pk-shift:disabled { opacity: 0.35; cursor: default; }
+.pk-shift:focus-visible { outline: 3px solid var(--pk-focus); outline-offset: 2px; }
+
+.pk-range {
+color: #ddd;
+font-size: 14px;
+letter-spacing: 0.04em;
+}
+
+/* =============================================================================
+BREAKPOINTS — keep at end of file
+========================================================================== */
+
+@media (max-width: 1024px) {
+:root {
+--pk-white-min: 32px;
+--pk-height: 160px;
+}
+}
+
+/* SYNC POINT: must match opts.mobileQuery in www/js/piano-keyboard.js */
+@media (max-width: 768px) {
+:root {
+--pk-white-min: 0px;    /* compact mode fits width — no horizontal scroll */
+--pk-black-ratio: 0.64;
+--pk-height: 200px;
+}
+.pk { padding: 8px 4px 6px; border-radius: 8px; }
+.pk-compact .pk-scroll { overflow-x: hidden; }
+}
+
+@media (max-width: 430px) {
+:root {
+--pk-height: 180px;
+}
+}
