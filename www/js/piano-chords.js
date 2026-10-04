@@ -12,16 +12,16 @@ export const MAJOR_TRIAD = [0, 4, 7];
 // Display names use the conventional major-key spelling
 export const MAJOR_CHORDS = [
   { name: 'C', root: 0 },
-  { name: 'D♭', root: 1 },
+  { name: 'Db', root: 1 },
   { name: 'D', root: 2 },
-  { name: 'E♭', root: 3 },
+  { name: 'Eb', root: 3 },
   { name: 'E', root: 4 },
   { name: 'F', root: 5 },
-  { name: 'F♯', root: 6 },
+  { name: 'F#', root: 6 },
   { name: 'G', root: 7 },
-  { name: 'A♭', root: 8 },
+  { name: 'Ab', root: 8 },
   { name: 'A', root: 9 },
-  { name: 'B♭', root: 10 },
+  { name: 'Bb', root: 10 },
   { name: 'B', root: 11 },
 ];
 
