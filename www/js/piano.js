@@ -121,6 +121,8 @@ function sliceRange(all, from, to) {
  * @param {string}  opts.scrollTo       desktop: note to center; responsive: starting octave (default 'C4')
  * @param {number}  opts.mobileOctaves  octaves shown in responsive mode (default 2)
  * @param {string}  opts.mobileQuery    responsive media query (default '(max-width: 768px)')
+ * @param {boolean} opts.sticky         keep the keyboard pinned to the top of the window while scrolling (default true)
+ * @param {number}  opts.stickyTop      px offset from the top when pinned, e.g. a fixed navbar height (default 0)
  * @param {boolean} opts.octaveColors   tint keys by octave (default true)
  * @param {string[]} opts.octaveFamilies material_colors family per octave 0–8
  * @param {string}  opts.octaveShade    light shade for white keys (default '100')
@@ -145,6 +147,8 @@ export async function renderPianoKeyboard(target = 'piano-keyboard', opts = {}) 
     scrollTo = 'C4',
     mobileOctaves = 2,
     mobileQuery = '(max-width: 768px)',
+    sticky = true,
+    stickyTop = 0,
     octaveColors = true,
     octaveFamilies = OCTAVE_FAMILIES,
     octaveShade = '100',
@@ -527,6 +531,41 @@ export async function renderPianoKeyboard(target = 'piano-keyboard', opts = {}) 
     },
   };
 
+  const baseDestroy = api.destroy;
+  api.destroy = () => {
+    stickyEl?.classList.remove('pk-sticky');
+    stickyEl?.style.removeProperty('--pk-sticky-top');
+    baseDestroy();
+  };
+
   render();
+
+  // --- sticky: pin the keyboard to the top of the window while the page scrolls -----
+  // position:sticky only sticks within its parent, so climb out of single-child wrappers and
+  // horizontal rows (e.g. .row > .col > #piano-keyboard) to the element whose parent holds
+  // the rest of the page content.
+  let stickyEl = null;
+  if (sticky) {
+    stickyEl = container;
+    while (stickyEl.parentElement && stickyEl.parentElement !== document.body) {
+      const parent = stickyEl.parentElement;
+      const ps = getComputedStyle(parent);
+      const onlyChild = parent.children.length === 1;
+      // a horizontal flex row (e.g. Bootstrap .row): its columns sit side by side, so stick the row
+      const sideBySide = ps.display.includes('flex') && ps.flexDirection.startsWith('row');
+      if (!onlyChild && !sideBySide) break;
+      stickyEl = parent;
+    }
+    stickyEl.classList.add('pk-sticky');
+    stickyEl.style.setProperty('--pk-sticky-top', `${Number(stickyTop) || 0}px`);
+    for (let a = stickyEl.parentElement; a && a !== document.body && a !== document.documentElement; a = a.parentElement) {
+      const o = getComputedStyle(a);
+      if (/(auto|scroll|hidden|clip)/.test(o.overflow + o.overflowX + o.overflowY)) {
+        console.warn('piano-keyboard: an ancestor has overflow set — sticky keyboard will not pin to the window', a);
+        break;
+      }
+    }
+  }
+
   return api;
 }

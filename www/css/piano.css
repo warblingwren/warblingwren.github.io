@@ -3,6 +3,7 @@
    ========================================================================== */
 
 :root {
+  --pk-sticky-bg: #ffffff;       /* page colour behind the pinned keyboard */
   --pk-white-bg: #fbfaf7;
   --pk-white-bg-pressed: #e4e0d6;
   --pk-white-border: #c9c4b8;
@@ -248,6 +249,15 @@
   color: #ddd;
   font-size: 14px;
   letter-spacing: 0.04em;
+}
+
+/* --- sticky keyboard (class added by piano.js) ------------------------------- */
+.pk-sticky {
+  position: -webkit-sticky;
+  position: sticky;
+  top: var(--pk-sticky-top, 0);
+  z-index: 1020;                       /* above page content; below Bootstrap modals (1050) */
+  background: var(--pk-sticky-bg);     /* opaque, so content scrolls behind it */
 }
 
 /* =============================================================================

@@ -304,8 +304,10 @@ export function renderChordControls(opts = {}) {
       warnedNoData = true;
       return;
     }
+    dataHost.classList.add('cd-host');               // host becomes a column the panel fills
     if (panel.parentElement !== dataHost) dataHost.append(panel);
     const relHost = getHost(relativeTarget) ?? getHost('minor-chord-data');
+    relHost?.classList.add('cd-host');
     if (relHost && relPanel.parentElement !== relHost) relHost.append(relPanel);
     if (!relHost && !warnedNoRel) {
       console.warn(`piano-chords: #${relativeTarget} not found — relative chord panel not shown`);

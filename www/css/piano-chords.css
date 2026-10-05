@@ -25,8 +25,8 @@
   --cd-name-fg: #ffffff;
   --cd-name-hover: #3a3a3e;
   --cd-margin-top: 28px;
-  --cd-relative-bg: #e0f7fa;     /* Material Cyan 50 */
-  --cd-relative-border: #b2ebf2; /* Material Cyan 100 */
+  --cd-relative-bg: #ffffff;
+  --cd-relative-border: #00bcd4; /* Material Cyan 500 */
   --cd-circle: 52px;
 }
 
@@ -114,7 +114,7 @@
   margin-top: var(--cd-margin-top);
   padding: 14px 16px 18px;
   border-radius: 10px;
-  border: 1px solid var(--cd-border);
+  border: 3px solid var(--cd-border);
   background: var(--cd-bg);
   color: var(--cd-fg);
   box-sizing: border-box;
@@ -122,6 +122,18 @@
 }
 
 .cd[hidden] { display: none; }
+
+/* #root-chord-data / #minor-chord-data (class added by piano-chords.js):
+   the panel fills the full height of its container, no margin */
+.cd-host {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;   /* fills a wrapping column; when the host is the column itself, flex stretch fills it */
+}
+.cd-host > .cd {
+  flex: 1 1 auto;
+  margin: 0;
+}
 
 /* "Root Chord" title, top-left of the chord detail card */
 .cd-title {
@@ -278,7 +290,7 @@
 .cd-octave-note:hover .cd-octave-dot { transform: scale(1.08); }
 .cd-octave-note.is-active .cd-octave-dot { transform: scale(1.12); box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--cc-focus); }
 
-/* relative minor / major: its own .cd panel, sibling of the root chord panel — Material Cyan 50 */
+/* relative minor panel (#minor-chord-data): white with a cyan border */
 .cd.cd-relative {
   border-color: var(--cd-relative-border);
   background: var(--cd-relative-bg);
