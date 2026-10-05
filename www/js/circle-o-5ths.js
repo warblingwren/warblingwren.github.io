@@ -134,7 +134,7 @@ const getHost = (id) => {
   return el instanceof HTMLElement && !(el instanceof HTMLFormElement) ? el : null;
 };
 
-const sigText = (s) => (s.count === 0 ? 'no sharps or flats'
+const sigText = (s) => (s.count === 0 ? 'none (no sharps or flats)'
   : `${s.count} ${s.type === 'sharps' ? '♯' : '♭'} (${s.accidentals.join(' ')})`);
 
 /**
@@ -269,13 +269,23 @@ export async function renderCircleProgressions(opts = {}) {
 
   function renderCards() {
     keyLabel.replaceChildren();
-    const kName = document.createElement('span');
-    kName.className = 'cp-key-name';
-    kName.textContent = `Key of ${currentKey.name}`;
-    const kSig = document.createElement('span');
-    kSig.className = 'cp-key-signature';
-    kSig.textContent = sigText(currentKey.signature);
-    keyLabel.append(kName, kSig);
+    const kv = (cls, label, value) => {
+      const rowEl = document.createElement('div');
+      rowEl.className = cls;
+      const l = document.createElement('span');
+      l.className = 'cp-kv-label';
+      l.textContent = label;
+      const v = document.createElement('span');
+      v.className = 'cp-kv-value';
+      v.textContent = value;
+      rowEl.append(l, v);
+      return rowEl;
+    };
+    const keyName = currentKey.name;
+    keyLabel.append(
+      kv('cp-key-name', 'Key:', keyName),
+      kv('cp-key-signature', 'Signature:', sigText(currentKey.signature)),
+    );
 
     roman.textContent = currentProg.roman;
     desc.textContent = currentProg.description || '';

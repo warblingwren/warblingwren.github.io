@@ -179,6 +179,11 @@ export function renderChordControls(opts = {}) {
     panel.replaceChildren();
     panel.hidden = false;
 
+    // Panel title: progressions below are built on this chord
+    const heading = document.createElement('div');
+    heading.className = 'cd-title';
+    heading.textContent = 'Root Chord';
+
     // Chord name badge: click re-highlights the whole chord on the keyboard
     const name = document.createElement('button');
     name.type = 'button';
@@ -219,7 +224,7 @@ export function renderChordControls(opts = {}) {
       item.append(deg, btn);
       row.append(item);
     }
-    panel.append(name, row);
+    panel.append(heading, name, row);
   }
 
   // Single tone: play it alone, highlight every key where it occurs in its role color

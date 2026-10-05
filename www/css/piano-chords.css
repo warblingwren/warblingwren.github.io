@@ -121,6 +121,14 @@
 
 .cd[hidden] { display: none; }
 
+/* "Root Chord" title, top-left of the chord detail card */
+.cd-title {
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--cd-muted);
+}
+
 .cd-name {
   appearance: none;
   -webkit-appearance: none;
