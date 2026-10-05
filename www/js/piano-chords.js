@@ -107,6 +107,7 @@ const getHost = (id) => {
  * Emits on the controls element: 'chord:select' detail {name, quality, group, rootName, root, notes, spelled}
  *                                'chord:type'   detail {type, title}
  *                                'chord:tone'   detail {chord, note, spelled, degree} | 'chord:clear'
+ *                                'chord:octave' detail {chord, octave, notes}
  */
 export function renderChordControls(opts = {}) {
   const {
@@ -191,7 +192,7 @@ export function renderChordControls(opts = {}) {
     name.textContent = chord.name;
     name.setAttribute('aria-label', `Play ${chord.name} and highlight it on the keyboard`);
     name.addEventListener('click', () => {
-      panel.querySelectorAll('.cd-circle.is-active').forEach((b) => b.classList.remove('is-active'));
+      clearPanelActive();
       showChordOnKeys(tones);
       audio.playChord(tones.map((t) => t.note), velocity, strumMs); // re-strike from the beginning
     });
@@ -224,12 +225,85 @@ export function renderChordControls(opts = {}) {
       item.append(deg, btn);
       row.append(item);
     }
-    panel.append(heading, name, row);
+    panel.append(heading, name, row, renderOctaves(chord));
+  }
+
+  const clearPanelActive = () =>
+    panel.querySelectorAll('.is-active').forEach((b) => b.classList.remove('is-active'));
+
+  // --- octave rows: "C1: (C)(E)(G)" … "C7: …" ------------------------------------
+  // One row per octave 1–7 where the whole chord fits on the 88 keys (A0 = 21 … C8 = 108).
+  // Pill = the root octave's light tint; circles = each note's chord-role color.
+  function renderOctaves(chord) {
+    const wrapEl = document.createElement('div');
+    wrapEl.className = 'cd-octaves';
+    wrapEl.setAttribute('role', 'group');
+    wrapEl.setAttribute('aria-label', `${chord.name} in each octave`);
+    const octaveColors = piano.octaveColors();
+
+    for (let o = 1; o <= 7; o++) {
+      const rootMidi = (o + 1) * 12 + chord.root;
+      const midis = chord.intervals.map((t) => rootMidi + t.semis);
+      if (midis[0] < 21 || midis[midis.length - 1] > 108) continue;
+
+      const tones = chord.intervals.map((t, rank) => ({
+        rank,
+        note: midiToNote(rootMidi + t.semis),
+        pc: (chord.root + t.semis) % 12,
+        spelled: spellTone(chord.rootName, t.semis, t.letters),
+        degree: t.label,
+      }));
+
+      const rowEl = document.createElement('div');
+      rowEl.className = 'cd-octave';
+
+      const label = document.createElement('span');
+      label.className = 'cd-octave-label';
+      label.textContent = `${chord.rootName}${o}`;
+
+      const pill = document.createElement('button');
+      pill.type = 'button';
+      pill.className = 'cd-octave-pill';
+      pill.setAttribute('aria-label', `Play ${chord.name} in octave ${o}: ${tones.map((t) => t.note).join(', ')}`);
+      const oc = octaveColors.get(o);
+      if (oc) pill.style.setProperty('--cd-octave-bg', oc.light);
+
+      for (const t of tones) {
+        const dot = document.createElement('span');
+        dot.className = `cd-octave-dot${t.rank === 0 ? ' is-root' : ''}`;
+        dot.textContent = t.spelled;
+        dot.title = `${t.degree}: ${t.note}`;
+        const color = piano.roleColor(t.note, t.rank);
+        if (color) {
+          dot.style.setProperty('--cd-dot-bg', color);
+          dot.style.setProperty('--cd-dot-fg', textOn(color));
+        }
+        pill.append(dot);
+      }
+      pill.addEventListener('click', () => playOctave(chord, tones, pill, o));
+
+      rowEl.append(label, pill);
+      wrapEl.append(rowEl);
+    }
+    return wrapEl;
+  }
+
+  // Play the chord in one octave and highlight exactly those keys
+  function playOctave(chord, tones, pill, o) {
+    clearPanelActive();
+    pill.classList.add('is-active');
+    piano.clearChord();
+    piano.clearPlayed();
+    piano.markNotes(tones.map((t) => ({
+      note: t.note, label: t.spelled, badge: t.degree, rank: t.rank, root: t.rank === 0, fill: true,
+    })));
+    audio.playChord(tones.map((t) => t.note), velocity, strumMs);
+    emit('chord:octave', { chord: chord.name, octave: o, notes: tones.map((t) => t.note) });
   }
 
   // Single tone: play it alone, highlight every key where it occurs in its role color
   function playTone(chord, t, btn) {
-    panel.querySelectorAll('.cd-circle.is-active').forEach((b) => b.classList.remove('is-active'));
+    clearPanelActive();
     btn.classList.add('is-active');
 
     piano.clearChord();

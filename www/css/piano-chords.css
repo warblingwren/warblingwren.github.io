@@ -193,6 +193,71 @@
 .cd-circle.is-active { transform: scale(1.1); box-shadow: 0 0 0 3px #fff, 0 0 0 6px var(--cc-focus); }
 .cd-circle:focus-visible { outline: 3px solid var(--cc-focus); outline-offset: 4px; }
 
+/* --- octave rows inside #chord-data: "C4: (C)(E)(G)" ------------------------- */
+:root {
+  --cd-dot: 30px;
+  --cd-octave-label-w: 44px;
+}
+
+.cd-octaves {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid var(--cd-border);
+}
+
+.cd-octave {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.cd-octave-label {
+  min-width: var(--cd-octave-label-w);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--cd-fg);
+}
+
+/* rounded rectangle in the octave's color; holds the role-colored note circles */
+.cd-octave-pill {
+  appearance: none;
+  -webkit-appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 6px 10px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 22px;
+  background: var(--cd-octave-bg, #eee);
+  font: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 80ms ease-out;
+}
+.cd-octave-pill:hover { box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.15); }
+.cd-octave-pill:focus-visible { outline: 3px solid var(--cc-focus); outline-offset: 2px; }
+.cd-octave-pill.is-active { box-shadow: 0 0 0 3px var(--cc-focus); }
+
+.cd-octave-dot {
+  box-sizing: border-box;
+  min-width: var(--cd-dot);
+  height: var(--cd-dot);
+  padding: 0 4px;
+  border-radius: calc(var(--cd-dot) / 2);
+  background: var(--cd-dot-bg, #555);
+  color: var(--cd-dot-fg, #fff);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: var(--cd-dot);
+  text-align: center;
+  pointer-events: none;
+}
+.cd-octave-dot.is-root { box-shadow: 0 0 0 2px #fff, 0 0 0 3px rgba(0, 0, 0, 0.5); }
+
 /* =============================================================================
    BREAKPOINTS — keep at end of file
    ========================================================================== */
