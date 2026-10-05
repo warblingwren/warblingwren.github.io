@@ -223,6 +223,22 @@ export function relativeChord(chord) {
   };
 }
 
+// Last chords displayed in #root-chord-data / #minor-chord-data (read by circle-o-5ths.js)
+let lastPanels = null;
+export const currentPanels = () => lastPanels;
+
+function chordInfo(c) {
+  return {
+    name: c.name,
+    rootName: c.rootName,
+    root: c.root,
+    group: c.group,
+    tones: c.intervals.map((t, rank) => ({
+      rank, semitones: t.semis, pc: (c.root + t.semis) % 12, spelled: spellTone(c.rootName, t.semis, t.letters), degree: t.label,
+    })),
+  };
+}
+
 const getDiv = (id) => {
   // DOM-clobbering guard: must be a real <div>
   const el = id ? document.getElementById(id) : null;
@@ -253,6 +269,7 @@ const getHost = (id) => {
  *                                'chord:type'   detail {type, title}
  *                                'chord:tone'   detail {chord, note, spelled, degree} | 'chord:clear'
  *                                'chord:octave' detail {chord, octave, notes}
+ * Dispatches on document: 'chord:panels' detail {selected, root, minor} — the chords shown in the two panels
  *                                'chord:octave-note' detail {chord, octave, note, spelled, degree}
  */
 export function renderChordControls(opts = {}) {
@@ -320,7 +337,16 @@ export function renderChordControls(opts = {}) {
   }
 
   // --- chord detail panel ------------------------------------------------------
+  // #root-chord-data always holds the major side, #minor-chord-data the minor side.
+  // Minor chord selected (e.g. Am): its relative major (C) goes in the root panel, Am in the minor panel.
+  function panelChords(chord) {
+    const rel = relativeChord(chord);
+    const minorSelected = rel?.title === 'Relative Major';
+    return { rootChord: minorSelected ? rel.chord : chord, minorChord: minorSelected ? chord : rel?.chord ?? null, minorSelected };
+  }
+
   function renderPanel(chord, tones) {
+    publishPanels(chord);
     // Resolve #chord-data on every click so it works even if the element is added after render
     const dataHost = getHost(dataTarget) ?? getHost('root-chord-data');
     if (!dataHost) {
@@ -340,18 +366,21 @@ export function renderChordControls(opts = {}) {
     panel.replaceChildren();
     panel.hidden = false;
 
-    // #root-chord-data always holds the major side, #minor-chord-data the minor side.
-    // Minor chord selected (e.g. Am): its relative major (C) goes in the root panel, Am in the minor panel.
-    const rel = relativeChord(chord);
-    const minorSelected = rel?.title === 'Relative Major';
-    const rootChord = minorSelected ? rel.chord : chord;
-    const minorChord = minorSelected ? chord : rel?.chord;
+    const { rootChord, minorChord, minorSelected } = panelChords(chord);
 
     panel.append(...chordSection(rootChord, minorSelected ? voice(rootChord) : tones, 'Root Chord'));
 
     relPanel.replaceChildren();
     relPanel.hidden = !minorChord;
     if (minorChord) relPanel.append(...chordSection(minorChord, voice(minorChord), 'Relative Minor'));
+  }
+
+  // The two chords shown in #root-chord-data and #minor-chord-data are the single source of truth
+  // for the progression panels (circle-o-5ths.js reads them via currentPanels / 'chord:panels').
+  function publishPanels(chord) {
+    const { rootChord, minorChord } = panelChords(chord);
+    lastPanels = { selected: chordInfo(chord), root: chordInfo(rootChord), minor: minorChord ? chordInfo(minorChord) : null };
+    document.dispatchEvent(new CustomEvent('chord:panels', { detail: lastPanels }));
   }
 
   // Title + chord badge + tone circles + octave rows (same layout for root and relative chord)

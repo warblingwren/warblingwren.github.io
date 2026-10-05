@@ -18,7 +18,7 @@
 
 import { midiToNote } from './piano-audio.js';
 import { textOn } from './piano.js';
-import { renderOctaveRows } from './piano-chords.js';
+import { renderOctaveRows, currentPanels } from './piano-chords.js';
 
 const LETTERS = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
 const LETTER_PC = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
@@ -488,7 +488,8 @@ export async function renderCircleProgressions(opts = {}) {
     root.desc.textContent = descIn(majorKey);
     renderCards(root, majorKey, rootProg);
 
-    relChord = { ...circle.tonicChord(minorKey), roman: 'i' };
+    // "Relative Minor:" = exactly the chord in #minor-chord-data
+    relChord = panelMinor ? asBadgeChord(panelMinor, 'i') : { ...circle.tonicChord(minorKey), roman: 'i' };
     relLabel.textContent = 'Relative Minor:';
     relBadge.textContent = relChord.name;
     relBadge.setAttribute('aria-label', `Play the relative minor chord ${relChord.name} and highlight it on the keyboard`);
@@ -499,7 +500,8 @@ export async function renderCircleProgressions(opts = {}) {
       rel.title.textContent = 'Relative Minor Progression';
       renderKeyBox(rel.keyBox, minorKey);
       relProgName.textContent = currentProg.name;
-      rootChordRef = { ...circle.tonicChord(majorKey), roman: 'I' };
+      // "Root Chord:" = exactly the chord in #root-chord-data
+      rootChordRef = panelRoot ? asBadgeChord(panelRoot, 'I') : { ...circle.tonicChord(majorKey), roman: 'I' };
       rootBadge.textContent = rootChordRef.name;
       rootBadge.setAttribute('aria-label', `Play the root chord ${rootChordRef.name} and highlight it on the keyboard`);
       rel.roman.textContent = minorProg.roman;
@@ -550,18 +552,31 @@ export async function renderCircleProgressions(opts = {}) {
     render();
   });
 
-  // Follow the chord controls: the selected chord sets the key pair
-  const onChordSelect = (e) => {
-    const d = e.detail;
-    if (!d || typeof d.root !== 'number') return;
-    const home = homeKeyOf(d);
+  // Follow the chord-data panels: their two chords are used exactly, never recomputed.
+  //   #minor-chord-data chord -> "Relative Minor:" badge + the minor progression's key (same root)
+  //   #root-chord-data chord  -> "Root Chord:" badge
+  //   selected chord          -> the root progression's key (home key for diminished chords)
+  let panelRoot = null;
+  let panelMinor = null;
+  const asBadgeChord = (c, roman) => ({ name: c.name, rootName: c.rootName, rootPc: c.root, tones: c.tones, roman });
+
+  function applyPanels(p) {
+    if (!p?.selected) return;
+    panelRoot = p.root;
+    panelMinor = p.minor;
+    const home = homeKeyOf(p.selected);
     keyNote = home.note;
-    setKey(home.mode, home.tonicPc, home.tonicName);
-  };
-  document.addEventListener('chord:select', onChordSelect);
+    const homeKey = circle.key(home.mode, home.tonicPc, home.tonicName);
+    majorKey = homeKey.mode === 'major' ? homeKey : circle.relativeKey(homeKey);
+    minorKey = panelMinor ? circle.key('minor', panelMinor.root, panelMinor.rootName) : circle.relativeKey(majorKey);
+    render();
+  }
+  const onPanels = (e) => applyPanels(e.detail);
+  document.addEventListener('chord:panels', onPanels);
 
   renderSelect();
-  render();
+  if (currentPanels()) applyPanels(currentPanels());   // panels rendered before this module loaded
+  else render();
 
   return {
     element: root.wrap,
@@ -573,7 +588,7 @@ export async function renderCircleProgressions(opts = {}) {
       if (p) { currentProg = p; select.value = id; render(); }
     },
     destroy() {
-      document.removeEventListener('chord:select', onChordSelect);
+      document.removeEventListener('chord:panels', onPanels);
       panels.forEach((w) => w.remove());
     },
   };
