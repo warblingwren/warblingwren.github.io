@@ -252,9 +252,13 @@ export function renderChordControls(opts = {}) {
   const wrap = document.createElement('div');
   wrap.className = 'cc';
 
-  const panel = document.createElement('div');   // chord detail panel (inside #chord-data)
+  const panel = document.createElement('div');   // root chord panel (inside #chord-data)
   panel.className = 'cd';
   panel.hidden = true;
+
+  const relPanel = document.createElement('div'); // relative minor/major panel — sibling of `panel`
+  relPanel.className = 'cd cd-relative';
+  relPanel.hidden = true;
 
   let activeChord = null;
   const byName = new Map();          // chord name -> chord
@@ -298,18 +302,16 @@ export function renderChordControls(opts = {}) {
       return;
     }
     if (panel.parentElement !== dataHost) dataHost.append(panel);
+    if (relPanel.parentElement !== dataHost || relPanel.previousElementSibling !== panel) panel.after(relPanel);
     panel.replaceChildren();
     panel.hidden = false;
 
     panel.append(...chordSection(chord, tones, 'Root Chord'));
 
     const rel = relativeChord(chord);
-    if (rel) {
-      const box = document.createElement('div');
-      box.className = 'cd-relative';
-      box.append(...chordSection(rel.chord, voice(rel.chord), rel.title));
-      panel.append(box);
-    }
+    relPanel.replaceChildren();
+    relPanel.hidden = !rel;
+    if (rel) relPanel.append(...chordSection(rel.chord, voice(rel.chord), rel.title));
   }
 
   // Title + chord badge + tone circles + octave rows (same layout for root and relative chord)
@@ -362,7 +364,7 @@ export function renderChordControls(opts = {}) {
   }
 
   const clearPanelActive = () =>
-    panel.querySelectorAll('.is-active').forEach((b) => b.classList.remove('is-active'));
+    [panel, relPanel].forEach((el) => el.querySelectorAll('.is-active').forEach((b) => b.classList.remove('is-active')));
 
   // --- octave rows (shared builder, see renderOctaveRows below) -----------------
   // Single tone: play it alone, highlight every key where it occurs in its role color
@@ -437,6 +439,8 @@ export function renderChordControls(opts = {}) {
     piano.clearMarks();
     panel.replaceChildren();
     panel.hidden = true;
+    relPanel.replaceChildren();
+    relPanel.hidden = true;
     emit('chord:clear');
   };
 
@@ -534,6 +538,7 @@ export function renderChordControls(opts = {}) {
       clear();
       wrap.remove();
       panel.remove();
+      relPanel.remove();
     },
   };
 }
