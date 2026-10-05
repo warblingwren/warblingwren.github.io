@@ -193,54 +193,70 @@
 .cd-circle.is-active { transform: scale(1.1); box-shadow: 0 0 0 3px #fff, 0 0 0 6px var(--cc-focus); }
 .cd-circle:focus-visible { outline: 3px solid var(--cc-focus); outline-offset: 4px; }
 
-/* --- octave rows inside #chord-data: "C4: (C)(E)(G)" ------------------------- */
+/* --- octave rows inside #chord-data: [C4 (C)(E)(G)] ----------------------------- */
 :root {
-  --cd-dot: 30px;
-  --cd-octave-label-w: 44px;
+  --cd-dot: 30px;                /* visible circle */
+  --cd-hit: 44px;                /* touch target around each circle */
 }
 
 .cd-octaves {
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
   gap: 8px;
   margin-top: 18px;
   padding-top: 14px;
   border-top: 1px solid var(--cd-border);
 }
 
-.cd-octave {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.cd-octave-label {
-  min-width: var(--cd-octave-label-w);
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--cd-fg);
-}
-
-/* rounded rectangle in the octave's color; holds the role-colored note circles */
+/* rounded rectangle in the octave's color, wrapping the label and the circles */
 .cd-octave-pill {
-  appearance: none;
-  -webkit-appearance: none;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  min-height: 44px;
-  padding: 6px 10px;
+  padding: 0 4px 0 2px;
   border: 1px solid rgba(0, 0, 0, 0.12);
-  border-radius: 22px;
+  border-radius: calc(var(--cd-hit) / 2);
   background: var(--cd-octave-bg, #eee);
+}
+.cd-octave-pill.is-active { box-shadow: 0 0 0 3px var(--cc-focus); }
+
+.cd-octave-label,
+.cd-octave-note {
+  appearance: none;
+  -webkit-appearance: none;
+  min-height: var(--cd-hit);
+  margin: 0;
+  border: none;
+  background: transparent;
   font: inherit;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
-  transition: transform 80ms ease-out;
 }
-.cd-octave-pill:hover { box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.15); }
-.cd-octave-pill:focus-visible { outline: 3px solid var(--cc-focus); outline-offset: 2px; }
-.cd-octave-pill.is-active { box-shadow: 0 0 0 3px var(--cc-focus); }
+
+/* clickable label: plays the full chord in this octave */
+.cd-octave-label {
+  min-width: var(--cd-hit);
+  padding: 0 8px 0 12px;
+  border-radius: calc(var(--cd-hit) / 2);
+  color: var(--cd-fg);
+  font-size: 15px;
+  font-weight: 700;
+  text-align: left;
+}
+.cd-octave-label:hover { background: rgba(0, 0, 0, 0.08); }
+
+/* clickable circle: plays that single note in this octave */
+.cd-octave-note {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--cd-hit);      /* 44px touch target; the circle inside stays 30px */
+  padding: 0;
+  border-radius: 50%;
+}
+
+.cd-octave-label:focus-visible,
+.cd-octave-note:focus-visible { outline: 3px solid var(--cc-focus); outline-offset: -2px; }
 
 .cd-octave-dot {
   box-sizing: border-box;
@@ -254,9 +270,11 @@
   font-weight: 700;
   line-height: var(--cd-dot);
   text-align: center;
-  pointer-events: none;
+  transition: transform 80ms ease-out;
 }
 .cd-octave-dot.is-root { box-shadow: 0 0 0 2px #fff, 0 0 0 3px rgba(0, 0, 0, 0.5); }
+.cd-octave-note:hover .cd-octave-dot { transform: scale(1.08); }
+.cd-octave-note.is-active .cd-octave-dot { transform: scale(1.12); box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--cc-focus); }
 
 /* =============================================================================
    BREAKPOINTS — keep at end of file

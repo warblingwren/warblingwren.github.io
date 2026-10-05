@@ -108,6 +108,7 @@ const getHost = (id) => {
  *                                'chord:type'   detail {type, title}
  *                                'chord:tone'   detail {chord, note, spelled, degree} | 'chord:clear'
  *                                'chord:octave' detail {chord, octave, notes}
+ *                                'chord:octave-note' detail {chord, octave, note, spelled, degree}
  */
 export function renderChordControls(opts = {}) {
   const {
@@ -254,38 +255,57 @@ export function renderChordControls(opts = {}) {
         degree: t.label,
       }));
 
-      const rowEl = document.createElement('div');
-      rowEl.className = 'cd-octave';
-
-      const label = document.createElement('span');
-      label.className = 'cd-octave-label';
-      label.textContent = `${chord.rootName}${o}`;
-
-      const pill = document.createElement('button');
-      pill.type = 'button';
+      // Rounded rectangle in the octave's color: [C4 label] (C)(E)(G)
+      // label button -> full chord in this octave; each circle button -> that single note
+      const pill = document.createElement('div');
       pill.className = 'cd-octave-pill';
-      pill.setAttribute('aria-label', `Play ${chord.name} in octave ${o}: ${tones.map((t) => t.note).join(', ')}`);
+      pill.setAttribute('role', 'group');
+      pill.setAttribute('aria-label', `${chord.name} in octave ${o}`);
       const oc = octaveColors.get(o);
       if (oc) pill.style.setProperty('--cd-octave-bg', oc.light);
 
+      const label = document.createElement('button');
+      label.type = 'button';
+      label.className = 'cd-octave-label';
+      label.textContent = `${chord.rootName}${o}`;
+      label.setAttribute('aria-label', `Play ${chord.name} in octave ${o}: ${tones.map((t) => t.note).join(', ')}`);
+      label.addEventListener('click', () => playOctave(chord, tones, pill, o));
+      pill.append(label);
+
       for (const t of tones) {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'cd-octave-note';
+        btn.setAttribute('aria-label', `Play ${t.spelled} (${t.degree}) — ${t.note}`);
+        btn.title = `${t.degree}: ${t.note}`;
+
         const dot = document.createElement('span');
         dot.className = `cd-octave-dot${t.rank === 0 ? ' is-root' : ''}`;
         dot.textContent = t.spelled;
-        dot.title = `${t.degree}: ${t.note}`;
         const color = piano.roleColor(t.note, t.rank);
         if (color) {
           dot.style.setProperty('--cd-dot-bg', color);
           dot.style.setProperty('--cd-dot-fg', textOn(color));
         }
-        pill.append(dot);
+        btn.append(dot);
+        btn.addEventListener('click', () => playOctaveNote(chord, t, btn, o));
+        pill.append(btn);
       }
-      pill.addEventListener('click', () => playOctave(chord, tones, pill, o));
 
-      rowEl.append(label, pill);
-      wrapEl.append(rowEl);
+      wrapEl.append(pill);
     }
     return wrapEl;
+  }
+
+  // Play one note of the chord in one octave and highlight that key
+  function playOctaveNote(chord, t, btn, o) {
+    clearPanelActive();
+    btn.classList.add('is-active');
+    piano.clearChord();
+    piano.clearPlayed();
+    piano.markNotes([{ note: t.note, label: t.spelled, badge: t.degree, rank: t.rank, root: t.rank === 0, fill: true }]);
+    audio.play(t.note);
+    emit('chord:octave-note', { chord: chord.name, octave: o, note: t.note, spelled: t.spelled, degree: t.degree });
   }
 
   // Play the chord in one octave and highlight exactly those keys
