@@ -25,6 +25,7 @@
   --cd-name-fg: #ffffff;
   --cd-name-hover: #3a3a3e;
   --cd-margin-top: 28px;
+  --cd-host-gap: 15px;           /* SYNC: .cp margin-top/bottom in circle-o-5ths.css */
   --cd-relative-bg: #ffffff;
   --cd-relative-border: #00bcd4; /* Material Cyan 500 */
   --cd-circle: 52px;
@@ -129,6 +130,11 @@
   display: flex;
   flex-direction: column;
   min-height: 100%;   /* fills a wrapping column; when the host is the column itself, flex stretch fills it */
+  /* SYNC: same 15px top/bottom spacing as the progression panels (.cp margin in circle-o-5ths.css),
+     so chord-data and progressions side by side line up top and bottom */
+  padding-top: var(--cd-host-gap);
+  padding-bottom: var(--cd-host-gap);
+  box-sizing: border-box;
 }
 .cd-host > .cd {
   flex: 1 1 auto;
@@ -226,6 +232,9 @@
 /* rounded rectangle in the octave's color, wrapping the label and the circles */
 .cd-octave-pill {
   display: inline-flex;
+  flex-wrap: wrap;               /* in narrow cards the circles wrap instead of overflowing */
+  max-width: 100%;
+  box-sizing: border-box;
   align-items: center;
   padding: 0 4px 0 2px;
   border: 1px solid rgba(0, 0, 0, 0.12);

@@ -325,6 +325,7 @@ export async function renderCircleProgressions(opts = {}) {
     wrap.append(head, roman, desc, cards);
     hostEl.append(wrap);
     panels.push(wrap);
+    new ResizeObserver(() => layoutCards(cards)).observe(cards);
     return { wrap, emit, title, keyBox, controls, roman, desc, cards };
   }
 
@@ -345,10 +346,10 @@ export async function renderCircleProgressions(opts = {}) {
     cards.replaceChildren();
     const chords = circle.resolve(k, prog);
     // Bootstrap columns: 1 per row on phones, 2 on small screens, all on one row from lg up
-    const lg = chords.length <= 4 ? `col-lg-${12 / chords.length}` : 'col-lg';
+    cards.dataset.tones = String(Math.max(...chords.map((c) => c.tones.length)));
     for (const chord of chords) {
       const tones = voice(chord);
-      const col = el('div', `col-12 col-sm-6 ${lg} mb-3`);
+      const col = el('div', 'col-12 mb-3 cp-col');           // width set by layoutCards()
       const card = el('div', 'card h-100 cp-card');           // Bootstrap card
       const body = el('div', 'card-body cd cd--compact');     // #chord-data layout, compact
 
@@ -392,6 +393,20 @@ export async function renderCircleProgressions(opts = {}) {
       col.append(card);
       cards.append(col);
     }
+    layoutCards(cards);
+  }
+
+  // Bootstrap columns sized to the panel's own width (not the screen): as many cards per row
+  // as fit without squeezing the octave rows, all on one row when there is room.
+  // SYNC: per-card width estimate matches .cd--compact octave sizes in circle-o-5ths.css
+  function layoutCards(cards) {
+    const cols = [...cards.children];
+    if (!cols.length) return;
+    const tones = Number(cards.dataset.tones) || 3;
+    const minCol = 125 + 34 * tones;                     // card padding + octave label + note circles
+    const perRow = Math.max(1, Math.min(cols.length, Math.floor(cards.clientWidth / minCol)));
+    const pct = `${100 / perRow}%`;
+    for (const c of cols) { c.style.flex = `0 0 ${pct}`; c.style.maxWidth = pct; }
   }
 
   // --- root panel: key box | "Choose a progression" + "Relative Minor:" badge ---
