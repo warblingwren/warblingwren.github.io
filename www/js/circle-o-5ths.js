@@ -198,7 +198,7 @@ export async function renderCircleProgressions(opts = {}) {
   desc.className = 'cp-desc';
 
   const cards = document.createElement('div');
-  cards.className = 'cp-cards';
+  cards.className = 'row cp-cards';               // Bootstrap grid: one column per card
 
   head.append(keyLabel, select);
   wrap.append(head, roman, desc, cards);
@@ -212,11 +212,14 @@ export async function renderCircleProgressions(opts = {}) {
     return chord.tones.map((t) => ({ ...t, note: midiToNote(rootMidi + t.semitones) }));
   };
 
-  const clearActive = () => cards.querySelectorAll('.is-active').forEach((el) => el.classList.remove('is-active'));
+  const clearActive = () => {
+    cards.querySelectorAll('.is-active').forEach((el) => el.classList.remove('is-active'));
+    cards.querySelectorAll('.card.border-primary').forEach((el) => el.classList.remove('border-primary'));
+  };
 
   function playChord(chord, card, badge) {
     clearActive();
-    card.classList.add('is-active');
+    card.classList.add('is-active', 'border-primary');
     badge.classList.add('is-active');
     const tones = voice(chord);
     piano.clearPlayed();
@@ -233,7 +236,7 @@ export async function renderCircleProgressions(opts = {}) {
 
   function playTone(chord, t, card, btn) {
     clearActive();
-    card.classList.add('is-active');
+    card.classList.add('is-active', 'border-primary');
     btn.classList.add('is-active');
     piano.clearChord();
     piano.clearPlayed();
@@ -270,7 +273,7 @@ export async function renderCircleProgressions(opts = {}) {
     kName.className = 'cp-key-name';
     kName.textContent = `Key of ${currentKey.name}`;
     const kSig = document.createElement('span');
-    kSig.className = 'cp-key-sig';
+    kSig.className = 'cp-key-signature';
     kSig.textContent = sigText(currentKey.signature);
     keyLabel.append(kName, kSig);
 
@@ -278,33 +281,36 @@ export async function renderCircleProgressions(opts = {}) {
     desc.textContent = currentProg.description || '';
 
     cards.replaceChildren();
-    for (const chord of circle.resolve(currentKey, currentProg)) {
+    const chords = circle.resolve(currentKey, currentProg);
+    // Bootstrap columns: 1 per row on phones, 2 on small screens, all on one row from lg up
+    const lg = chords.length <= 4 ? `col-lg-${12 / chords.length}` : 'col-lg';
+    for (const chord of chords) {
       const tones = voice(chord);
 
+      const col = document.createElement('div');
+      col.className = `col-12 col-sm-6 ${lg} mb-3`;
+
+      // Bootstrap card; body uses the same .cd-* layout as #chord-data, compact size
       const card = document.createElement('div');
-      card.className = 'card cp-card';
+      card.className = 'card h-100 cp-card';
 
       const body = document.createElement('div');
-      body.className = 'card-body cp-card-body';
-
-      const top = document.createElement('div');
-      top.className = 'cp-card-top';
+      body.className = 'card-body cd cd--compact';
 
       const rn = document.createElement('span');
       rn.className = 'cp-card-roman';
       rn.textContent = chord.roman;
+      rn.setAttribute('aria-label', `Position ${chord.roman} in the progression`);
 
       const badge = document.createElement('button');
       badge.type = 'button';
-      badge.className = 'cp-chord';
+      badge.className = 'cd-name';
       badge.textContent = chord.name;
       badge.setAttribute('aria-label', `Play ${chord.name} (${chord.roman}) and highlight it on the keyboard`);
       badge.addEventListener('click', () => playChord(chord, card, badge));
 
-      top.append(rn, badge);
-
       const row = document.createElement('div');
-      row.className = 'cd-tones cp-tones';
+      row.className = 'cd-tones';
       for (const t of tones) {
         const item = document.createElement('div');
         item.className = 'cd-tone';
@@ -326,9 +332,10 @@ export async function renderCircleProgressions(opts = {}) {
         row.append(item);
       }
 
-      body.append(top, row);
+      body.append(rn, badge, row);
       card.append(body);
-      cards.append(card);
+      col.append(card);
+      cards.append(col);
     }
     emit('progression:change', { key: currentKey.name, progression: currentProg.id });
   }

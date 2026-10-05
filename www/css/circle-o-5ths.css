@@ -1,0 +1,121 @@
+/* =============================================================================
+   circle-o-5ths.css — progression panel (#circle-progressions)
+   Cards are Bootstrap .card in a Bootstrap .row; the card body reuses the
+   #chord-data layout (.cd-* in piano-chords.css) at a compact size.
+   ========================================================================== */
+
+:root {
+  --cp-bg: #3d3d42;              /* same lighter grey as the chord controls */
+  --cp-fg: #f2f2f2;
+  --cp-muted: #c4c4c9;
+  --cp-roman: #6b6b70;
+  --cp-active: #3d7be8;
+  --cp-gutter: 15px;             /* matches Bootstrap .row gutter (-15px margins) */
+
+  /* compact chord-data card */
+  --cp-circle: 44px;
+  --cp-name-size: 17px;
+}
+
+.cp {
+  width: 100%;
+  min-width: 0;
+  margin-bottom: 15px;
+  padding: 12px var(--cp-gutter) 0;
+  border-radius: 10px;
+  background: var(--cp-bg);
+  color: var(--cp-fg);
+  box-sizing: border-box;
+  text-align: left;              /* every section inherits left alignment */
+}
+
+.cp-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.cp-key { display: flex; flex-direction: column; }
+
+.cp-key-name {
+  margin-top: 8px;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.cp-key-signature {
+  margin-top: 6px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--cp-muted);
+}
+
+.cp-select { margin-bottom: 0; }
+
+.cp-roman {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  word-spacing: 2px;
+  margin-bottom: 2px;
+}
+
+.cp-desc {
+  font-size: 13px;
+  color: var(--cp-muted);
+  margin-bottom: 12px;
+}
+
+/* --- Bootstrap cards --------------------------------------------------------- */
+.cp-card { color: #1d1d1f; }
+.cp-card.is-active { box-shadow: 0 0 0 2px var(--cp-active); }
+
+/* chord-data layout inside a card body: drop the panel chrome, keep the content */
+.cd.cd--compact {
+  position: relative;
+  margin-top: 0;
+  padding: 14px 14px 16px;
+  border: none;
+  border-radius: inherit;
+  background: transparent;
+}
+
+/* roman numeral: position of the chord in the progression, upper-right corner */
+.cp-card-roman {
+  position: absolute;
+  top: 10px;
+  right: 14px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--cp-roman);
+}
+
+.cd--compact .cd-name {
+  font-size: var(--cp-name-size);
+  padding: 0 14px;
+  margin-bottom: 12px;
+}
+
+.cd--compact .cd-tones { gap: 10px; }
+
+.cd--compact .cd-circle {
+  width: var(--cp-circle);
+  height: var(--cp-circle);
+  font-size: 15px;
+}
+
+/* =============================================================================
+   BREAKPOINTS — keep at end of file
+   ========================================================================== */
+
+@media (max-width: 768px) {
+  .cp { border-radius: 8px; }
+  .cp-select { width: 100%; }
+}
+
+@media (max-width: 430px) {
+  .cp-key-name { font-size: 16px; }
+}
