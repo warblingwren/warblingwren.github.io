@@ -112,6 +112,17 @@ body {
 }
 
 /*
+ * **************************************************************** WRAPPER
+*/
+
+.quip {
+    background-color: #fff;
+    background-image: url("../img/ux/quip_bg.png");
+    background-position: bottom right;
+    background-repeat: no-repeat;
+}
+
+/*
  * **************************************************************** CONTENT
 */
 
