@@ -318,8 +318,9 @@ export async function renderCircleProgressions(opts = {}) {
     const head = el('div', 'cp-head');
     const keyBox = el('div', 'cp-key');
     const controls = el('div', 'cp-controls');
-    const roman = el('div', 'cp-roman');
-    roman.setAttribute('aria-label', 'Chosen progression');
+    const roman = el('div', 'cp-roman');              // chord badges of the chosen progression, in order
+    roman.setAttribute('role', 'group');
+    roman.setAttribute('aria-label', 'Chosen progression chords');
     const desc = el('div', 'cp-desc');
     const note = el('div', 'cp-note');                 // why the key differs from the chord (dim chords)
     note.hidden = true;
@@ -352,6 +353,7 @@ export async function renderCircleProgressions(opts = {}) {
     const chords = circle.resolve(k, prog);
     // Bootstrap columns: 1 per row on phones, 2 on small screens, all on one row from lg up
     cards.dataset.tones = String(Math.max(...chords.map((c) => c.tones.length)));
+    const items = [];                                        // one per step: {chord, card, label}
     for (const chord of chords) {
       const tones = voice(chord);
       const col = el('div', 'col-12 mb-3 cp-col');           // width set by layoutCards()
@@ -400,8 +402,35 @@ export async function renderCircleProgressions(opts = {}) {
       card.append(body);
       col.append(card);
       cards.append(col);
+      items.push({ chord, card, label });
     }
     layoutCards(cards);
+    return items;
+  }
+
+  // Chosen progression as chord badges (the roman numerals are in the dropdown).
+  // Bar-based forms (blues) show every bar, separated by '|'; others by '–'.
+  // Each badge is exactly the chord on its card and plays it the same way.
+  function renderSequence(panel, prog, items) {
+    const box = panel.roman;
+    box.replaceChildren();
+    const bars = Array.isArray(prog.bars);
+    const order = bars ? prog.bars : items.map((_, i) => i);
+    order.forEach((stepIdx, i) => {
+      const item = items[stepIdx];
+      if (!item) return;
+      if (i > 0) {
+        const sep = el('span', 'cp-seq-sep', bars ? '|' : '–');
+        sep.setAttribute('aria-hidden', 'true');
+        box.append(sep);
+      }
+      const { chord, card, label } = item;
+      const b = el('button', 'cp-seq-badge', chord.name);
+      b.type = 'button';
+      b.setAttribute('aria-label', `${bars ? `Bar ${i + 1}: ` : ''}play ${chord.name} (${chord.roman}) and highlight it on the keyboard`);
+      b.addEventListener('click', () => playChord(chord, card, b, panel.emit, label));
+      box.append(b);
+    });
   }
 
   // Bootstrap columns sized to the panel's own width (not the screen): as many cards per row
@@ -494,9 +523,8 @@ export async function renderCircleProgressions(opts = {}) {
     // root panel: major key
     const rootProg = progIn(majorKey);
     renderKeyBox(root.keyBox, majorKey);
-    root.roman.textContent = rootProg.roman;
     root.desc.textContent = descIn(majorKey);
-    renderCards(root, majorKey, rootProg);
+    renderSequence(root, rootProg, renderCards(root, majorKey, rootProg));
 
     // "Relative Minor:" = exactly the chord in #minor-chord-data
     relChord = panelMinor ? asBadgeChord(panelMinor, 'i') : { ...circle.tonicChord(minorKey), roman: 'i' };
@@ -514,9 +542,8 @@ export async function renderCircleProgressions(opts = {}) {
       rootChordRef = panelRoot ? asBadgeChord(panelRoot, 'I') : { ...circle.tonicChord(majorKey), roman: 'I' };
       rootBadge.textContent = rootChordRef.name;
       rootBadge.setAttribute('aria-label', `Play the root chord ${rootChordRef.name} and highlight it on the keyboard`);
-      rel.roman.textContent = minorProg.roman;
       rel.desc.textContent = descIn(minorKey);
-      renderCards(rel, minorKey, minorProg);
+      renderSequence(rel, minorProg, renderCards(rel, minorKey, minorProg));
     }
 
     root.emit('progression:change', { key: majorKey.name, relativeKey: minorKey.name, progression: currentProg.id });

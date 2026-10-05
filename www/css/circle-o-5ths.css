@@ -94,23 +94,23 @@
   color: var(--cp-muted);
 }
 
-/* chosen sequence as a rounded badge, indented under the key box */
+/* chosen sequence: one chord badge per step (every bar for bar-based forms), in order */
 .cp-roman {
-  display: inline-block;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
   max-width: calc(100% - var(--cp-indent));
-  margin: 4px 0 8px var(--cp-indent);
-  padding: 6px 14px;
-  border: 1px solid var(--cc-btn-border, #66666d);
-  border-radius: 8px;
-  background: var(--cc-select-bg, #2b2b2e);
-  color: var(--cp-fg);
-  font-size: 15px;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  word-spacing: 2px;
-  line-height: 1.5;
+  margin: 4px 0 10px var(--cp-indent);
   box-sizing: border-box;
 }
+.cp-seq-sep {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--cp-muted);
+  user-select: none;
+}
+.cp--relative .cp-seq-sep { color: var(--cp-relative-muted); }
 
 /* "G♯dim is the vii° chord of A major." — explains a key that differs from the chord */
 .cp-note {
@@ -146,7 +146,8 @@
   font-weight: 700;
   color: var(--cp-muted);
 }
-.cp-rel-badge {
+.cp-rel-badge,
+.cp-seq-badge {
   appearance: none;
   -webkit-appearance: none;
   min-height: 44px;
@@ -161,9 +162,13 @@
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
-.cp-rel-badge:hover { border-color: var(--cp-fg); }
-.cp-rel-badge:focus-visible { outline: 3px solid var(--cp-active); outline-offset: 2px; }
-.cp-rel-badge.is-active { box-shadow: 0 0 0 3px var(--cp-active); }
+.cp-rel-badge:hover,
+.cp-seq-badge:hover { border-color: var(--cp-fg); }
+.cp-rel-badge:focus-visible,
+.cp-seq-badge:focus-visible { outline: 3px solid var(--cp-active); outline-offset: 2px; }
+.cp-rel-badge.is-active,
+.cp-seq-badge.is-active { box-shadow: 0 0 0 3px var(--cp-active); }
+.cp-seq-badge { padding: 0 14px; font-size: 16px; white-space: nowrap; }
 
 /* static progression name (relative panel) — looks like the dropdown, not interactive */
 .cp-static {
@@ -252,6 +257,7 @@
 }
 
 @media (max-width: 430px) {
+  .cp-seq-badge { padding: 0 12px; font-size: 15px; }
   .cp-key-name,
   .cp-key-signature { font-size: 15px; }
   .cp-kv-label { min-width: 92px; }

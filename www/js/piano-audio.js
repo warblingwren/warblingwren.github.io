@@ -8,7 +8,7 @@
 // =============================================================================
 //
 // SYNC POINT (note_ref -> sample filename): '#' -> 's'   e.g. 'C#4' -> 'Cs4'
-//   Must match: piano-keyboard.js noteToFileStem, Python backend (future), DATA/piano/*
+//   Must match: piano.js noteToFileStem, Python backend (future), DATA/piano/*
 // =============================================================================
 
 const NOTE_RE = /^([A-G])(#?)([0-8])$/;
@@ -36,6 +36,9 @@ const fileStem = (note) => note.replace('#', 's');
  * @param {boolean} opts.ringUntilNext true = sound rings until the next play; key-up ignored (default true)
  * @param {number} opts.maxShift       max semitones to pitch-shift a fallback sample (default 3)
  * @param {string[]} opts.missing      note_refs with no sample file — skipped without a request
+ * @param {boolean} opts.muted         start muted (default false)
+ * @param {EventTarget|null} opts.muteEvents  listens here for 'piano:mute' {muted} from the
+ *                                     keyboard's mute button (default document; null = don't listen)
  */
 export function createPianoAudio(opts = {}) {
   const {
@@ -46,6 +49,8 @@ export function createPianoAudio(opts = {}) {
     ringUntilNext = true,
     maxShift = 3,
     missing = [],
+    muted: startMuted = false,
+    muteEvents = document,
   } = opts;
 
   const Ctx = window.AudioContext || window.webkitAudioContext;
@@ -61,6 +66,7 @@ export function createPianoAudio(opts = {}) {
   const voices = new Set();    // {note, src, gain}
   const held = new Set();      // ringUntilNext=false only: keys currently down
   let generation = 0;          // newest play wins if samples load out of order
+  let muted = Boolean(startMuted);
 
   // --- loading ------------------------------------------------------------
   function loadMidi(midi) {
@@ -121,6 +127,7 @@ export function createPianoAudio(opts = {}) {
    * @param {number} strumMs   delay between notes
    */
   async function strike(notes, velocity = 1, strumMs = 0) {
+    if (muted) return;
     const midis = notes.map(noteToMidi).filter((m) => m !== null);
     if (!midis.length) return;
     const my = ++generation;
@@ -131,6 +138,7 @@ export function createPianoAudio(opts = {}) {
 
     const resolved = await Promise.all(midis.map(resolve));
     if (ringUntilNext && my !== generation) return; // a newer strike superseded this one
+    if (muted) return;                               // muted while the samples were loading
 
     const t0 = ctx.currentTime;
     resolved.forEach((res, i) => {
@@ -163,6 +171,18 @@ export function createPianoAudio(opts = {}) {
     [...voices].forEach((v) => fade(v, sec));
   }
 
+  // Mute: nothing sounds until unmuted; anything ringing fades out quickly.
+  function setMuted(on) {
+    muted = Boolean(on);
+    if (muted) stopAll(0.05);
+    return muted;
+  }
+
+  // The keyboard's mute button emits 'piano:mute' (bubbles to document)
+  if (muteEvents && typeof muteEvents.addEventListener === 'function') {
+    muteEvents.addEventListener('piano:mute', (e) => setMuted(Boolean(e.detail && e.detail.muted)));
+  }
+
   function preload(notes) {
     return Promise.all(
       [...notes].map((n) => noteToMidi(n)).filter((m) => m !== null).map(loadMidi),
@@ -175,6 +195,8 @@ export function createPianoAudio(opts = {}) {
     release,
     preload,
     stopAll,
+    setMuted,
+    isMuted: () => muted,
     setVolume: (v) => { master.gain.value = Math.max(0, Math.min(1, v)); },
     context: ctx,
   };

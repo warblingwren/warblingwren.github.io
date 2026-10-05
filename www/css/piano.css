@@ -15,6 +15,10 @@
   --pk-focus: #3d7be8;
   --pk-label: rgba(0, 0, 0, 0.5);
   --pk-frame: #2b2b2e;
+  --pk-mute-bg: #3a3a3e;
+  --pk-mute-fg: #f2f2f2;
+  --pk-muted-bg: #c62828;        /* Material Red 800 — sound is off */
+  --pk-muted-fg: #ffffff;
 
   --pk-white-min: 24px;
   --pk-height: 180px;
@@ -251,10 +255,19 @@
   letter-spacing: 0.04em;
 }
 
-/* --- status indicator: upper-right of the keyboard ------------------------- */
-.pk-status {
-  min-height: 20px;
+/* --- top row: status indicator + mute toggle (upper right) ------------------- */
+.pk-top {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
   margin: 0 4px 6px;
+}
+
+.pk-status {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 20px;
   color: #f2f2f2;
   font-size: 14px;
   font-weight: 700;
@@ -264,6 +277,28 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+.pk-mute {
+  appearance: none;
+  -webkit-appearance: none;
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1px solid #555;
+  border-radius: 22px;
+  background: var(--pk-mute-bg);
+  color: var(--pk-mute-fg);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color 80ms linear;
+}
+.pk-mute:hover { border-color: var(--pk-mute-fg); }
+.pk-mute:focus-visible { outline: 3px solid var(--pk-focus); outline-offset: 2px; }
+.pk-mute.is-muted { background: var(--pk-muted-bg); border-color: var(--pk-muted-bg); color: var(--pk-muted-fg); }
 
 /* --- sticky keyboard (class added by piano.js) ------------------------------- */
 .pk-sticky {

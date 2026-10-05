@@ -130,12 +130,15 @@ function sliceRange(all, from, to) {
  * @param {string}  opts.chordShade     shade for chord-tone keys (default '700')
  * Last played key stays colored (octave family, darker toward the root) until the next key.
  * @param {object}  opts.palette        palette override (default window.material_colors)
+ * @param {boolean} opts.muteButton     show the mute toggle at the upper right (default true)
+ * @param {boolean} opts.muted          start muted (default false)
  * @returns {Promise<object>} API: highlight, clear, shiftOctave, isCompact, keys(), octaveColors(),
  *          showChord(pitchClasses), clearChord(), markNotes(list), clearMarks(),
  *          notesWithPitchClass(pc), roleColor(note, rank), setStatus(text), clearStatus(),
- *          lastPlayed(), clearPlayed(), destroy
+ *          lastPlayed(), clearPlayed(), setMuted(bool), isMuted(), destroy
  * Emits on container: 'piano:press' / 'piano:release'  detail {note, index, file}
  *                     'piano:rerender'                 detail {from, to, compact}
+ *                     'piano:mute'                     detail {muted}  (piano-audio.js listens on document)
  */
 export async function renderPianoKeyboard(target = 'piano-keyboard', opts = {}) {
   const {
@@ -155,6 +158,8 @@ export async function renderPianoKeyboard(target = 'piano-keyboard', opts = {}) 
     accentShade = '300',
     chordShade = '700',
     palette = null,
+    muteButton = true,
+    muted: startMuted = false,
   } = opts;
 
   const octaveColorMap = octaveColors
@@ -198,6 +203,29 @@ export async function renderPianoKeyboard(target = 'piano-keyboard', opts = {}) 
     if (statusEl) statusEl.textContent = statusText;
   }
   const prettyNote = (n) => n.replace('#', '♯');
+  let muted = Boolean(startMuted);  // persists across re-renders
+  let muteEl = null;
+  const SPEAKER = '<path d="M3 9v6h4l5 5V4L7 9H3z" fill="currentColor"/>';
+  const ICON_ON = `<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false">${SPEAKER}`
+    + '<path d="M16.5 12a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4zM14 3.2v2.1a7 7 0 0 1 0 13.4v2.1a9 9 0 0 0 0-17.6z" fill="currentColor"/></svg>';
+  const ICON_OFF = `<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false">${SPEAKER}`
+    + '<path d="M15 9l6 6M21 9l-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></svg>';
+  function paintMute() {
+    if (!muteEl) return;
+    muteEl.classList.toggle('is-muted', muted);
+    muteEl.setAttribute('aria-pressed', String(muted));
+    muteEl.setAttribute('aria-label', muted ? 'Unmute keyboard sound' : 'Mute keyboard sound');
+    muteEl.title = muted ? 'Sound off — click to unmute' : 'Sound on — click to mute';
+    muteEl.innerHTML = muted ? ICON_OFF : ICON_ON;  // static markup only, no data
+  }
+  function setMuted(on) {
+    const next = Boolean(on);
+    const changed = next !== muted;
+    muted = next;
+    paintMute();
+    if (changed) emit('piano:mute', { muted });
+    return muted;
+  }
   let rail = null;              // badge row under the keys
 
   container.classList.add('pk');
@@ -414,13 +442,26 @@ export async function renderPianoKeyboard(target = 'piano-keyboard', opts = {}) 
     container.replaceChildren();
     container.classList.toggle('pk-compact', compact);
 
-    // status: what the keyboard is showing and its relationship ("Root Chord C", "Note C♯4 · Key 41")
+    // top row: status (what the keyboard is showing, e.g. "Root Chord C", "Note C♯4 · Key 41")
+    // and the mute toggle in the upper-right corner
+    const top = document.createElement('div');
+    top.className = 'pk-top';
     statusEl = document.createElement('div');
     statusEl.className = 'pk-status';
     statusEl.setAttribute('role', 'status');
     statusEl.setAttribute('aria-live', 'polite');
     statusEl.textContent = statusText;
-    container.append(statusEl);
+    top.append(statusEl);
+    muteEl = null;
+    if (muteButton) {
+      muteEl = document.createElement('button');
+      muteEl.type = 'button';
+      muteEl.className = 'pk-mute';
+      muteEl.addEventListener('click', () => setMuted(!muted));
+      paintMute();
+      top.append(muteEl);
+    }
+    container.append(top);
 
     if (compact) container.append(buildControls());
 
@@ -524,6 +565,9 @@ export async function renderPianoKeyboard(target = 'piano-keyboard', opts = {}) 
     /** Upper-right indicator text, e.g. 'Root Chord C' or 'Relative Minor Chord Am'. */
     setStatus: (text) => setStatus(text),
     clearStatus: () => setStatus(''),
+    /** Mute toggle; emits 'piano:mute' {muted} so piano-audio.js silences every play path. */
+    setMuted: (on) => setMuted(on),
+    isMuted: () => muted,
     lastPlayed: () => lastPlayed,
     clearPlayed() {
       if (lastPlayed) keyMap.get(lastPlayed)?.classList.remove('is-played');
