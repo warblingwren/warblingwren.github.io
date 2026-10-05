@@ -298,14 +298,14 @@ export function renderChordControls(opts = {}) {
   // --- chord detail panel ------------------------------------------------------
   function renderPanel(chord, tones) {
     // Resolve #chord-data on every click so it works even if the element is added after render
-    const dataHost = getHost(dataTarget);
+    const dataHost = getHost(dataTarget) ?? getHost('root-chord-data');
     if (!dataHost) {
       if (!warnedNoData) console.warn(`piano-chords: #${dataTarget} not found — chord detail panel not shown`);
       warnedNoData = true;
       return;
     }
     if (panel.parentElement !== dataHost) dataHost.append(panel);
-    const relHost = getHost(relativeTarget);
+    const relHost = getHost(relativeTarget) ?? getHost('minor-chord-data');
     if (relHost && relPanel.parentElement !== relHost) relHost.append(relPanel);
     if (!relHost && !warnedNoRel) {
       console.warn(`piano-chords: #${relativeTarget} not found — relative chord panel not shown`);

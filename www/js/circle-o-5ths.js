@@ -181,6 +181,22 @@ const getHost = (id) => {
   return el instanceof HTMLElement && !(el instanceof HTMLFormElement) ? el : null;
 };
 
+// Resolve a container by id, trying each candidate in order. If none exists yet (script ran
+// before the element was parsed or added), wait for the DOM — up to timeoutMs — instead of failing.
+function waitForHost(ids, timeoutMs = 5000) {
+  const find = () => ids.map(getHost).find(Boolean) ?? null;
+  const now = find();
+  if (now) return Promise.resolve(now);
+  return new Promise((resolve) => {
+    const obs = new MutationObserver(() => {
+      const el = find();
+      if (el) { obs.disconnect(); clearTimeout(timer); resolve(el); }
+    });
+    obs.observe(document.documentElement, { childList: true, subtree: true });
+    const timer = setTimeout(() => { obs.disconnect(); resolve(find()); }, timeoutMs);
+  });
+}
+
 const sigText = (s) => (s.count === 0 ? 'none (no sharps or flats)'
   : `${s.count} ${s.type === 'sharps' ? '♯' : '♭'} (${s.accidentals.join(' ')})`);
 
@@ -196,7 +212,7 @@ const sigText = (s) => (s.count === 0 ? 'none (no sharps or flats)'
  * @param {number} opts.octave         octave of each progression chord's root (default 4)
  * @param {number} opts.velocity       chord volume 0–1 (default 0.7)
  * @param {number} opts.strumMs        delay between chord tones (default 0)
- * @returns {Promise<{circle, setKey, select, element, relativeElement, destroy}>}
+ * @returns {Promise<{circle, setKey, select, element, relativeElement, destroy}|null>}  null if the root container is missing
  * Emits (bubbling): 'progression:change' {key, relativeKey, progression}
  *                   'progression:chord' {roman, name, notes} | 'progression:tone' {chord, note, spelled, degree}
  */
@@ -214,10 +230,19 @@ export async function renderCircleProgressions(opts = {}) {
   } = opts;
 
   if (!piano || !audio) throw new TypeError('circle-o-5ths: piano and audio are required');
-  const host = getHost(target);
-  if (!host) throw new TypeError(`circle-o-5ths: #${target} not found`);
-  const relHost = getHost(relativeTarget);
-  if (!relHost) console.warn(`circle-o-5ths: #${relativeTarget} not found — relative progressions not shown`);
+
+  // Containers: the requested id, falling back to the standard id; waits if not in the DOM yet.
+  const ROOT_ID = 'root-circle-progressions';
+  const MINOR_ID = 'minor-circle-progressions';
+  const [host, relHost] = await Promise.all([
+    waitForHost([...new Set([target, ROOT_ID])]),
+    waitForHost([...new Set([relativeTarget, MINOR_ID])]),
+  ]);
+  if (!host) {
+    console.error(`circle-o-5ths: no element with id "${target}"${target !== ROOT_ID ? ` or "${ROOT_ID}"` : ''} — progressions not shown`);
+    return null;
+  }
+  if (!relHost) console.warn(`circle-o-5ths: no element with id "${relativeTarget}" — relative progressions not shown`);
 
   const load = async (url) => {
     const r = await fetch(url, { credentials: 'same-origin' });
