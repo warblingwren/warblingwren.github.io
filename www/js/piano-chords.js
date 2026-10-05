@@ -324,6 +324,25 @@ export function renderChordControls(opts = {}) {
     panel.querySelectorAll('.is-active').forEach((b) => b.classList.remove('is-active'));
 
   // --- octave rows (shared builder, see renderOctaveRows below) -----------------
+  // Single tone: play it alone, highlight every key where it occurs in its role color
+  function playTone(chord, t, btn) {
+    clearPanelActive();
+    btn.classList.add('is-active');
+
+    piano.clearChord();
+    piano.clearPlayed(); // a key played on the piano loses its color unless it is this tone
+    piano.markNotes(piano.notesWithPitchClass(t.pc).map((n) => ({
+      note: n,
+      label: t.spelled,
+      badge: t.degree,
+      rank: t.rank,
+      root: t.rank === 0,
+      fill: true,
+    })));
+    audio.play(t.note);
+    emit('chord:tone', { chord: chord.name, note: t.note, spelled: t.spelled, degree: t.degree });
+  }
+
   function renderOctaves(chord) {
     return renderOctaveRows({
       piano, audio, velocity, strumMs,
