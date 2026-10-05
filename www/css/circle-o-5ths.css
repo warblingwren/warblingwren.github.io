@@ -112,6 +112,16 @@
   box-sizing: border-box;
 }
 
+/* "G♯dim is the vii° chord of A major." — explains a key that differs from the chord */
+.cp-note {
+  margin: 0 0 6px var(--cp-indent);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--cp-fg);
+}
+.cp-note[hidden] { display: none; }
+.cp--relative .cp-note { color: var(--cp-relative-fg); }
+
 .cp-desc {
   margin: 0 0 12px var(--cp-indent);
   font-size: 15px;

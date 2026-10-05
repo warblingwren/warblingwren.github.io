@@ -319,14 +319,16 @@ export async function renderCircleProgressions(opts = {}) {
     const roman = el('div', 'cp-roman');
     roman.setAttribute('aria-label', 'Chosen progression');
     const desc = el('div', 'cp-desc');
+    const note = el('div', 'cp-note');                 // why the key differs from the chord (dim chords)
+    note.hidden = true;
     const cards = el('div', 'row cp-cards');           // Bootstrap grid: one column per card
     head.append(keyBox, controls);
     if (title) wrap.append(title);
-    wrap.append(head, roman, desc, cards);
+    wrap.append(head, note, roman, desc, cards);
     hostEl.append(wrap);
     panels.push(wrap);
     new ResizeObserver(() => layoutCards(cards)).observe(cards);
-    return { wrap, emit, title, keyBox, controls, roman, desc, cards };
+    return { wrap, emit, title, keyBox, controls, note, roman, desc, cards };
   }
 
   function renderKeyBox(box, k) {
@@ -473,6 +475,12 @@ export async function renderCircleProgressions(opts = {}) {
     : `The same scale degrees as ${currentProg.name} in ${nativeKey().name}, played in ${k.name}.`);
 
   function render() {
+    for (const pnl of [root, rel]) {
+      if (!pnl) continue;
+      pnl.note.textContent = keyNote;
+      pnl.note.hidden = !keyNote;
+    }
+
     // root panel: major key
     const rootProg = progIn(majorKey);
     renderKeyBox(root.keyBox, majorKey);
@@ -502,6 +510,29 @@ export async function renderCircleProgressions(opts = {}) {
     root.emit('progression:change', { key: majorKey.name, relativeKey: minorKey.name, progression: currentProg.id });
   }
 
+  // Key a selected chord belongs to.
+  //   Diminished chords don't define a key of their own, so they go to the key they naturally
+  //   sit in: dim / m7♭5 = vii° / viiø7 of the major key a half step up (G♯dim -> A major);
+  //   dim7 = vii°7 of the harmonic-minor key a half step up (G♯dim7 -> A minor).
+  //   Augmented chords fit several keys equally, so the key stays on the chord the user chose.
+  //   Everything else: major-family -> major key on its root, minor-family -> minor key on its root.
+  const LEADING_TONE = { dim: ['major', 'vii°'], m7b5: ['major', 'viiø7'], dim7: ['minor', 'vii°7'] };
+  let keyNote = '';
+  function homeKeyOf(d) {
+    const lt = LEADING_TONE[d.group];
+    if (lt) {
+      const [mode, roman] = lt;
+      const tonicName = spell(d.rootName, 1, 1);         // a minor second up: G♯ -> A
+      const k = circle.key(mode, (d.root + 1) % 12, tonicName);
+      return { mode, tonicPc: k.tonicPc, tonicName: k.tonic, note: `${d.name} is the ${roman} chord of ${k.name}.` };
+    }
+    if (d.group === 'aug' || d.group === 'aug7') {
+      return { mode: 'major', tonicPc: d.root, tonicName: d.rootName,
+        note: `${d.name} fits several keys; showing the key of ${d.rootName}, the chord you chose.` };
+    }
+    return { mode: circle.familyOf(d.group), tonicPc: d.root, tonicName: d.rootName, note: '' };
+  }
+
   // Set the key pair from a chord root: mode 'major' -> that major key + its relative minor,
   // mode 'minor' -> that minor key + its relative major.
   function setKey(mode, tonicPc, rootName) {
@@ -520,7 +551,9 @@ export async function renderCircleProgressions(opts = {}) {
   const onChordSelect = (e) => {
     const d = e.detail;
     if (!d || typeof d.root !== 'number') return;
-    setKey(circle.familyOf(d.group), d.root, d.rootName);
+    const home = homeKeyOf(d);
+    keyNote = home.note;
+    setKey(home.mode, home.tonicPc, home.tonicName);
   };
   document.addEventListener('chord:select', onChordSelect);
 
