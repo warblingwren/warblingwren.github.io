@@ -361,6 +361,11 @@ export function renderChordControls(opts = {}) {
   if (target) host.append(wrap);                     // inside the given column
   else host.insertAdjacentElement('afterend', wrap); // directly below the piano
 
+  // Default #chord-data to C major (matches the progressions' default key).
+  // Display only: the keyboard and the chord buttons stay untouched until a chord is clicked.
+  const defaultChord = byName.get('C');
+  if (defaultChord) renderPanel(defaultChord, voice(defaultChord));
+
   return {
     element: wrap,
     select: (name) => {
