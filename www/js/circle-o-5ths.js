@@ -472,8 +472,16 @@ export async function renderCircleProgressions(opts = {}) {
   const relBadge = el('button', 'cp-rel-badge');
   relBadge.type = 'button';
   relRow.append(relLabel, relBadge);
-  if (selector) root.controls.append(relRow);
-  else root.controls.append(choose, relRow);         // fallback: no #progression-selector in the page
+  // Where the dropdown used to be: a static "Progression" label (same as the relative panel)
+  let rootProgName = null;
+  if (selector) {
+    const box = el('div', 'cp-choose');
+    rootProgName = el('div', 'cp-static');
+    box.append(el('span', 'cp-choose-text', 'Progression'), rootProgName);
+    root.controls.append(box, relRow);
+  } else {
+    root.controls.append(choose, relRow);            // fallback: no #progression-selector in the page
+  }
 
   let relChord = null;
   relBadge.addEventListener('click', () => {
@@ -538,6 +546,7 @@ export async function renderCircleProgressions(opts = {}) {
     // root panel: major key
     const rootProg = progIn(majorKey);
     renderKeyBox(root.keyBox, majorKey);
+    if (rootProgName) rootProgName.textContent = currentProg.name;
     root.desc.textContent = descIn(majorKey);
     renderSequence(root, rootProg, renderCards(root, majorKey, rootProg));
 
