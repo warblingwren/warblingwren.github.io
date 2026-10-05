@@ -10,8 +10,8 @@ defaults:
       site_author: Warbling Wren
       site_description: Warbling Wren
       title: Warbling Wren
-      subtitle: Data Driven Music
-      quip: Singing Songs With Data
+      subtitle: The Musician's Companion
+      quip: Sharing bits and bites to color your songs
       logo_url: https://avatars.githubusercontent.com/u/337726381
       style_css: /www/css/www.css
       site_js: /www/js/dashboard.js
