@@ -314,12 +314,18 @@ export function renderChordControls(opts = {}) {
     panel.replaceChildren();
     panel.hidden = false;
 
-    panel.append(...chordSection(chord, tones, 'Root Chord'));
-
+    // #root-chord-data always holds the major side, #minor-chord-data the minor side.
+    // Minor chord selected (e.g. Am): its relative major (C) goes in the root panel, Am in the minor panel.
     const rel = relativeChord(chord);
+    const minorSelected = rel?.title === 'Relative Major';
+    const rootChord = minorSelected ? rel.chord : chord;
+    const minorChord = minorSelected ? chord : rel?.chord;
+
+    panel.append(...chordSection(rootChord, minorSelected ? voice(rootChord) : tones, 'Root Chord'));
+
     relPanel.replaceChildren();
-    relPanel.hidden = !rel;
-    if (rel) relPanel.append(...chordSection(rel.chord, voice(rel.chord), rel.title));
+    relPanel.hidden = !minorChord;
+    if (minorChord) relPanel.append(...chordSection(minorChord, voice(minorChord), 'Relative Minor'));
   }
 
   // Title + chord badge + tone circles + octave rows (same layout for root and relative chord)

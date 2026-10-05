@@ -227,7 +227,10 @@ export async function renderCircleProgressions(opts = {}) {
   const [circleData, progressionData] = await Promise.all([load(dataUrl), load(progressionsUrl)]);
   const circle = createCircle(circleData, progressionData);
 
-  let currentKey = circle.key('major', 0, 'C');   // default until a chord is selected
+  // #root-circle-progressions always shows the major key, #minor-circle-progressions its relative minor.
+  // A minor chord selection (e.g. Am) sets the pair from the minor side (A minor + C major).
+  let majorKey = circle.key('major', 0, 'C');     // default until a chord is selected
+  let minorKey = circle.relativeKey(majorKey);
   let currentProg = circle.progression(circle.defaults.major);
 
   const el = (tag, cls, text) => {
@@ -393,16 +396,18 @@ export async function renderCircleProgressions(opts = {}) {
     rel.controls.append(box);
   }
 
+  // Dropdown lists every progression (major and minor), grouped by genre.
+  // Each progression is shown natively in the panel of its own mode and translated in the other.
   function renderSelect() {
     select.replaceChildren();
-    const list = circle.progressions(currentKey.mode);
     for (const genre of circle.genres) {
-      const items = list.filter((p) => p.genre === genre);
+      const items = [...circle.progressions('major'), ...circle.progressions('minor')].filter((p) => p.genre === genre);
       if (!items.length) continue;
       const og = document.createElement('optgroup');
       og.label = genre;
       for (const p of items) {
-        const opt = el('option', null, p.name);
+        const tag = p.mode === 'minor' && !/minor/i.test(p.name) ? ' (minor)' : '';
+        const opt = el('option', null, p.name + tag);
         opt.value = p.id;
         og.append(opt);
       }
@@ -411,39 +416,45 @@ export async function renderCircleProgressions(opts = {}) {
     select.value = currentProg.id;
   }
 
+  const nativeKey = () => (currentProg.mode === 'minor' ? minorKey : majorKey);
+  const progIn = (k) => (currentProg.mode === k.mode ? currentProg : circle.translate(currentProg, k));
+  const descIn = (k) => (currentProg.mode === k.mode
+    ? currentProg.description || ''
+    : `The same scale degrees as ${currentProg.name} in ${nativeKey().name}, played in ${k.name}.`);
+
   function render() {
-    const relKey = circle.relativeKey(currentKey);
-    const relWord = relKey.mode === 'minor' ? 'Minor' : 'Major';
+    // root panel: major key
+    const rootProg = progIn(majorKey);
+    renderKeyBox(root.keyBox, majorKey);
+    root.roman.textContent = rootProg.roman;
+    root.desc.textContent = descIn(majorKey);
+    renderCards(root, majorKey, rootProg);
 
-    // root
-    renderKeyBox(root.keyBox, currentKey);
-    root.roman.textContent = currentProg.roman;
-    root.desc.textContent = currentProg.description || '';
-    renderCards(root, currentKey, currentProg);
-
-    relChord = { ...circle.tonicChord(relKey), roman: relKey.mode === 'minor' ? 'i' : 'I' };
-    relLabel.textContent = `Relative ${relWord}:`;
+    relChord = { ...circle.tonicChord(minorKey), roman: 'i' };
+    relLabel.textContent = 'Relative Minor:';
     relBadge.textContent = relChord.name;
-    relBadge.setAttribute('aria-label', `Play the relative ${relWord.toLowerCase()} chord ${relChord.name} and highlight it on the keyboard`);
+    relBadge.setAttribute('aria-label', `Play the relative minor chord ${relChord.name} and highlight it on the keyboard`);
 
-    // relative: same progression degrees played in the relative key
+    // minor panel: relative minor key
     if (rel) {
-      const relProg = circle.translate(currentProg, relKey);
-      rel.title.textContent = `Relative ${relWord} Progression`;
-      renderKeyBox(rel.keyBox, relKey);
+      const minorProg = progIn(minorKey);
+      rel.title.textContent = 'Relative Minor Progression';
+      renderKeyBox(rel.keyBox, minorKey);
       relProgName.textContent = currentProg.name;
-      rel.roman.textContent = relProg.roman;
-      rel.desc.textContent = `The same scale degrees as ${currentProg.name} in ${currentKey.name}, played in ${relKey.name}.`;
-      renderCards(rel, relKey, relProg);
+      rel.roman.textContent = minorProg.roman;
+      rel.desc.textContent = descIn(minorKey);
+      renderCards(rel, minorKey, minorProg);
     }
 
-    root.emit('progression:change', { key: currentKey.name, relativeKey: relKey.name, progression: currentProg.id });
+    root.emit('progression:change', { key: majorKey.name, relativeKey: minorKey.name, progression: currentProg.id });
   }
 
+  // Set the key pair from a chord root: mode 'major' -> that major key + its relative minor,
+  // mode 'minor' -> that minor key + its relative major.
   function setKey(mode, tonicPc, rootName) {
-    currentKey = circle.key(mode, tonicPc, rootName);
-    if (currentProg.mode !== mode) currentProg = circle.progression(circle.defaults[mode]);
-    renderSelect();
+    const k = circle.key(mode, tonicPc, rootName);
+    if (k.mode === 'major') { majorKey = k; minorKey = circle.relativeKey(k); }
+    else { minorKey = k; majorKey = circle.relativeKey(k); }
     render();
   }
 
@@ -452,7 +463,7 @@ export async function renderCircleProgressions(opts = {}) {
     render();
   });
 
-  // Follow the chord controls: the selected chord sets the key
+  // Follow the chord controls: the selected chord sets the key pair
   const onChordSelect = (e) => {
     const d = e.detail;
     if (!d || typeof d.root !== 'number') return;
@@ -470,7 +481,7 @@ export async function renderCircleProgressions(opts = {}) {
     setKey,
     select: (id) => {
       const p = circle.progression(id);
-      if (p && p.mode === currentKey.mode) { currentProg = p; select.value = id; render(); }
+      if (p) { currentProg = p; select.value = id; render(); }
     },
     destroy() {
       document.removeEventListener('chord:select', onChordSelect);
