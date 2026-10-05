@@ -25,10 +25,9 @@ body {
 
 .accent {
   font-family: var(--accent-font);
-  font-weight: 100;
-  font-size: 1rem;
-  line-height: 1;
-  text-align: right;
+  font-weight: 200;
+  font-size: 1.25rem;
+  line-height: 1.4;
 }
 
 /*
@@ -84,7 +83,10 @@ body {
 .header .top-left {}
 .header .top-left .pfp {margin:5px;}
 .header .top-left .title {font-size : 2em;}
-.header .top-left .subtitle {font-size : 1em;}
+.header .top-left .subtitle {
+    font-size : 1em;
+    text-align: right;
+}
 
 .header .top-center {}
 .header .top-right {
@@ -299,5 +301,5 @@ ul.checklist li {
 /* BREAKPOINTS */
 @media (max-width: 430px) {
     .brand { font-size: 2rem; }
-    .accent { font-size: 1rem; }
+    .accent { font-size: 1.25rem; }
 }
