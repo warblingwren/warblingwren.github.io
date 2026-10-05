@@ -414,11 +414,21 @@ export async function renderCircleProgressions(opts = {}) {
   // --- relative panel: title, key box, static progression label ----------------
   const rel = relHost ? buildPanel(relHost, 'relative') : null;
   let relProgName = null;
+  let rootBadge = null;
+  let rootChordRef = null;
   if (rel) {
     const box = el('div', 'cp-choose');
     relProgName = el('div', 'cp-static');
     box.append(el('span', 'cp-choose-text', 'Progression'), relProgName);
-    rel.controls.append(box);
+
+    // "Root Chord:" + badge (mirror of the "Relative Minor:" badge in the root panel)
+    const rootRow = el('div', 'cp-rel');
+    rootBadge = el('button', 'cp-rel-badge');
+    rootBadge.type = 'button';
+    rootRow.append(el('span', 'cp-rel-label', 'Root Chord:'), rootBadge);
+    rootBadge.addEventListener('click', () => { if (rootChordRef) playChord(rootChordRef, null, rootBadge, rel.emit); });
+
+    rel.controls.append(box, rootRow);
   }
 
   // Dropdown lists every progression (major and minor), grouped by genre.
@@ -466,6 +476,9 @@ export async function renderCircleProgressions(opts = {}) {
       rel.title.textContent = 'Relative Minor Progression';
       renderKeyBox(rel.keyBox, minorKey);
       relProgName.textContent = currentProg.name;
+      rootChordRef = { ...circle.tonicChord(majorKey), roman: 'I' };
+      rootBadge.textContent = rootChordRef.name;
+      rootBadge.setAttribute('aria-label', `Play the root chord ${rootChordRef.name} and highlight it on the keyboard`);
       rel.roman.textContent = minorProg.roman;
       rel.desc.textContent = descIn(minorKey);
       renderCards(rel, minorKey, minorProg);

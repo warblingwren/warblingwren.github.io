@@ -182,7 +182,8 @@
   color: var(--cp-relative-fg);
 }
 .cp--relative .cp-desc,
-.cp--relative .cp-choose-text { color: var(--cp-relative-muted); }
+.cp--relative .cp-choose-text,
+.cp--relative .cp-rel-label { color: var(--cp-relative-muted); }
 
 /* --- Bootstrap cards --------------------------------------------------------- */
 .cp-card { color: #1d1d1f; }
