@@ -1,5 +1,8 @@
 
-:root { --brand-font: 'Cedarville Cursive', cursive; }
+:root { 
+    --brand-font: 'Cedarville Cursive', cursive; 
+    --accent-font: 'Indie Flower', cursive;
+}
 
 body {
     font-family: "proxima-nova", sans-serif;
@@ -20,6 +23,13 @@ body {
     letter-spacing: 0.01em;
 }
 
+.accent {
+  font-family: var(--accent-font);
+  font-weight: 100;
+  font-size: 1rem;
+  line-height: 1;
+  text-align: right;
+}
 
 /*
  * **************************************************************** WRAPPER
@@ -289,4 +299,5 @@ ul.checklist li {
 /* BREAKPOINTS */
 @media (max-width: 430px) {
     .brand { font-size: 2rem; }
+    .accent { font-size: 1rem; }
 }
