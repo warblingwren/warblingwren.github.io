@@ -17,6 +17,7 @@
 
 import { midiToNote } from './piano-audio.js';
 import { textOn } from './piano.js';
+import { renderOctaveRows } from './piano-chords.js';
 
 const LETTERS = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
 const LETTER_PC = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
@@ -342,7 +343,18 @@ export async function renderCircleProgressions(opts = {}) {
         row.append(item);
       }
 
-      body.append(rn, badge, row);
+      // Octave rows (same component as #chord-data): label plays the chord, circles play single notes
+      const octaves = renderOctaveRows({
+        piano, audio, velocity, strumMs,
+        name: chord.name,
+        rootName: chord.rootName,
+        rootPc: chord.rootPc,
+        tones: chord.tones,
+        onSelect: () => { clearActive(); card.classList.add('is-active', 'border-primary'); },
+        emit,
+      });
+
+      body.append(rn, badge, row, octaves);
       card.append(body);
       col.append(card);
       cards.append(col);
