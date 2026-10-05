@@ -18,11 +18,19 @@ tags: [Warbling Wren]
 				</div>
 			</div>
             <div class="row">
-                <div class="col-md-9">
-					<div id="circle-progressions"></div>
+                <div class="col-md-9 h-100">
+					<div id="root-circle-progressions"></div>
 				</div>
-                <div class="col-md-3">
-					<div id="chord-data"></div>
+                <div class="col-md-3 h-100">
+					<div id="root-chord-data"></div>
+                </div>
+			</div>
+            <div class="row">
+                <div class="col-md-9 h-100">
+					<div id="minor-circle-progressions"></div>
+				</div>
+                <div class="col-md-3 h-100">
+					<div id="minor-chord-data"></div>
                 </div>
 			</div>
 		</div>

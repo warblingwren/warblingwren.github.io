@@ -1,6 +1,7 @@
 // =============================================================================
 // circle-o-5ths.js — chord progressions driven by the circle of fifths
 //
+// Renders into #root-circle-progressions and #minor-circle-progressions.
 // Reads DATA/circle_of_fifths.json (keys, chords) and DATA/progressions.json
 // (genre progressions) — both static, pre-generated — and listens for
 // 'chord:select' from the chord controls. The selected chord sets the key:
@@ -110,6 +111,48 @@ export function createCircle(circleData, progressionData = { genres: [], default
     };
   }
 
+  // Relative key: major -> relative minor (6th degree), minor -> relative major (3rd degree).
+  // Spelled from the current tonic so enharmonic keys stay consistent (G♭ major -> E♭ minor).
+  function relativeKey(k) {
+    return k.mode === 'major'
+      ? key('minor', (k.tonicPc + 9) % 12, spell(k.tonic, 9, 5))
+      : key('major', (k.tonicPc + 3) % 12, spell(k.tonic, 3, 2));
+  }
+
+  // Tonic triad of a key, as a resolved chord
+  const tonicChord = (k) => resolveStep(k, k.mode === 'minor'
+    ? { roman: 'i', degree: 1, semitones: 0, quality: 'minor' }
+    : { roman: 'I', degree: 1, semitones: 0, quality: 'major' });
+
+  const SEVENTH_ROMAN = { min7: '7', dom7: '7', maj7: 'maj7', dim7: '7' };
+  const seventhRoman = (roman, quality) => (quality === 'm7b5'
+    ? `${roman.replace('°', '')}ø7`
+    : roman + (SEVENTH_ROMAN[quality] ?? '7'));
+
+  // Re-voice a progression's scale degrees in another key, using that key's diatonic chords.
+  // Triads stay triads, sevenths stay sevenths. In a minor key a major/dominant V uses the
+  // harmonic-minor V so the cadence still pulls home.
+  function translate(p, toKey) {
+    const steps = p.steps.map((st) => {
+      const d = toKey.diatonic[st.degree - 1];
+      const seventh = qualities[st.quality].intervals.length === 4;
+      const useHarmonic = toKey.mode === 'minor' && st.degree === 5 && d.harmonic
+        && qualities[st.quality].family === 'major';
+      const src = useHarmonic ? d.harmonic : d;
+      const chord = seventh ? src.seventh : src.triad;
+      return {
+        roman: seventh ? seventhRoman(src.roman, chord.quality) : src.roman,
+        degree: st.degree,
+        semitones: (pcOf(src.root) - toKey.tonicPc + 12) % 12,
+        quality: chord.quality,
+      };
+    });
+    const roman = Array.isArray(p.bars)
+      ? p.bars.map((b) => steps[b].roman).join(' | ')
+      : steps.map((st) => st.roman).join(' – ');
+    return { ...p, mode: toKey.mode, steps, roman };
+  }
+
   const progressions = (mode) => prog.progressions.filter((p) => p.mode === mode);
   const progression = (id) => prog.progressions.find((p) => p.id === id) ?? null;
 
@@ -123,6 +166,9 @@ export function createCircle(circleData, progressionData = { genres: [], default
     progressions,
     progression,
     resolve: (k, prog) => prog.steps.map((s) => resolveStep(k, s)),
+    relativeKey,
+    tonicChord,
+    translate,
     neighbors: (k) => ({
       dominant: key('major', positions[k.neighbors.clockwise].major.tonic_pc),
       subdominant: key('major', positions[k.neighbors.counterclockwise].major.tonic_pc),
@@ -139,23 +185,27 @@ const sigText = (s) => (s.count === 0 ? 'none (no sharps or flats)'
   : `${s.count} ${s.type === 'sharps' ? '♯' : '♭'} (${s.accidentals.join(' ')})`);
 
 /**
+ * Root progressions + relative (minor/major) progressions.
  * @param {object} opts
- * @param {object} opts.piano       API returned by renderPianoKeyboard
- * @param {object} opts.audio       API returned by createPianoAudio
- * @param {string} opts.target      id of the container element (default 'circle-progressions')
- * @param {string} opts.dataUrl     circle data file (default 'DATA/circle_of_fifths.json')
+ * @param {object} opts.piano          API returned by renderPianoKeyboard
+ * @param {object} opts.audio          API returned by createPianoAudio
+ * @param {string} opts.target         root progressions container id (default 'root-circle-progressions')
+ * @param {string} opts.relativeTarget relative progressions container id (default 'minor-circle-progressions'; skipped if absent)
+ * @param {string} opts.dataUrl        circle data file (default 'DATA/circle_of_fifths.json')
  * @param {string} opts.progressionsUrl progressions data file (default 'DATA/progressions.json')
- * @param {number} opts.octave      octave of each progression chord's root (default 4)
- * @param {number} opts.velocity    chord volume 0–1 (default 0.7)
- * @param {number} opts.strumMs     delay between chord tones (default 0)
- * @returns {Promise<{circle, setKey, select, element}>}
- * Emits on the container: 'progression:change' {key, progression} | 'progression:chord' {roman, name} | 'progression:tone'
+ * @param {number} opts.octave         octave of each progression chord's root (default 4)
+ * @param {number} opts.velocity       chord volume 0–1 (default 0.7)
+ * @param {number} opts.strumMs        delay between chord tones (default 0)
+ * @returns {Promise<{circle, setKey, select, element, relativeElement, destroy}>}
+ * Emits (bubbling): 'progression:change' {key, relativeKey, progression}
+ *                   'progression:chord' {roman, name, notes} | 'progression:tone' {chord, note, spelled, degree}
  */
 export async function renderCircleProgressions(opts = {}) {
   const {
     piano,
     audio,
-    target = 'circle-progressions',
+    target = 'root-circle-progressions',
+    relativeTarget = 'minor-circle-progressions',
     dataUrl = 'DATA/circle_of_fifths.json',
     progressionsUrl = 'DATA/progressions.json',
     octave = 4,
@@ -166,6 +216,8 @@ export async function renderCircleProgressions(opts = {}) {
   if (!piano || !audio) throw new TypeError('circle-o-5ths: piano and audio are required');
   const host = getHost(target);
   if (!host) throw new TypeError(`circle-o-5ths: #${target} not found`);
+  const relHost = getHost(relativeTarget);
+  if (!relHost) console.warn(`circle-o-5ths: #${relativeTarget} not found — relative progressions not shown`);
 
   const load = async (url) => {
     const r = await fetch(url, { credentials: 'same-origin' });
@@ -178,58 +230,30 @@ export async function renderCircleProgressions(opts = {}) {
   let currentKey = circle.key('major', 0, 'C');   // default until a chord is selected
   let currentProg = circle.progression(circle.defaults.major);
 
-  // --- DOM -------------------------------------------------------------------
-  const wrap = document.createElement('div');
-  wrap.className = 'cp';
+  const el = (tag, cls, text) => {
+    const n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text != null) n.textContent = text;
+    return n;
+  };
 
-  const head = document.createElement('div');
-  head.className = 'cp-head';
+  // --- shared piano actions (cards never touch the chord-data panels) ---------
+  const panels = [];
+  const clearActive = () => panels.forEach((w) => {
+    w.querySelectorAll('.is-active').forEach((n) => n.classList.remove('is-active'));
+    w.querySelectorAll('.card.border-primary').forEach((n) => n.classList.remove('border-primary'));
+  });
+  const emitFrom = (node) => (type, detail) => node.dispatchEvent(new CustomEvent(type, { bubbles: true, detail }));
 
-  const keyLabel = document.createElement('div');
-  keyLabel.className = 'cp-key';
-
-  const select = document.createElement('select');
-  select.className = 'cc-type cp-select';          // same look as the chord-type dropdown
-
-  const roman = document.createElement('div');
-  roman.className = 'cp-roman';                    // rounded badge: the chosen sequence
-  roman.setAttribute('aria-label', 'Chosen progression');
-
-  const desc = document.createElement('div');
-  desc.className = 'cp-desc';
-
-  const cards = document.createElement('div');
-  cards.className = 'row cp-cards';               // Bootstrap grid: one column per card
-
-  // "Choose a progression" label wraps the dropdown (implicit association, no id needed)
-  const choose = document.createElement('label');
-  choose.className = 'cp-choose';
-  const chooseText = document.createElement('span');
-  chooseText.className = 'cp-choose-text';
-  chooseText.textContent = 'Choose a progression';
-  choose.append(chooseText, select);
-
-  head.append(keyLabel, choose);
-  wrap.append(head, roman, desc, cards);
-  host.append(wrap);
-
-  const emit = (type, detail) => wrap.dispatchEvent(new CustomEvent(type, { bubbles: true, detail }));
-
-  // --- piano actions (never touch #chord-data) -------------------------------
   const voice = (chord) => {
     const rootMidi = (octave + 1) * 12 + chord.rootPc;
     return chord.tones.map((t) => ({ ...t, note: midiToNote(rootMidi + t.semitones) }));
   };
 
-  const clearActive = () => {
-    cards.querySelectorAll('.is-active').forEach((el) => el.classList.remove('is-active'));
-    cards.querySelectorAll('.card.border-primary').forEach((el) => el.classList.remove('border-primary'));
-  };
-
-  function playChord(chord, card, badge) {
+  function playChord(chord, card, trigger, emit) {
     clearActive();
-    card.classList.add('is-active', 'border-primary');
-    badge.classList.add('is-active');
+    card?.classList.add('is-active', 'border-primary');
+    trigger.classList.add('is-active');
     const tones = voice(chord);
     piano.clearPlayed();
     piano.showChord(tones.map((t) => t.pc));
@@ -243,7 +267,7 @@ export async function renderCircleProgressions(opts = {}) {
     emit('progression:chord', { roman: chord.roman, name: chord.name, notes: tones.map((t) => t.note) });
   }
 
-  function playTone(chord, t, card, btn) {
+  function playTone(chord, t, card, btn, emit) {
     clearActive();
     card.classList.add('is-active', 'border-primary');
     btn.classList.add('is-active');
@@ -256,102 +280,75 @@ export async function renderCircleProgressions(opts = {}) {
     emit('progression:tone', { chord: chord.name, note: t.note, spelled: t.spelled, degree: t.degree });
   }
 
-  // --- rendering -------------------------------------------------------------
-  function renderSelect() {
-    select.replaceChildren();
-    const list = circle.progressions(currentKey.mode);
-    for (const genre of circle.genres) {
-      const items = list.filter((p) => p.genre === genre);
-      if (!items.length) continue;
-      const og = document.createElement('optgroup');
-      og.label = genre;
-      for (const p of items) {
-        const opt = document.createElement('option');
-        opt.value = p.id;
-        opt.textContent = p.name;
-        og.append(opt);
-      }
-      select.append(og);
-    }
-    select.value = currentProg.id;
+  // --- panel builder (root + relative share the same layout) -------------------
+  function buildPanel(hostEl, variant) {
+    const wrap = el('div', variant === 'relative' ? 'cp cp--relative' : 'cp');
+    const emit = emitFrom(wrap);
+    const title = variant === 'relative' ? el('div', 'cp-title') : null;
+    const head = el('div', 'cp-head');
+    const keyBox = el('div', 'cp-key');
+    const controls = el('div', 'cp-controls');
+    const roman = el('div', 'cp-roman');
+    roman.setAttribute('aria-label', 'Chosen progression');
+    const desc = el('div', 'cp-desc');
+    const cards = el('div', 'row cp-cards');           // Bootstrap grid: one column per card
+    head.append(keyBox, controls);
+    if (title) wrap.append(title);
+    wrap.append(head, roman, desc, cards);
+    hostEl.append(wrap);
+    panels.push(wrap);
+    return { wrap, emit, title, keyBox, controls, roman, desc, cards };
   }
 
-  function renderCards() {
-    keyLabel.replaceChildren();
+  function renderKeyBox(box, k) {
     const kv = (cls, label, value) => {
-      const rowEl = document.createElement('div');
-      rowEl.className = cls;
-      const l = document.createElement('span');
-      l.className = 'cp-kv-label';
-      l.textContent = label;
-      const v = document.createElement('span');
-      v.className = 'cp-kv-value';
-      v.textContent = value;
-      rowEl.append(l, v);
-      return rowEl;
+      const row = el('div', cls);
+      row.append(el('span', 'cp-kv-label', label), el('span', 'cp-kv-value', value));
+      return row;
     };
-    const keyName = currentKey.name;
-    keyLabel.append(
-      kv('cp-key-name', 'Key:', keyName),
-      kv('cp-key-signature', 'Signature:', sigText(currentKey.signature)),
+    box.replaceChildren(
+      kv('cp-key-name', 'Key:', k.name),
+      kv('cp-key-signature', 'Signature:', sigText(k.signature)),
     );
+  }
 
-    roman.textContent = currentProg.roman;
-    desc.textContent = currentProg.description || '';
-
+  function renderCards(panel, k, prog) {
+    const { cards, emit } = panel;
     cards.replaceChildren();
-    const chords = circle.resolve(currentKey, currentProg);
+    const chords = circle.resolve(k, prog);
     // Bootstrap columns: 1 per row on phones, 2 on small screens, all on one row from lg up
     const lg = chords.length <= 4 ? `col-lg-${12 / chords.length}` : 'col-lg';
     for (const chord of chords) {
       const tones = voice(chord);
+      const col = el('div', `col-12 col-sm-6 ${lg} mb-3`);
+      const card = el('div', 'card h-100 cp-card');           // Bootstrap card
+      const body = el('div', 'card-body cd cd--compact');     // #chord-data layout, compact
 
-      const col = document.createElement('div');
-      col.className = `col-12 col-sm-6 ${lg} mb-3`;
-
-      // Bootstrap card; body uses the same .cd-* layout as #chord-data, compact size
-      const card = document.createElement('div');
-      card.className = 'card h-100 cp-card';
-
-      const body = document.createElement('div');
-      body.className = 'card-body cd cd--compact';
-
-      const rn = document.createElement('span');
-      rn.className = 'cp-card-roman';
-      rn.textContent = chord.roman;
+      const rn = el('span', 'cp-card-roman', chord.roman);
       rn.setAttribute('aria-label', `Position ${chord.roman} in the progression`);
 
-      const badge = document.createElement('button');
+      const badge = el('button', 'cd-name', chord.name);
       badge.type = 'button';
-      badge.className = 'cd-name';
-      badge.textContent = chord.name;
       badge.setAttribute('aria-label', `Play ${chord.name} (${chord.roman}) and highlight it on the keyboard`);
-      badge.addEventListener('click', () => playChord(chord, card, badge));
+      badge.addEventListener('click', () => playChord(chord, card, badge, emit));
 
-      const row = document.createElement('div');
-      row.className = 'cd-tones';
+      const row = el('div', 'cd-tones');
       for (const t of tones) {
-        const item = document.createElement('div');
-        item.className = 'cd-tone';
-        const deg = document.createElement('div');
-        deg.className = 'cd-degree';
-        deg.textContent = t.degree;
-        const btn = document.createElement('button');
+        const item = el('div', 'cd-tone');
+        const btn = el('button', `cd-circle${t.rank === 0 ? ' is-root' : ''}`, t.spelled);
         btn.type = 'button';
-        btn.className = `cd-circle${t.rank === 0 ? ' is-root' : ''}`;
-        btn.textContent = t.spelled;
         btn.setAttribute('aria-label', `Play ${t.spelled} (${t.degree} of ${chord.name})`);
         const color = piano.roleColor(t.note, t.rank);
         if (color) {
           btn.style.setProperty('--cd-circle-bg', color);
           btn.style.setProperty('--cd-circle-fg', textOn(color));
         }
-        btn.addEventListener('click', () => playTone(chord, t, card, btn));
-        item.append(deg, btn);
+        btn.addEventListener('click', () => playTone(chord, t, card, btn, emit));
+        item.append(el('div', 'cd-degree', t.degree), btn);
         row.append(item);
       }
 
-      // Octave rows (same component as #chord-data): label plays the chord, circles play single notes
+      // Octave rows (same component as #root-chord-data): label plays the chord, circles single notes
       const octaves = renderOctaveRows({
         piano, audio, velocity, strumMs,
         name: chord.name,
@@ -367,19 +364,92 @@ export async function renderCircleProgressions(opts = {}) {
       col.append(card);
       cards.append(col);
     }
-    emit('progression:change', { key: currentKey.name, progression: currentProg.id });
+  }
+
+  // --- root panel: key box | "Choose a progression" + "Relative Minor:" badge ---
+  const root = buildPanel(host, 'root');
+
+  const select = el('select', 'cc-type cp-select');   // same look as the chord-type dropdown
+  const choose = el('label', 'cp-choose');            // label wraps the select (no id needed)
+  choose.append(el('span', 'cp-choose-text', 'Choose a progression'), select);
+
+  const relRow = el('div', 'cp-rel');
+  const relLabel = el('span', 'cp-rel-label');
+  const relBadge = el('button', 'cp-rel-badge');
+  relBadge.type = 'button';
+  relRow.append(relLabel, relBadge);
+  root.controls.append(choose, relRow);
+
+  let relChord = null;
+  relBadge.addEventListener('click', () => { if (relChord) playChord(relChord, null, relBadge, root.emit); });
+
+  // --- relative panel: title, key box, static progression label ----------------
+  const rel = relHost ? buildPanel(relHost, 'relative') : null;
+  let relProgName = null;
+  if (rel) {
+    const box = el('div', 'cp-choose');
+    relProgName = el('div', 'cp-static');
+    box.append(el('span', 'cp-choose-text', 'Progression'), relProgName);
+    rel.controls.append(box);
+  }
+
+  function renderSelect() {
+    select.replaceChildren();
+    const list = circle.progressions(currentKey.mode);
+    for (const genre of circle.genres) {
+      const items = list.filter((p) => p.genre === genre);
+      if (!items.length) continue;
+      const og = document.createElement('optgroup');
+      og.label = genre;
+      for (const p of items) {
+        const opt = el('option', null, p.name);
+        opt.value = p.id;
+        og.append(opt);
+      }
+      select.append(og);
+    }
+    select.value = currentProg.id;
+  }
+
+  function render() {
+    const relKey = circle.relativeKey(currentKey);
+    const relWord = relKey.mode === 'minor' ? 'Minor' : 'Major';
+
+    // root
+    renderKeyBox(root.keyBox, currentKey);
+    root.roman.textContent = currentProg.roman;
+    root.desc.textContent = currentProg.description || '';
+    renderCards(root, currentKey, currentProg);
+
+    relChord = { ...circle.tonicChord(relKey), roman: relKey.mode === 'minor' ? 'i' : 'I' };
+    relLabel.textContent = `Relative ${relWord}:`;
+    relBadge.textContent = relChord.name;
+    relBadge.setAttribute('aria-label', `Play the relative ${relWord.toLowerCase()} chord ${relChord.name} and highlight it on the keyboard`);
+
+    // relative: same progression degrees played in the relative key
+    if (rel) {
+      const relProg = circle.translate(currentProg, relKey);
+      rel.title.textContent = `Relative ${relWord} Progression`;
+      renderKeyBox(rel.keyBox, relKey);
+      relProgName.textContent = currentProg.name;
+      rel.roman.textContent = relProg.roman;
+      rel.desc.textContent = `The same scale degrees as ${currentProg.name} in ${currentKey.name}, played in ${relKey.name}.`;
+      renderCards(rel, relKey, relProg);
+    }
+
+    root.emit('progression:change', { key: currentKey.name, relativeKey: relKey.name, progression: currentProg.id });
   }
 
   function setKey(mode, tonicPc, rootName) {
     currentKey = circle.key(mode, tonicPc, rootName);
     if (currentProg.mode !== mode) currentProg = circle.progression(circle.defaults[mode]);
     renderSelect();
-    renderCards();
+    render();
   }
 
   select.addEventListener('change', () => {
     currentProg = circle.progression(select.value) ?? currentProg;
-    renderCards();
+    render();
   });
 
   // Follow the chord controls: the selected chord sets the key
@@ -391,19 +461,20 @@ export async function renderCircleProgressions(opts = {}) {
   document.addEventListener('chord:select', onChordSelect);
 
   renderSelect();
-  renderCards();
+  render();
 
   return {
-    element: wrap,
+    element: root.wrap,
+    relativeElement: rel?.wrap ?? null,
     circle,
     setKey,
     select: (id) => {
       const p = circle.progression(id);
-      if (p && p.mode === currentKey.mode) { currentProg = p; select.value = id; renderCards(); }
+      if (p && p.mode === currentKey.mode) { currentProg = p; select.value = id; render(); }
     },
     destroy() {
       document.removeEventListener('chord:select', onChordSelect);
-      wrap.remove();
+      panels.forEach((w) => w.remove());
     },
   };
 }

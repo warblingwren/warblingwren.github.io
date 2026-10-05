@@ -217,7 +217,8 @@ const getHost = (id) => {
  * @param {object} opts.audio       API returned by createPianoAudio
  * @param {string} opts.target      id of a <div> to render the buttons INTO. Takes precedence over `after`.
  * @param {string} opts.after       id of the piano container; used only when `target` is not given (default 'piano-keyboard')
- * @param {string} opts.dataTarget  id of the chord detail element (default 'chord-data'); looked up on every chord click
+ * @param {string} opts.dataTarget  id of the root chord element (default 'root-chord-data'); looked up on every chord click
+ * @param {string} opts.relativeTarget id of the relative minor/major element (default 'minor-chord-data')
  * @param {number} opts.octave      octave of the played chord root (default 4)
  * @param {number} opts.strumMs     delay between chord tones, 0 = simultaneous (default 0)
  * @param {number} opts.velocity    chord volume 0–1 (default 0.7)
@@ -236,7 +237,8 @@ export function renderChordControls(opts = {}) {
     audio,
     target = null,
     after = 'piano-keyboard',
-    dataTarget = 'chord-data',
+    dataTarget = 'root-chord-data',
+    relativeTarget = 'minor-chord-data',
     octave = 4,
     strumMs = 0,
     velocity = 0.7,
@@ -248,15 +250,16 @@ export function renderChordControls(opts = {}) {
   const host = getDiv(hostId);
   if (!host) throw new TypeError(`piano-chords: #${hostId} is not a <div>`);
   let warnedNoData = false;
+  let warnedNoRel = false;
 
   const wrap = document.createElement('div');
   wrap.className = 'cc';
 
-  const panel = document.createElement('div');   // root chord panel (inside #chord-data)
+  const panel = document.createElement('div');   // root chord panel (inside #root-chord-data)
   panel.className = 'cd';
   panel.hidden = true;
 
-  const relPanel = document.createElement('div'); // relative minor/major panel — sibling of `panel`
+  const relPanel = document.createElement('div'); // relative minor/major panel (inside #minor-chord-data)
   relPanel.className = 'cd cd-relative';
   relPanel.hidden = true;
 
@@ -302,7 +305,12 @@ export function renderChordControls(opts = {}) {
       return;
     }
     if (panel.parentElement !== dataHost) dataHost.append(panel);
-    if (relPanel.parentElement !== dataHost || relPanel.previousElementSibling !== panel) panel.after(relPanel);
+    const relHost = getHost(relativeTarget);
+    if (relHost && relPanel.parentElement !== relHost) relHost.append(relPanel);
+    if (!relHost && !warnedNoRel) {
+      console.warn(`piano-chords: #${relativeTarget} not found — relative chord panel not shown`);
+      warnedNoRel = true;
+    }
     panel.replaceChildren();
     panel.hidden = false;
 
