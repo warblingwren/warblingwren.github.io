@@ -170,9 +170,14 @@ export function renderOctaveRows(o) {
   return wrapEl;
 }
 
-// Relative chord shown under the root chord in #chord-data.
+// Relative chord shown in #minor-chord-data.
 // Major-family chords -> relative minor (root a minor 3rd down); minor-family -> relative major.
-// Diminished family has no conventional relative -> none.
+// Diminished chords -> the minor chord of the key they naturally belong to (same rule as the
+// progressions in circle-o-5ths.js — SYNC):
+//   dim / m7♭5 = vii° / viiø7 of the major key a half step up -> that key's relative minor (G♯dim -> F♯m)
+//   dim7       = vii°7 of the minor key a half step up        -> that minor key's tonic   (F♯dim7 -> Gm7)
+const LEADING_TONE_HOME = { dim: { mode: 'major', quality: 'minor' }, m7b5: { mode: 'major', quality: 'min7' },
+  dim7: { mode: 'minor', quality: 'min7' } };
 const RELATIVE = {
   major: 'minor', maj7: 'min7', dom7: 'min7', maj6: 'min7', aug: 'minor', aug7: 'min7', sus2: 'minor', sus4: 'minor',
   minor: 'major', min7: 'maj7', min6: 'major',
@@ -180,6 +185,25 @@ const RELATIVE = {
 const MINOR_FAMILY = new Set(['minor', 'min7', 'min6']);
 
 export function relativeChord(chord) {
+  const home = LEADING_TONE_HOME[chord.group];
+  if (home) {
+    const group = CHORD_SECTIONS.flatMap((sec) => sec.groups).find((g) => g.id === home.quality);
+    const tonicPc = (chord.root + 1) % 12;
+    let rootName;
+    let root;
+    if (home.mode === 'major') {
+      const tonic = spellTone(chord.rootName, 1, 1);    // major key a half step up: G♯ -> A
+      rootName = spellTone(tonic, 9, 5);                // its relative minor:         A -> F♯
+      root = (tonicPc + 9) % 12;
+    } else {
+      rootName = MINOR_ROOTS[tonicPc];                  // conventional minor-key spelling (C♯, not D♭)
+      root = tonicPc;
+    }
+    return {
+      title: 'Relative Minor',
+      chord: { name: `${rootName}${group.suffix}`, rootName, root, group: group.id, quality: group.quality, intervals: group.intervals },
+    };
+  }
   const targetId = RELATIVE[chord.group];
   if (!targetId) return null;
   const group = CHORD_SECTIONS.flatMap((sec) => sec.groups).find((g) => g.id === targetId);

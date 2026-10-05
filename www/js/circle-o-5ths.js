@@ -517,13 +517,16 @@ export async function renderCircleProgressions(opts = {}) {
   //   Augmented chords fit several keys equally, so the key stays on the chord the user chose.
   //   Everything else: major-family -> major key on its root, minor-family -> minor key on its root.
   const LEADING_TONE = { dim: ['major', 'vii°'], m7b5: ['major', 'viiø7'], dim7: ['minor', 'vii°7'] };
+  // Conventional minor-key spellings — SYNC: MINOR_ROOTS in piano-chords.js (G♯ minor, not A♭ minor)
+  const MINOR_KEY_NAMES = ['C', 'C♯', 'D', 'E♭', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'B♭', 'B'];
   let keyNote = '';
   function homeKeyOf(d) {
     const lt = LEADING_TONE[d.group];
     if (lt) {
       const [mode, roman] = lt;
-      const tonicName = spell(d.rootName, 1, 1);         // a minor second up: G♯ -> A
-      const k = circle.key(mode, (d.root + 1) % 12, tonicName);
+      const tonicPc = (d.root + 1) % 12;                 // a half step up: G♯ -> A
+      const tonicName = mode === 'minor' ? MINOR_KEY_NAMES[tonicPc] : spell(d.rootName, 1, 1);
+      const k = circle.key(mode, tonicPc, tonicName);
       return { mode, tonicPc: k.tonicPc, tonicName: k.tonic, note: `${d.name} is the ${roman} chord of ${k.name}.` };
     }
     if (d.group === 'aug' || d.group === 'aug7') {
