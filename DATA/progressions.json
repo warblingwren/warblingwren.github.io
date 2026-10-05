@@ -1,0 +1,722 @@
+{
+ "meta": {
+  "description": "Chord progressions by genre. Steps are relative to the key tonic and resolve against circle_of_fifths.json at run time.",
+  "step": "degree = scale step (1–7), semitones = root distance above the tonic, quality = circle_of_fifths.json chord_qualities id",
+  "mode": "major | minor — which keys the progression applies to",
+  "version": 1
+ },
+ "genres": [
+  "Blues",
+  "Jazz",
+  "Country",
+  "Rock & Roll",
+  "Folk",
+  "Pop"
+ ],
+ "defaults": {
+  "major": "rock-three-chord",
+  "minor": "folk-minor-i-iv-v"
+ },
+ "progressions": [
+  {
+   "id": "blues-12-bar",
+   "name": "12-bar blues",
+   "genre": "Blues",
+   "mode": "major",
+   "roman": "I7 | I7 | I7 | I7 | IV7 | IV7 | I7 | I7 | V7 | IV7 | I7 | V7",
+   "steps": [
+    {
+     "roman": "I7",
+     "degree": 1,
+     "semitones": 0,
+     "quality": "dom7"
+    },
+    {
+     "roman": "IV7",
+     "degree": 4,
+     "semitones": 5,
+     "quality": "dom7"
+    },
+    {
+     "roman": "V7",
+     "degree": 5,
+     "semitones": 7,
+     "quality": "dom7"
+    }
+   ],
+   "description": "The foundation of blues: four bars of I, two of IV, back to I, then the V–IV–I turnaround.",
+   "bars": [
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    0,
+    0,
+    2,
+    1,
+    0,
+    2
+   ]
+  },
+  {
+   "id": "blues-quick-change",
+   "name": "12-bar blues (quick change)",
+   "genre": "Blues",
+   "mode": "major",
+   "roman": "I7 | IV7 | I7 | I7 | IV7 | IV7 | I7 | I7 | V7 | IV7 | I7 | V7",
+   "steps": [
+    {
+     "roman": "I7",
+     "degree": 1,
+     "semitones": 0,
+     "quality": "dom7"
+    },
+    {
+     "roman": "IV7",
+     "degree": 4,
+     "semitones": 5,
+     "quality": "dom7"
+    },
+    {
+     "roman": "V7",
+     "degree": 5,
+     "semitones": 7,
+     "quality": "dom7"
+    }
+   ],
+   "description": "Like the 12-bar, but visits IV in bar 2.",
+   "bars": [
+    0,
+    1,
+    0,
+    0,
+    1,
+    1,
+    0,
+    0,
+    2,
+    1,
+    0,
+    2
+   ]
+  },
+  {
+   "id": "blues-8-bar",
+   "name": "8-bar blues",
+   "genre": "Blues",
+   "mode": "major",
+   "roman": "I7 | V7 | IV7 | IV7 | I7 | V7 | I7 | V7",
+   "steps": [
+    {
+     "roman": "I7",
+     "degree": 1,
+     "semitones": 0,
+     "quality": "dom7"
+    },
+    {
+     "roman": "V7",
+     "degree": 5,
+     "semitones": 7,
+     "quality": "dom7"
+    },
+    {
+     "roman": "IV7",
+     "degree": 4,
+     "semitones": 5,
+     "quality": "dom7"
+    }
+   ],
+   "description": "A shorter blues form.",
+   "bars": [
+    0,
+    1,
+    2,
+    2,
+    0,
+    1,
+    0,
+    1
+   ]
+  },
+  {
+   "id": "blues-minor",
+   "name": "Minor blues",
+   "genre": "Blues",
+   "mode": "minor",
+   "roman": "i7 | i7 | i7 | i7 | iv7 | iv7 | i7 | i7 | V7 | iv7 | i7 | V7",
+   "steps": [
+    {
+     "roman": "i7",
+     "degree": 1,
+     "semitones": 0,
+     "quality": "min7"
+    },
+    {
+     "roman": "iv7",
+     "degree": 4,
+     "semitones": 5,
+     "quality": "min7"
+    },
+    {
+     "roman": "V7",
+     "degree": 5,
+     "semitones": 7,
+     "quality": "dom7"
+    }
+   ],
+   "description": "12-bar form in a minor key; the V7 is borrowed from harmonic minor.",
+   "bars": [
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    0,
+    0,
+    2,
+    1,
+    0,
+    2
+   ]
+  },
+  {
+   "id": "jazz-ii-v-i",
+   "name": "ii–V–I",
+   "genre": "Jazz",
+   "mode": "major",
+   "roman": "ii7 – V7 – Imaj7",
+   "steps": [
+    {
+     "roman": "ii7",
+     "degree": 2,
+     "semitones": 2,
+     "quality": "min7"
+    },
+    {
+     "roman": "V7",
+     "degree": 5,
+     "semitones": 7,
+     "quality": "dom7"
+    },
+    {
+     "roman": "Imaj7",
+     "degree": 1,
+     "semitones": 0,
+     "quality": "maj7"
+    }
+   ],
+   "description": "The most common cadence in jazz: each chord a fifth below the last."
+  },
+  {
+   "id": "jazz-i-vi-ii-v",
+   "name": "I–vi–ii–V turnaround",
+   "genre": "Jazz",
+   "mode": "major",
+   "roman": "Imaj7 – vi7 – ii7 – V7",
+   "steps": [
+    {
+     "roman": "Imaj7",
+     "degree": 1,
+     "semitones": 0,
+     "quality": "maj7"
+    },
+    {
+     "roman": "vi7",
+     "degree": 6,
+     "semitones": 9,
+     "quality": "min7"
+    },
+    {
+     "roman": "ii7",
+     "degree": 2,
+     "semitones": 2,
+     "quality": "min7"
+    },
+    {
+     "roman": "V7",
+     "degree": 5,
+     "semitones": 7,
+     "quality": "dom7"
+    }
+   ],
+   "description": "Turnaround used in rhythm changes; roots move by fifths after the vi."
+  },
+  {
+   "id": "jazz-iii-vi-ii-v",
+   "name": "iii–vi–ii–V",
+   "genre": "Jazz",
+   "mode": "major",
+   "roman": "iii7 – vi7 – ii7 – V7",
+   "steps": [
+    {
+     "roman": "iii7",
+     "degree": 3,
+     "semitones": 4,
+     "quality": "min7"
+    },
+    {
+     "roman": "vi7",
+     "degree": 6,
+     "semitones": 9,
+     "quality": "min7"
+    },
+    {
+     "roman": "ii7",
+     "degree": 2,
+     "semitones": 2,
+     "quality": "min7"
+    },
+    {
+     "roman": "V7",
+     "degree": 5,
+     "semitones": 7,
+     "quality": "dom7"
+    }
+   ],
+   "description": "Every root moves down a fifth around the circle."
+  },
+  {
+   "id": "jazz-minor-ii-v-i",
+   "name": "Minor ii–V–i",
+   "genre": "Jazz",
+   "mode": "minor",
+   "roman": "iiø7 – V7 – i7",
+   "steps": [
+    {
+     "roman": "iiø7",
+     "degree": 2,
+     "semitones": 2,
+     "quality": "m7b5"
+    },
+    {
+     "roman": "V7",
+     "degree": 5,
+     "semitones": 7,
+     "quality": "dom7"
+    },
+    {
+     "roman": "i7",
+     "degree": 1,
+     "semitones": 0,
+     "quality": "min7"
+    }
+   ],
+   "description": "Minor-key cadence with a half-diminished ii."
+  },
+  {
+   "id": "country-i-iv-v",
+   "name": "I–IV–V",
+   "genre": "Country",
+   "mode": "major",
+   "roman": "I – IV – V",
+   "steps": [
+    {
+     "roman": "I",
+     "degree": 1,
+     "semitones": 0,
+     "quality": "major"
+    },
+    {
+     "roman": "IV",
+     "degree": 4,
+     "semitones": 5,
+     "quality": "major"
+    },
+    {
+     "roman": "V",
+     "degree": 5,
+     "semitones": 7,
+     "quality": "major"
+    }
+   ],
+   "description": "Three-chord country: tonic, subdominant, dominant."
+  },
+  {
+   "id": "country-i-ii7-v7",
+   "name": "I–II7–V7",
+   "genre": "Country",
+   "mode": "major",
+   "roman": "I – II7 – V7",
+   "steps": [
+    {
+     "roman": "I",
+     "degree": 1,
+     "semitones": 0,
+     "quality": "major"
+    },
+    {
+     "roman": "II7",
+     "degree": 2,
+     "semitones": 2,
+     "quality": "dom7"
+    },
+    {
+     "roman": "V7",
+     "degree": 5,
+     "semitones": 7,
+     "quality": "dom7"
+    }
+   ],
+   "description": "II7 is a secondary dominant (V of V) that pulls to V."
+  },
+  {
+   "id": "rock-three-chord",
+   "name": "I–IV–V (three-chord)",
+   "genre": "Rock & Roll",
+   "mode": "major",
+   "roman": "I – IV – V",
+   "steps": [
+    {
+     "roman": "I",
+     "degree": 1,
+     "semitones": 0,
+     "quality": "major"
+    },
+    {
+     "roman": "IV",
+     "degree": 4,
+     "semitones": 5,
+     "quality": "major"
+    },
+    {
+     "roman": "V",
+     "degree": 5,
+     "semitones": 7,
+     "quality": "major"
+    }
+   ],
+   "description": "The classic rock & roll progression; the circle neighbours of the tonic."
+  },
+  {
+   "id": "rock-50s",
+   "name": "I–vi–IV–V (’50s)",
+   "genre": "Rock & Roll",
+   "mode": "major",
+   "roman": "I – vi – IV – V",
+   "steps": [
+    {
+     "roman": "I",
+     "degree": 1,
+     "semitones": 0,
+     "quality": "major"
+    },
+    {
+     "roman": "vi",
+     "degree": 6,
+     "semitones": 9,
+     "quality": "minor"
+    },
+    {
+     "roman": "IV",
+     "degree": 4,
+     "semitones": 5,
+     "quality": "major"
+    },
+    {
+     "roman": "V",
+     "degree": 5,
+     "semitones": 7,
+     "quality": "major"
+    }
+   ],
+   "description": "Doo-wop and early rock & roll."
+  },
+  {
+   "id": "rock-mixolydian",
+   "name": "I–♭VII–IV",
+   "genre": "Rock & Roll",
+   "mode": "major",
+   "roman": "I – ♭VII – IV",
+   "steps": [
+    {
+     "roman": "I",
+     "degree": 1,
+     "semitones": 0,
+     "quality": "major"
+    },
+    {
+     "roman": "♭VII",
+     "degree": 7,
+     "semitones": 10,
+     "quality": "major"
+    },
+    {
+     "roman": "IV",
+     "degree": 4,
+     "semitones": 5,
+     "quality": "major"
+    }
+   ],
+   "description": "♭VII is borrowed from the Mixolydian mode; a staple of classic rock."
+  },
+  {
+   "id": "rock-aeolian",
+   "name": "i–VI–VII",
+   "genre": "Rock & Roll",
+   "mode": "minor",
+   "roman": "i – VI – VII",
+   "steps": [
+    {
+     "roman": "i",
+     "degree": 1,
+     "semitones": 0,
+     "quality": "minor"
+    },
+    {
+     "roman": "VI",
+     "degree": 6,
+     "semitones": 8,
+     "quality": "major"
+    },
+    {
+     "roman": "VII",
+     "degree": 7,
+     "semitones": 10,
+     "quality": "major"
+    }
+   ],
+   "description": "Minor-key rock climb."
+  },
+  {
+   "id": "folk-canon",
+   "name": "Canon (I–V–vi–iii–IV)",
+   "genre": "Folk",
+   "mode": "major",
+   "roman": "I – V – vi – iii – IV",
+   "steps": [
+    {
+     "roman": "I",
+     "degree": 1,
+     "semitones": 0,
+     "quality": "major"
+    },
+    {
+     "roman": "V",
+     "degree": 5,
+     "semitones": 7,
+     "quality": "major"
+    },
+    {
+     "roman": "vi",
+     "degree": 6,
+     "semitones": 9,
+     "quality": "minor"
+    },
+    {
+     "roman": "iii",
+     "degree": 3,
+     "semitones": 4,
+     "quality": "minor"
+    },
+    {
+     "roman": "IV",
+     "degree": 4,
+     "semitones": 5,
+     "quality": "major"
+    }
+   ],
+   "description": "Pachelbel’s Canon pattern, common in folk ballads."
+  },
+  {
+   "id": "folk-i-iv-vi-v",
+   "name": "I–IV–vi–V",
+   "genre": "Folk",
+   "mode": "major",
+   "roman": "I – IV – vi – V",
+   "steps": [
+    {
+     "roman": "I",
+     "degree": 1,
+     "semitones": 0,
+     "quality": "major"
+    },
+    {
+     "roman": "IV",
+     "degree": 4,
+     "semitones": 5,
+     "quality": "major"
+    },
+    {
+     "roman": "vi",
+     "degree": 6,
+     "semitones": 9,
+     "quality": "minor"
+    },
+    {
+     "roman": "V",
+     "degree": 5,
+     "semitones": 7,
+     "quality": "major"
+    }
+   ],
+   "description": "Gentle folk progression."
+  },
+  {
+   "id": "folk-minor-i-iv-v",
+   "name": "i–iv–v",
+   "genre": "Folk",
+   "mode": "minor",
+   "roman": "i – iv – v",
+   "steps": [
+    {
+     "roman": "i",
+     "degree": 1,
+     "semitones": 0,
+     "quality": "minor"
+    },
+    {
+     "roman": "iv",
+     "degree": 4,
+     "semitones": 5,
+     "quality": "minor"
+    },
+    {
+     "roman": "v",
+     "degree": 5,
+     "semitones": 7,
+     "quality": "minor"
+    }
+   ],
+   "description": "Three-chord progression in natural minor."
+  },
+  {
+   "id": "folk-andalusian",
+   "name": "Andalusian cadence (i–VII–VI–V)",
+   "genre": "Folk",
+   "mode": "minor",
+   "roman": "i – VII – VI – V",
+   "steps": [
+    {
+     "roman": "i",
+     "degree": 1,
+     "semitones": 0,
+     "quality": "minor"
+    },
+    {
+     "roman": "VII",
+     "degree": 7,
+     "semitones": 10,
+     "quality": "major"
+    },
+    {
+     "roman": "VI",
+     "degree": 6,
+     "semitones": 8,
+     "quality": "major"
+    },
+    {
+     "roman": "V",
+     "degree": 5,
+     "semitones": 7,
+     "quality": "major"
+    }
+   ],
+   "description": "Descending minor cadence from Spanish folk and flamenco."
+  },
+  {
+   "id": "pop-axis",
+   "name": "I–V–vi–IV",
+   "genre": "Pop",
+   "mode": "major",
+   "roman": "I – V – vi – IV",
+   "steps": [
+    {
+     "roman": "I",
+     "degree": 1,
+     "semitones": 0,
+     "quality": "major"
+    },
+    {
+     "roman": "V",
+     "degree": 5,
+     "semitones": 7,
+     "quality": "major"
+    },
+    {
+     "roman": "vi",
+     "degree": 6,
+     "semitones": 9,
+     "quality": "minor"
+    },
+    {
+     "roman": "IV",
+     "degree": 4,
+     "semitones": 5,
+     "quality": "major"
+    }
+   ],
+   "description": "The “axis” progression behind many pop songs."
+  },
+  {
+   "id": "pop-vi-iv-i-v",
+   "name": "vi–IV–I–V",
+   "genre": "Pop",
+   "mode": "major",
+   "roman": "vi – IV – I – V",
+   "steps": [
+    {
+     "roman": "vi",
+     "degree": 6,
+     "semitones": 9,
+     "quality": "minor"
+    },
+    {
+     "roman": "IV",
+     "degree": 4,
+     "semitones": 5,
+     "quality": "major"
+    },
+    {
+     "roman": "I",
+     "degree": 1,
+     "semitones": 0,
+     "quality": "major"
+    },
+    {
+     "roman": "V",
+     "degree": 5,
+     "semitones": 7,
+     "quality": "major"
+    }
+   ],
+   "description": "The axis progression started on vi for a minor feel."
+  },
+  {
+   "id": "pop-minor",
+   "name": "i–VI–III–VII",
+   "genre": "Pop",
+   "mode": "minor",
+   "roman": "i – VI – III – VII",
+   "steps": [
+    {
+     "roman": "i",
+     "degree": 1,
+     "semitones": 0,
+     "quality": "minor"
+    },
+    {
+     "roman": "VI",
+     "degree": 6,
+     "semitones": 8,
+     "quality": "major"
+    },
+    {
+     "roman": "III",
+     "degree": 3,
+     "semitones": 3,
+     "quality": "major"
+    },
+    {
+     "roman": "VII",
+     "degree": 7,
+     "semitones": 10,
+     "quality": "major"
+    }
+   ],
+   "description": "Minor-key pop loop."
+  }
+ ]
+}

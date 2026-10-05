@@ -104,7 +104,7 @@ const getHost = (id) => {
  * @returns {{select:Function, clear:Function, destroy:Function, element:HTMLDivElement}}
  *          select('C'), select('Cdim7'), select('Bm7♭5') …
  *          showType('maj7') switches the button row (dropdown values = group ids)
- * Emits on the controls element: 'chord:select' detail {name, quality, root, notes, spelled}
+ * Emits on the controls element: 'chord:select' detail {name, quality, group, rootName, root, notes, spelled}
  *                                'chord:type'   detail {type, title}
  *                                'chord:tone'   detail {chord, note, spelled, degree} | 'chord:clear'
  */
@@ -294,6 +294,8 @@ export function renderChordControls(opts = {}) {
     emit('chord:select', {
       name: chord.name,
       quality: chord.quality,
+      group: chord.group,        // chord-type id (SYNC: circle_of_fifths.json chord_qualities)
+      rootName: chord.rootName,  // spelled root, e.g. 'D♭'
       root: chord.root,
       notes: tones.map((t) => t.note),
       spelled: tones.map((t) => t.spelled),

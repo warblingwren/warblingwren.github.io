@@ -6,6 +6,7 @@ import './colors.js'
 import { renderPianoKeyboard, OCTAVE_FAMILIES } from './piano.js';
 import { createPianoAudio } from './piano-audio.js';
 import { renderChordControls } from './piano-chords.js';
+import { renderCircleProgressions } from './circle-o-5ths.js';
 
 (function () {
   //javascript code here
@@ -31,6 +32,7 @@ el.addEventListener('piano:release', (e) => audio.release(e.detail.note));
 
 //const chords = renderChordControls({ piano, audio });
 const chords = renderChordControls({ piano, audio, target: 'piano-chords' });
+const progressions = await renderCircleProgressions({ piano, audio, target: 'circle-progressions'  });
 
 /*
 const el = document.getElementById('piano-keyboard');

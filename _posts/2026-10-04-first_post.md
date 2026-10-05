@@ -19,7 +19,7 @@ tags: [Warbling Wren]
 			</div>
             <div class="row">
                 <div class="col-md-9">
-					<div id="piano-progressions"></div>
+					<div id="circle-progressions"></div>
 				</div>
                 <div class="col-md-3">
 					<div id="chord-data"></div>
