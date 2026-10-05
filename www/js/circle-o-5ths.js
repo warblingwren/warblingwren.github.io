@@ -207,12 +207,14 @@ const sigText = (s) => (s.count === 0 ? 'none (no sharps or flats)'
  * @param {object} opts.audio          API returned by createPianoAudio
  * @param {string} opts.target         root progressions container id (default 'root-circle-progressions')
  * @param {string} opts.relativeTarget relative progressions container id (default 'minor-circle-progressions'; skipped if absent)
+ * @param {string} opts.selectorTarget progression dropdown container id (default 'progression-selector';
+ *                                     if absent the dropdown falls back into the root panel's controls)
  * @param {string} opts.dataUrl        circle data file (default 'DATA/circle_of_fifths.json')
  * @param {string} opts.progressionsUrl progressions data file (default 'DATA/progressions.json')
  * @param {number} opts.octave         octave of each progression chord's root (default 4)
  * @param {number} opts.velocity       chord volume 0–1 (default 0.7)
  * @param {number} opts.strumMs        delay between chord tones (default 0)
- * @returns {Promise<{circle, setKey, select, element, relativeElement, destroy}|null>}  null if the root container is missing
+ * @returns {Promise<{circle, setKey, select, element, relativeElement, selectorElement, destroy}|null>}  null if the root container is missing
  * Emits (bubbling): 'progression:change' {key, relativeKey, progression}
  *                   'progression:chord' {roman, name, notes} | 'progression:tone' {chord, note, spelled, degree}
  */
@@ -222,6 +224,7 @@ export async function renderCircleProgressions(opts = {}) {
     audio,
     target = 'root-circle-progressions',
     relativeTarget = 'minor-circle-progressions',
+    selectorTarget = 'progression-selector',
     dataUrl = 'DATA/circle_of_fifths.json',
     progressionsUrl = 'DATA/progressions.json',
     octave = 4,
@@ -234,15 +237,18 @@ export async function renderCircleProgressions(opts = {}) {
   // Containers: the requested id, falling back to the standard id; waits if not in the DOM yet.
   const ROOT_ID = 'root-circle-progressions';
   const MINOR_ID = 'minor-circle-progressions';
-  const [host, relHost] = await Promise.all([
+  const SELECTOR_ID = 'progression-selector';
+  const [host, relHost, selHost] = await Promise.all([
     waitForHost([...new Set([target, ROOT_ID])]),
     waitForHost([...new Set([relativeTarget, MINOR_ID])]),
+    waitForHost([...new Set([selectorTarget, SELECTOR_ID])]),
   ]);
   if (!host) {
     console.error(`circle-o-5ths: no element with id "${target}"${target !== ROOT_ID ? ` or "${ROOT_ID}"` : ''} — progressions not shown`);
     return null;
   }
   if (!relHost) console.warn(`circle-o-5ths: no element with id "${relativeTarget}" — relative progressions not shown`);
+  if (!selHost) console.warn(`circle-o-5ths: no element with id "${selectorTarget}" — progression dropdown placed in the root progressions panel`);
 
   const load = async (url) => {
     const r = await fetch(url, { credentials: 'same-origin' });
@@ -446,19 +452,28 @@ export async function renderCircleProgressions(opts = {}) {
     for (const c of cols) { c.style.flex = `0 0 ${pct}`; c.style.maxWidth = pct; }
   }
 
-  // --- root panel: key box | "Choose a progression" + "Relative Minor:" badge ---
+  // --- root panel: key box | "Relative Minor:" badge ----------------------------
   const root = buildPanel(host, 'root');
 
+  // --- progression selector: self-contained, rendered into #progression-selector -----
+  // One dropdown drives both progression panels.
   const select = el('select', 'cc-type cp-select');   // same look as the chord-type dropdown
   const choose = el('label', 'cp-choose');            // label wraps the select (no id needed)
   choose.append(el('span', 'cp-choose-text', 'Choose a progression'), select);
+  let selector = null;
+  if (selHost) {
+    selector = el('div', 'cp-selector');
+    selector.append(choose);
+    selHost.append(selector);
+  }
 
   const relRow = el('div', 'cp-rel');
   const relLabel = el('span', 'cp-rel-label');
   const relBadge = el('button', 'cp-rel-badge');
   relBadge.type = 'button';
   relRow.append(relLabel, relBadge);
-  root.controls.append(choose, relRow);
+  if (selector) root.controls.append(relRow);
+  else root.controls.append(choose, relRow);         // fallback: no #progression-selector in the page
 
   let relChord = null;
   relBadge.addEventListener('click', () => {
@@ -621,6 +636,7 @@ export async function renderCircleProgressions(opts = {}) {
   return {
     element: root.wrap,
     relativeElement: rel?.wrap ?? null,
+    selectorElement: selector,
     circle,
     setKey,
     select: (id) => {
@@ -631,6 +647,7 @@ export async function renderCircleProgressions(opts = {}) {
       document.removeEventListener('chord:panels', onPanels);
       document.removeEventListener('piano:press', onKeyPress);
       panels.forEach((w) => w.remove());
+      selector?.remove();
     },
   };
 }

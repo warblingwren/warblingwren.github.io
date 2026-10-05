@@ -12,6 +12,7 @@
   --cp-roman: #6b6b70;
   --cp-active: #3d7be8;
   --cp-gutter: 15px;             /* matches Bootstrap .row gutter (-15px margins) */
+  --cp-select-max: 480px;        /* progression dropdown width on wide screens */
   --cp-indent: 0px;              /* sequence badge + description align with the key box */
   --cp-relative-bg: #e0f7fa;     /* Material Cyan 50 — relative progression panel */
   --cp-relative-fg: #1d1d1f;
@@ -77,6 +78,21 @@
 .cp-kv-value { font-weight: 700; color: var(--cp-fg); }
 
 .cp-select { margin-bottom: 0; }
+
+/* --- progression selector (#progression-selector): self-contained block ------- */
+.cp-selector {
+  width: 100%;
+  min-width: 0;
+  margin-top: 15px;
+  margin-bottom: 15px;
+  padding: 12px var(--cp-gutter);
+  border-radius: 10px;
+  background: var(--cp-bg);
+  color: var(--cp-fg);
+  box-sizing: border-box;
+  text-align: left;
+}
+.cp-selector .cp-select { width: 100%; max-width: var(--cp-select-max); }
 
 /* "Choose a progression" label above the dropdown.
    Resets global <label> rules (e.g. app.css) so only these styles apply. */
@@ -251,6 +267,8 @@
 
 @media (max-width: 768px) {
   .cp { border-radius: 8px; }
+  .cp-selector { border-radius: 8px; }
+  .cp-selector .cp-select { max-width: 100%; }
   .cp-select { width: 100%; }
   .cp-choose { width: 100%; }
   .cp-controls { width: 100%; }

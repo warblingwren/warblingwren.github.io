@@ -32,7 +32,15 @@ el.addEventListener('piano:release', (e) => audio.release(e.detail.note));
 
 //const chords = renderChordControls({ piano, audio });
 const chords = renderChordControls({ piano, audio, target: 'piano-chords' });
-const progressions = await renderCircleProgressions({ piano, audio, target: 'circle-progressions'  });
+//const progressions = await renderCircleProgressions({ piano, audio, target: 'circle-progressions'  });
+
+const progressions = await renderCircleProgressions({
+  piano,
+  audio,
+  target: 'root-circle-progressions',
+  relativeTarget: 'minor-circle-progressions',
+  selectorTarget: 'progression-selector',
+});
 
 /*
 const el = document.getElementById('piano-keyboard');
