@@ -251,6 +251,20 @@
   letter-spacing: 0.04em;
 }
 
+/* --- status indicator: upper-right of the keyboard ------------------------- */
+.pk-status {
+  min-height: 20px;
+  margin: 0 4px 6px;
+  color: #f2f2f2;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 20px;
+  text-align: right;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* --- sticky keyboard (class added by piano.js) ------------------------------- */
 .pk-sticky {
   position: -webkit-sticky;
@@ -259,6 +273,8 @@
   z-index: 1020;                       /* above page content; below Bootstrap modals (1050) */
   background: var(--pk-sticky-bg);     /* opaque, so content scrolls behind it */
 }
+/* when the keyboard itself is the pinned element, keep its dark frame */
+.pk.pk-sticky { background: var(--pk-frame); }
 
 /* =============================================================================
    BREAKPOINTS — keep at end of file

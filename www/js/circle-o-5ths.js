@@ -278,7 +278,7 @@ export async function renderCircleProgressions(opts = {}) {
     return chord.tones.map((t) => ({ ...t, note: midiToNote(rootMidi + t.semitones) }));
   };
 
-  function playChord(chord, card, trigger, emit) {
+  function playChord(chord, card, trigger, emit, label) {
     clearActive();
     card?.classList.add('is-active', 'border-primary');
     trigger.classList.add('is-active');
@@ -292,10 +292,11 @@ export async function renderCircleProgressions(opts = {}) {
     }
     piano.markNotes(marks);
     audio.playChord(tones.map((t) => t.note), velocity, strumMs);
+    piano.setStatus(label ?? chord.name);
     emit('progression:chord', { roman: chord.roman, name: chord.name, notes: tones.map((t) => t.note) });
   }
 
-  function playTone(chord, t, card, btn, emit) {
+  function playTone(chord, t, card, btn, emit, label) {
     clearActive();
     card.classList.add('is-active', 'border-primary');
     btn.classList.add('is-active');
@@ -305,6 +306,7 @@ export async function renderCircleProgressions(opts = {}) {
       note: n, label: t.spelled, badge: t.degree, rank: t.rank, root: t.rank === 0, fill: true,
     })));
     audio.play(t.note);
+    piano.setStatus(`${label} · ${t.spelled} (${t.degree})`);
     emit('progression:tone', { chord: chord.name, note: t.note, spelled: t.spelled, degree: t.degree });
   }
 
@@ -328,7 +330,8 @@ export async function renderCircleProgressions(opts = {}) {
     hostEl.append(wrap);
     panels.push(wrap);
     new ResizeObserver(() => layoutCards(cards)).observe(cards);
-    return { wrap, emit, title, keyBox, controls, note, roman, desc, cards };
+    const label = variant === 'relative' ? 'Relative Minor Progression' : 'Root Progression';
+    return { wrap, emit, title, keyBox, controls, note, roman, desc, cards, label };
   }
 
   function renderKeyBox(box, k) {
@@ -361,7 +364,9 @@ export async function renderCircleProgressions(opts = {}) {
       const badge = el('button', 'cd-name', chord.name);
       badge.type = 'button';
       badge.setAttribute('aria-label', `Play ${chord.name} (${chord.roman}) and highlight it on the keyboard`);
-      badge.addEventListener('click', () => playChord(chord, card, badge, emit));
+      // keyboard indicator, e.g. "Root Progression IV: F" / "Relative Minor Progression iv: Dm"
+      const label = `${panel.label} ${chord.roman}: ${chord.name}`;
+      badge.addEventListener('click', () => playChord(chord, card, badge, emit, label));
 
       const row = el('div', 'cd-tones');
       for (const t of tones) {
@@ -374,7 +379,7 @@ export async function renderCircleProgressions(opts = {}) {
           btn.style.setProperty('--cd-circle-bg', color);
           btn.style.setProperty('--cd-circle-fg', textOn(color));
         }
-        btn.addEventListener('click', () => playTone(chord, t, card, btn, emit));
+        btn.addEventListener('click', () => playTone(chord, t, card, btn, emit, label));
         item.append(el('div', 'cd-degree', t.degree), btn);
         row.append(item);
       }
@@ -387,6 +392,7 @@ export async function renderCircleProgressions(opts = {}) {
         rootPc: chord.rootPc,
         tones: chord.tones,
         onSelect: () => { clearActive(); card.classList.add('is-active', 'border-primary'); },
+        statusLabel: label,
         emit,
       });
 
@@ -426,7 +432,9 @@ export async function renderCircleProgressions(opts = {}) {
   root.controls.append(choose, relRow);
 
   let relChord = null;
-  relBadge.addEventListener('click', () => { if (relChord) playChord(relChord, null, relBadge, root.emit); });
+  relBadge.addEventListener('click', () => {
+    if (relChord) playChord(relChord, null, relBadge, root.emit, `Relative Minor Chord ${relChord.name}`);
+  });
 
   // --- relative panel: title, key box, static progression label ----------------
   const rel = relHost ? buildPanel(relHost, 'relative') : null;
@@ -443,7 +451,9 @@ export async function renderCircleProgressions(opts = {}) {
     rootBadge = el('button', 'cp-rel-badge');
     rootBadge.type = 'button';
     rootRow.append(el('span', 'cp-rel-label', 'Root Chord:'), rootBadge);
-    rootBadge.addEventListener('click', () => { if (rootChordRef) playChord(rootChordRef, null, rootBadge, rel.emit); });
+    rootBadge.addEventListener('click', () => {
+      if (rootChordRef) playChord(rootChordRef, null, rootBadge, rel.emit, `Root Chord ${rootChordRef.name}`);
+    });
 
     rel.controls.append(box, rootRow);
   }
@@ -572,6 +582,9 @@ export async function renderCircleProgressions(opts = {}) {
     render();
   }
   const onPanels = (e) => applyPanels(e.detail);
+  // A single key played on the keyboard clears every active card/badge here
+  const onKeyPress = () => clearActive();
+  document.addEventListener('piano:press', onKeyPress);
   document.addEventListener('chord:panels', onPanels);
 
   renderSelect();
@@ -589,6 +602,7 @@ export async function renderCircleProgressions(opts = {}) {
     },
     destroy() {
       document.removeEventListener('chord:panels', onPanels);
+      document.removeEventListener('piano:press', onKeyPress);
       panels.forEach((w) => w.remove());
     },
   };

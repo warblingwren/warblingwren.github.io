@@ -132,7 +132,7 @@ function sliceRange(all, from, to) {
  * @param {object}  opts.palette        palette override (default window.material_colors)
  * @returns {Promise<object>} API: highlight, clear, shiftOctave, isCompact, keys(), octaveColors(),
  *          showChord(pitchClasses), clearChord(), markNotes(list), clearMarks(),
- *          notesWithPitchClass(pc), roleColor(note, rank),
+ *          notesWithPitchClass(pc), roleColor(note, rank), setStatus(text), clearStatus(),
  *          lastPlayed(), clearPlayed(), destroy
  * Emits on container: 'piano:press' / 'piano:release'  detail {note, index, file}
  *                     'piano:rerender'                 detail {from, to, compact}
@@ -191,6 +191,13 @@ export async function renderPianoKeyboard(target = 'piano-keyboard', opts = {}) 
   let lastPlayed = null;        // note_ref of the last key played (persists across re-renders)
   let chordPCs = new Set();     // pitch classes of the displayed chord
   const marks = new Map();      // note -> {label, badge}  (played chord tones)
+  let statusText = '';
+  let statusEl = null;
+  function setStatus(text) {
+    statusText = text ? String(text) : '';
+    if (statusEl) statusEl.textContent = statusText;
+  }
+  const prettyNote = (n) => n.replace('#', '♯');
   let rail = null;              // badge row under the keys
 
   container.classList.add('pk');
@@ -211,7 +218,15 @@ export async function renderPianoKeyboard(target = 'piano-keyboard', opts = {}) 
     if (lastPlayed) keyMap.get(lastPlayed)?.classList.remove('is-played');
     lastPlayed = btn.dataset.note;
     btn.classList.add('is-played');
-    if (marks.size) { marks.clear(); refreshMarks(); } // single key replaces the sounding chord's marks
+    // A single key clears whatever else is shown: chord highlight, chord marks.
+    // It shows its own tone on the key and its key index (1–88) in a circle below it.
+    chordPCs = new Set();
+    for (const b of keyMap.values()) b.classList.remove('is-chord');
+    const pretty = prettyNote(btn.dataset.note);
+    marks.clear();
+    marks.set(btn.dataset.note, { label: pretty, badge: btn.dataset.index, rank: 0, root: false, fill: false, below: true });
+    refreshMarks();
+    setStatus(`Note ${pretty} · Key ${btn.dataset.index}`);
     emit('piano:press', keyDetail(btn));
   };
   const release = (btn) => {
@@ -337,7 +352,7 @@ export async function renderPianoKeyboard(target = 'piano-keyboard', opts = {}) 
         btn.style.setProperty('--pk-tone', color);
       }
 
-      if (mark.badge && btn.classList.contains('pk-black')) {
+      if (mark.badge && btn.classList.contains('pk-black') && !mark.below) {
         // black key: degree circle sits on the key, above the note-name circle
         // (keeps the rail below free for white keys — no overlapping circles)
         const kb = document.createElement('span');
@@ -398,6 +413,14 @@ export async function renderPianoKeyboard(target = 'piano-keyboard', opts = {}) 
 
     container.replaceChildren();
     container.classList.toggle('pk-compact', compact);
+
+    // status: what the keyboard is showing and its relationship ("Root Chord C", "Note C♯4 · Key 41")
+    statusEl = document.createElement('div');
+    statusEl.className = 'pk-status';
+    statusEl.setAttribute('role', 'status');
+    statusEl.setAttribute('aria-live', 'polite');
+    statusEl.textContent = statusText;
+    container.append(statusEl);
 
     if (compact) container.append(buildControls());
 
@@ -486,6 +509,7 @@ export async function renderPianoKeyboard(target = 'piano-keyboard', opts = {}) 
           rank: Number.isInteger(m.rank) ? m.rank : 0,
           root: Boolean(m.root),
           fill: Boolean(m.fill),
+          below: Boolean(m.below),
         });
       }
       refreshMarks();
@@ -497,6 +521,9 @@ export async function renderPianoKeyboard(target = 'piano-keyboard', opts = {}) 
       marks.clear();
       refreshMarks();
     },
+    /** Upper-right indicator text, e.g. 'Root Chord C' or 'Relative Minor Chord Am'. */
+    setStatus: (text) => setStatus(text),
+    clearStatus: () => setStatus(''),
     lastPlayed: () => lastPlayed,
     clearPlayed() {
       if (lastPlayed) keyMap.get(lastPlayed)?.classList.remove('is-played');

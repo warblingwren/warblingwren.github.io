@@ -97,6 +97,7 @@ export function spellTone(rootName, semis, letterSteps) {
  */
 export function renderOctaveRows(o) {
   const { piano, audio, name, rootName, rootPc, tones, onSelect = () => {}, emit = () => {},
+    statusLabel = name,
     velocity = 0.7, strumMs = 0 } = o;
 
   const wrapEl = document.createElement('div');
@@ -136,6 +137,7 @@ export function renderOctaveRows(o) {
       pill.classList.add('is-active');
       highlight(voiced);
       audio.playChord(voiced.map((t) => t.note), velocity, strumMs);
+      piano.setStatus?.(`${statusLabel} · Octave ${oct}`);
       emit('chord:octave', { chord: name, octave: oct, notes: voiced.map((t) => t.note) });
     });
     pill.append(label);
@@ -161,6 +163,7 @@ export function renderOctaveRows(o) {
         btn.classList.add('is-active');
         highlight([t]);
         audio.play(t.note);
+        piano.setStatus?.(`${statusLabel} · ${t.spelled}${t.note.slice(-1)} (${t.degree})`);
         emit('chord:octave-note', { chord: name, octave: oct, note: t.note, spelled: t.spelled, degree: t.degree });
       });
       pill.append(btn);
@@ -385,6 +388,8 @@ export function renderChordControls(opts = {}) {
 
   // Title + chord badge + tone circles + octave rows (same layout for root and relative chord)
   function chordSection(chord, tones, title) {
+    // keyboard indicator text for anything clicked in this section
+    const label = title === 'Root Chord' ? `Root Chord ${chord.name}` : `Relative Minor Chord ${chord.name}`;
     const heading = document.createElement('div');
     heading.className = 'cd-title';
     heading.textContent = title;
@@ -398,6 +403,7 @@ export function renderChordControls(opts = {}) {
     name.addEventListener('click', () => {
       clearPanelActive();
       showChordOnKeys(tones);
+      piano.setStatus(label);
       audio.playChord(tones.map((t) => t.note), velocity, strumMs); // re-strike from the beginning
     });
 
@@ -424,12 +430,12 @@ export function renderChordControls(opts = {}) {
         btn.style.setProperty('--cd-circle-bg', color);
         btn.style.setProperty('--cd-circle-fg', textOn(color));
       }
-      btn.addEventListener('click', () => playTone(chord, t, btn));
+      btn.addEventListener('click', () => playTone(chord, t, btn, label));
 
       item.append(deg, btn);
       row.append(item);
     }
-    return [heading, name, row, renderOctaves(chord)];
+    return [heading, name, row, renderOctaves(chord, label)];
   }
 
   const clearPanelActive = () =>
@@ -437,7 +443,7 @@ export function renderChordControls(opts = {}) {
 
   // --- octave rows (shared builder, see renderOctaveRows below) -----------------
   // Single tone: play it alone, highlight every key where it occurs in its role color
-  function playTone(chord, t, btn) {
+  function playTone(chord, t, btn, label) {
     clearPanelActive();
     btn.classList.add('is-active');
 
@@ -452,10 +458,11 @@ export function renderChordControls(opts = {}) {
       fill: true,
     })));
     audio.play(t.note);
+    piano.setStatus(`${label} · ${t.spelled} (${t.degree})`);
     emit('chord:tone', { chord: chord.name, note: t.note, spelled: t.spelled, degree: t.degree });
   }
 
-  function renderOctaves(chord) {
+  function renderOctaves(chord, label) {
     return renderOctaveRows({
       piano, audio, velocity, strumMs,
       name: chord.name,
@@ -469,6 +476,7 @@ export function renderChordControls(opts = {}) {
       })),
       onSelect: clearPanelActive,
       emit,
+      statusLabel: label,
     });
   }
 
@@ -506,12 +514,16 @@ export function renderChordControls(opts = {}) {
     audio.stopAll();
     piano.clearChord();
     piano.clearMarks();
+    piano.clearStatus();
     panel.replaceChildren();
     panel.hidden = true;
     relPanel.replaceChildren();
     relPanel.hidden = true;
     emit('chord:clear');
   };
+
+  // A single key played on the keyboard clears every active state shown here
+  document.addEventListener('piano:press', () => clearPanelActive());
 
   // Clicking the same chord again re-strikes it from the beginning
   const select = (chord) => {
@@ -521,6 +533,7 @@ export function renderChordControls(opts = {}) {
 
     const tones = voice(chord);
     showChordOnKeys(tones);
+    piano.setStatus(panelChords(chord).minorSelected ? `Relative Minor Chord ${chord.name}` : `Root Chord ${chord.name}`);
     renderPanel(chord, tones);
     audio.playChord(tones.map((t) => t.note), velocity, strumMs);
 
