@@ -80,6 +80,12 @@ body {
     height: 90px;
 }
 
+.header .feature {
+    display: flex;
+    align-items: center;
+}
+
+
 .header .top-left {}
 .header .top-left .pfp {margin:5px;}
 .header .top-left .title {font-size : 2em;}
