@@ -258,10 +258,11 @@ export async function renderCircleProgressions(opts = {}) {
   const [circleData, progressionData] = await Promise.all([load(dataUrl), load(progressionsUrl)]);
   const circle = createCircle(circleData, progressionData);
 
-  // #root-circle-progressions always shows the major key, #minor-circle-progressions its relative minor.
-  // A minor chord selection (e.g. Am) sets the pair from the minor side (A minor + C major).
-  let majorKey = circle.key('major', 0, 'C');     // default until a chord is selected
-  let minorKey = circle.relativeKey(majorKey);
+  // #root-circle-progressions shows the key of the selected chord (#root-chord-data);
+  // #minor-circle-progressions the key of its relative (#minor-chord-data):
+  //   major chord C  -> C major  + A minor        minor chord Fm -> F minor + A♭ major
+  let rootKey = circle.key('major', 0, 'C');     // default until a chord is selected
+  let relKey = circle.relativeKey(rootKey);
   let currentProg = circle.progression(circle.defaults.major);
 
   const el = (tag, cls, text) => {
@@ -485,7 +486,7 @@ export async function renderCircleProgressions(opts = {}) {
 
   let relChord = null;
   relBadge.addEventListener('click', () => {
-    if (relChord) playChord(relChord, null, relBadge, root.emit, `Relative Minor Chord ${relChord.name}`);
+    if (relChord) playChord(relChord, null, relBadge, root.emit, `${relWord()} Chord ${relChord.name}`);
   });
 
   // --- relative panel: title, key box, static progression label ----------------
@@ -530,7 +531,9 @@ export async function renderCircleProgressions(opts = {}) {
     select.value = currentProg.id;
   }
 
-  const nativeKey = () => (currentProg.mode === 'minor' ? minorKey : majorKey);
+  const nativeKey = () => [rootKey, relKey].find((k) => k.mode === currentProg.mode) ?? rootKey;
+  const relWord = () => (relKey.mode === 'major' ? 'Relative Major' : 'Relative Minor');
+  const tonicRoman = (k) => (k.mode === 'minor' ? 'i' : 'I');
   const progIn = (k) => (currentProg.mode === k.mode ? currentProg : circle.translate(currentProg, k));
   const descIn = (k) => (currentProg.mode === k.mode
     ? currentProg.description || ''
@@ -543,34 +546,35 @@ export async function renderCircleProgressions(opts = {}) {
       pnl.note.hidden = !keyNote;
     }
 
-    // root panel: major key
-    const rootProg = progIn(majorKey);
-    renderKeyBox(root.keyBox, majorKey);
+    // root panel: key of the selected chord
+    const rootProg = progIn(rootKey);
+    renderKeyBox(root.keyBox, rootKey);
     if (rootProgName) rootProgName.textContent = currentProg.name;
-    root.desc.textContent = descIn(majorKey);
-    renderSequence(root, rootProg, renderCards(root, majorKey, rootProg));
+    root.desc.textContent = descIn(rootKey);
+    renderSequence(root, rootProg, renderCards(root, rootKey, rootProg));
 
-    // "Relative Minor:" = exactly the chord in #minor-chord-data
-    relChord = panelMinor ? asBadgeChord(panelMinor, 'i') : { ...circle.tonicChord(minorKey), roman: 'i' };
-    relLabel.textContent = 'Relative Minor:';
+    // "Relative Minor:" / "Relative Major:" = exactly the chord in #minor-chord-data
+    relChord = panelMinor ? asBadgeChord(panelMinor, tonicRoman(relKey)) : { ...circle.tonicChord(relKey), roman: tonicRoman(relKey) };
+    relLabel.textContent = `${relWord()}:`;
     relBadge.textContent = relChord.name;
-    relBadge.setAttribute('aria-label', `Play the relative minor chord ${relChord.name} and highlight it on the keyboard`);
+    relBadge.setAttribute('aria-label', `Play the ${relWord().toLowerCase()} chord ${relChord.name} and highlight it on the keyboard`);
 
     // minor panel: relative minor key
     if (rel) {
-      const minorProg = progIn(minorKey);
-      rel.title.textContent = 'Relative Minor Progression';
-      renderKeyBox(rel.keyBox, minorKey);
+      const minorProg = progIn(relKey);
+      rel.label = `${relWord()} Progression`;          // keyboard indicator for its cards
+      rel.title.textContent = rel.label;
+      renderKeyBox(rel.keyBox, relKey);
       relProgName.textContent = currentProg.name;
       // "Root Chord:" = exactly the chord in #root-chord-data
-      rootChordRef = panelRoot ? asBadgeChord(panelRoot, 'I') : { ...circle.tonicChord(majorKey), roman: 'I' };
+      rootChordRef = panelRoot ? asBadgeChord(panelRoot, tonicRoman(rootKey)) : { ...circle.tonicChord(rootKey), roman: tonicRoman(rootKey) };
       rootBadge.textContent = rootChordRef.name;
       rootBadge.setAttribute('aria-label', `Play the root chord ${rootChordRef.name} and highlight it on the keyboard`);
-      rel.desc.textContent = descIn(minorKey);
-      renderSequence(rel, minorProg, renderCards(rel, minorKey, minorProg));
+      rel.desc.textContent = descIn(relKey);
+      renderSequence(rel, minorProg, renderCards(rel, relKey, minorProg));
     }
 
-    root.emit('progression:change', { key: majorKey.name, relativeKey: minorKey.name, progression: currentProg.id });
+    root.emit('progression:change', { key: rootKey.name, relativeKey: relKey.name, progression: currentProg.id });
   }
 
   // Key a selected chord belongs to.
@@ -599,12 +603,12 @@ export async function renderCircleProgressions(opts = {}) {
     return { mode: circle.familyOf(d.group), tonicPc: d.root, tonicName: d.rootName, note: '' };
   }
 
-  // Set the key pair from a chord root: mode 'major' -> that major key + its relative minor,
-  // mode 'minor' -> that minor key + its relative major.
+  // Set the key pair from a chord root: that key in the root panel, its relative in the other
+  // (mode 'major' -> major key + relative minor, mode 'minor' -> minor key + relative major).
   function setKey(mode, tonicPc, rootName) {
     const k = circle.key(mode, tonicPc, rootName);
-    if (k.mode === 'major') { majorKey = k; minorKey = circle.relativeKey(k); }
-    else { minorKey = k; majorKey = circle.relativeKey(k); }
+    rootKey = k;
+    relKey = circle.relativeKey(k);
     render();
   }
 
@@ -614,7 +618,7 @@ export async function renderCircleProgressions(opts = {}) {
   });
 
   // Follow the chord-data panels: their two chords are used exactly, never recomputed.
-  //   #minor-chord-data chord -> "Relative Minor:" badge + the minor progression's key (same root)
+  //   #minor-chord-data chord -> "Relative Minor:"/"Relative Major:" badge + the relative progression's key (same root)
   //   #root-chord-data chord  -> "Root Chord:" badge
   //   selected chord          -> the root progression's key (home key for diminished chords)
   let panelRoot = null;
@@ -628,8 +632,16 @@ export async function renderCircleProgressions(opts = {}) {
     const home = homeKeyOf(p.selected);
     keyNote = home.note;
     const homeKey = circle.key(home.mode, home.tonicPc, home.tonicName);
-    majorKey = homeKey.mode === 'major' ? homeKey : circle.relativeKey(homeKey);
-    minorKey = panelMinor ? circle.key('minor', panelMinor.root, panelMinor.rootName) : circle.relativeKey(majorKey);
+    if (p.relation === 'major') {
+      // minor-family chord (Fm): its own minor key + the relative major key of #minor-chord-data (A♭)
+      rootKey = homeKey;
+      relKey = panelMinor ? circle.key('major', panelMinor.root, panelMinor.rootName) : circle.relativeKey(homeKey);
+    } else {
+      // major-family / diminished chord: major home key + the minor key of #minor-chord-data
+      // (dim7 belongs to a minor key, so its root panel shows that key's relative major)
+      rootKey = homeKey.mode === 'major' ? homeKey : circle.relativeKey(homeKey);
+      relKey = panelMinor ? circle.key('minor', panelMinor.root, panelMinor.rootName) : circle.relativeKey(rootKey);
+    }
     render();
   }
   const onPanels = (e) => applyPanels(e.detail);
