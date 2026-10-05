@@ -190,10 +190,10 @@ export async function renderCircleProgressions(opts = {}) {
 
   const select = document.createElement('select');
   select.className = 'cc-type cp-select';          // same look as the chord-type dropdown
-  select.setAttribute('aria-label', 'Progression');
 
   const roman = document.createElement('div');
-  roman.className = 'cp-roman';
+  roman.className = 'cp-roman';                    // rounded badge: the chosen sequence
+  roman.setAttribute('aria-label', 'Chosen progression');
 
   const desc = document.createElement('div');
   desc.className = 'cp-desc';
@@ -201,7 +201,15 @@ export async function renderCircleProgressions(opts = {}) {
   const cards = document.createElement('div');
   cards.className = 'row cp-cards';               // Bootstrap grid: one column per card
 
-  head.append(keyLabel, select);
+  // "Choose a progression" label wraps the dropdown (implicit association, no id needed)
+  const choose = document.createElement('label');
+  choose.className = 'cp-choose';
+  const chooseText = document.createElement('span');
+  chooseText.className = 'cp-choose-text';
+  chooseText.textContent = 'Choose a progression';
+  choose.append(chooseText, select);
+
+  head.append(keyLabel, choose);
   wrap.append(head, roman, desc, cards);
   host.append(wrap);
 
