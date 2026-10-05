@@ -8,6 +8,7 @@
   --cp-bg: #55555c;              /* lighter grey than the chord controls */
   --cp-fg: #f2f2f2;
   --cp-muted: #dcdce0;
+  --cp-rule: #8a8a92;            /* light grey dividers in the key box */
   --cp-roman: #6b6b70;
   --cp-active: #3d7be8;
   --cp-gutter: 15px;             /* matches Bootstrap .row gutter (-15px margins) */
@@ -39,22 +40,33 @@
   margin-bottom: 10px;
 }
 
-.cp-key { display: flex; flex-direction: column; }
+.cp-key {
+  display: flex;
+  flex-direction: column;
+  margin-top: 4px;
+  border: 1px solid var(--cc-btn-border, #66666d);   /* same frame as the progression dropdown */
+  border-radius: 8px;
+  background: var(--cc-select-bg, #2b2b2e);          /* same fill as the progression dropdown */
+  overflow: hidden;
+}
 
-/* key/value rows: "Key: D major" / "Signature: 2 ♯ (F♯ C♯)" */
+/* key/value rows: "Key | D major" / "Signature | 2 ♯ (F♯ C♯)" */
 .cp-key-name,
 .cp-key-signature {
   display: flex;
-  align-items: baseline;
-  gap: 8px;
+  align-items: stretch;
   font-size: 16px;
   line-height: 1.4;
 }
-.cp-key-name { margin-top: 8px; }
-.cp-key-signature { margin-top: 4px; }
+.cp-key-name { border-bottom: 1px solid var(--cp-rule); }
+
+.cp-kv-label,
+.cp-kv-value { padding: 8px 12px; }
 
 .cp-kv-label {
-  min-width: 84px;
+  min-width: 104px;
+  border-right: 1px solid var(--cp-rule);
+  text-align: right;
   font-weight: 700;
   color: var(--cp-muted);
 }
@@ -133,4 +145,5 @@
 @media (max-width: 430px) {
   .cp-key-name,
   .cp-key-signature { font-size: 15px; }
+  .cp-kv-label { min-width: 92px; }
 }
