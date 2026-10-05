@@ -89,7 +89,10 @@ body {
 
 .header .top-left {}
 .header .top-left .pfp {margin:5px;}
-.header .top-left .title {font-size : 2em;}
+.header .top-left .title {
+    font-size : 2em;
+    margin-top: 10px;
+}
 .header .top-left .subtitle {
     font-size : 1em;
     text-align: right;

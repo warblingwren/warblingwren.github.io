@@ -170,6 +170,35 @@ export function renderOctaveRows(o) {
   return wrapEl;
 }
 
+// Relative chord shown under the root chord in #chord-data.
+// Major-family chords -> relative minor (root a minor 3rd down); minor-family -> relative major.
+// Diminished family has no conventional relative -> none.
+const RELATIVE = {
+  major: 'minor', maj7: 'min7', dom7: 'min7', maj6: 'min7', aug: 'minor', aug7: 'min7', sus2: 'minor', sus4: 'minor',
+  minor: 'major', min7: 'maj7', min6: 'major',
+};
+const MINOR_FAMILY = new Set(['minor', 'min7', 'min6']);
+
+export function relativeChord(chord) {
+  const targetId = RELATIVE[chord.group];
+  if (!targetId) return null;
+  const group = CHORD_SECTIONS.flatMap((sec) => sec.groups).find((g) => g.id === targetId);
+  const toMajor = MINOR_FAMILY.has(chord.group);
+  // relative minor: 9 semitones / 5 letters up (= minor 3rd down); relative major: 3 semitones / 2 letters up
+  const rootName = toMajor ? spellTone(chord.rootName, 3, 2) : spellTone(chord.rootName, 9, 5);
+  return {
+    title: toMajor ? 'Relative Major' : 'Relative Minor',
+    chord: {
+      name: `${rootName}${group.suffix}`,
+      rootName,
+      root: (chord.root + (toMajor ? 3 : 9)) % 12,
+      group: group.id,
+      quality: group.quality,
+      intervals: group.intervals,
+    },
+  };
+}
+
 const getDiv = (id) => {
   // DOM-clobbering guard: must be a real <div>
   const el = id ? document.getElementById(id) : null;
@@ -272,12 +301,24 @@ export function renderChordControls(opts = {}) {
     panel.replaceChildren();
     panel.hidden = false;
 
-    // Panel title: progressions below are built on this chord
+    panel.append(...chordSection(chord, tones, 'Root Chord'));
+
+    const rel = relativeChord(chord);
+    if (rel) {
+      const box = document.createElement('div');
+      box.className = 'cd-relative';
+      box.append(...chordSection(rel.chord, voice(rel.chord), rel.title));
+      panel.append(box);
+    }
+  }
+
+  // Title + chord badge + tone circles + octave rows (same layout for root and relative chord)
+  function chordSection(chord, tones, title) {
     const heading = document.createElement('div');
     heading.className = 'cd-title';
-    heading.textContent = 'Root Chord';
+    heading.textContent = title;
 
-    // Chord name badge: click re-highlights the whole chord on the keyboard
+    // Chord name badge: click plays and re-highlights the whole chord on the keyboard
     const name = document.createElement('button');
     name.type = 'button';
     name.className = 'cd-name';
@@ -317,7 +358,7 @@ export function renderChordControls(opts = {}) {
       item.append(deg, btn);
       row.append(item);
     }
-    panel.append(heading, name, row, renderOctaves(chord));
+    return [heading, name, row, renderOctaves(chord)];
   }
 
   const clearPanelActive = () =>

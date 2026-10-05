@@ -25,6 +25,8 @@
   --cd-name-fg: #ffffff;
   --cd-name-hover: #3a3a3e;
   --cd-margin-top: 28px;
+  --cd-relative-bg: #e0f7fa;     /* Material Cyan 50 */
+  --cd-relative-border: #b2ebf2; /* Material Cyan 100 */
   --cd-circle: 52px;
 }
 
@@ -276,6 +278,16 @@
 .cd-octave-note:hover .cd-octave-dot { transform: scale(1.08); }
 .cd-octave-note.is-active .cd-octave-dot { transform: scale(1.12); box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--cc-focus); }
 
+/* relative minor / major under the root chord — Material Cyan 50 */
+.cd-relative {
+  margin-top: 18px;
+  padding: 14px 16px 18px;
+  border: 1px solid var(--cd-relative-border);
+  border-radius: 10px;
+  background: var(--cd-relative-bg);
+}
+.cd-relative .cd-octaves { border-top-color: var(--cd-relative-border); }
+
 /* =============================================================================
    BREAKPOINTS — keep at end of file
    ========================================================================== */
@@ -288,6 +300,7 @@
   .cc-group { padding: 10px 8px; border-radius: 8px; }
   .cc-type { width: 100%; }
   .cd { padding: 12px; border-radius: 8px; }
+  .cd-relative { padding: 12px; border-radius: 8px; }
   :root { --cd-margin-top: 20px; }
 }
 

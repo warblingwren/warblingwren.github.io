@@ -12,7 +12,7 @@
   --cp-roman: #6b6b70;
   --cp-active: #3d7be8;
   --cp-gutter: 15px;             /* matches Bootstrap .row gutter (-15px margins) */
-  --cp-indent: 12px;             /* left indent for the sequence badge + description */
+  --cp-indent: 0px;              /* sequence badge + description align with the key box */
 
   /* compact chord-data card */
   --cp-circle: 44px;
