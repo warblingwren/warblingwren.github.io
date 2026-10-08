@@ -24,7 +24,7 @@ const NOTE_RE = /^([A-G])(#?)([0-8])$/;
 const DEGREE_SHADES = ['900', '800', '700', '600', '500', '400', '300'];
 const HEX_RE = /^#[0-9a-f]{6}$/i;
 // SYNC: --gf-css-version in www/css/guitar.css. Bump both together when the markup/CSS contract changes.
-const CSS_VERSION = 3;
+const CSS_VERSION = 4;
 const SEMITONE = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
 const NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -105,13 +105,13 @@ function validateTunings(json) {
  *                                    (optional; without it the same default families are read from colors.js)
  * @param {object}  opts.progressions API returned by renderCircleProgressions (optional; its 'progression:change'
  *                                    events are also picked up from document)
- * @param {string}  opts.overlay      initial progression overlay: 'none' | 'root' | 'relative' (default 'none')
+ * @param {string}  opts.overlay      initial progression overlay: 'root' | 'relative' (default 'root')
  * @returns {Promise<object|null>} API (null if the container is missing):
  *   element, tunings(), tuning(), setTuning(name), noteAt(string, fret),
  *   positionsOf(noteOrPitchClass), range(), shiftFrets(dir), showFrets(fromFret),
- *   setOverlay(panel), overlay(), isCompact(), destroy()
+ *   setOverlay(panel), overlay(), focusChord(name|null), isCompact(), destroy()
  * Emits on the container (bubbling): 'guitar:tuning'   detail {name, alias, strings:[{string, note}]}
- *                                    'guitar:overlay'  detail {panel, key, notes:[spelled]}
+ *                                    'guitar:overlay'  detail {panel, key, chord, notes:[spelled]}
  *                                    'guitar:rerender' detail {from, to, compact}
  */
 export async function renderGuitarFretboard(opts = {}, legacyOpts = {}) {
@@ -131,7 +131,7 @@ export async function renderGuitarFretboard(opts = {}, legacyOpts = {}) {
     taper = 0.5,
     progressions = null,
     piano = null,
-    overlay: startOverlay = 'none',
+    overlay: startOverlay = 'root',
   } = opts;
 
   const container = await waitForHost(target);
@@ -170,7 +170,7 @@ export async function renderGuitarFretboard(opts = {}, legacyOpts = {}) {
   container.classList.add('gf');
   const emit = (type, detail) => container.dispatchEvent(new CustomEvent(type, { bubbles: true, detail }));
 
-  // --- static chrome: [status .... progression ▾ tuning ▾] / [‹ Frets 1–12 ›] / board ----
+  // --- static chrome: [status · All C G Am … · progression ▾ tuning ▾] / [‹ Frets 1–12 ›] / board ----
   const top = document.createElement('div');
   top.className = 'gf-top';
   const status = document.createElement('div');
@@ -189,11 +189,11 @@ export async function renderGuitarFretboard(opts = {}, legacyOpts = {}) {
   select.value = current.name;
   select.addEventListener('change', () => api.setTuning(select.value));
 
-  // Progression overlay: None / Root progression – C major / Relative progression – A minor
+  // Progression overlay: Root – C major / Relative – A minor (always one of the two)
   const progSelect = document.createElement('select');
   progSelect.className = 'gf-select gf-prog';
   progSelect.setAttribute('aria-label', 'Show progression notes on the fretboard');
-  const PANELS = ['none', 'root', 'relative'];
+  const PANELS = ['root', 'relative'];
   for (const v of PANELS) {
     const opt = document.createElement('option');
     opt.value = v;
@@ -201,10 +201,16 @@ export async function renderGuitarFretboard(opts = {}, legacyOpts = {}) {
   }
   progSelect.addEventListener('change', () => api.setOverlay(progSelect.value));
 
+  // Chord badges: All + each chord of the progression once; a chord shows only its tones
+  const badges = document.createElement('div');
+  badges.className = 'gf-badges';
+  badges.setAttribute('role', 'group');
+  badges.setAttribute('aria-label', 'Show one chord of the progression');
+
   const selects = document.createElement('div');
   selects.className = 'gf-selects';
   selects.append(progSelect, select);
-  top.append(status, selects);
+  top.append(status, badges, selects);
 
   const controls = document.createElement('div');
   controls.className = 'gf-controls';
@@ -431,14 +437,38 @@ export async function renderGuitarFretboard(opts = {}, legacyOpts = {}) {
   // Source: the progression panels' own chords (circle-o-5ths.js state / 'progression:change'),
   // never recomputed here.
   let progState = progressions?.state?.() ?? null;
-  let overlayPanel = PANELS.includes(startOverlay) ? startOverlay : 'none';
+  let overlayPanel = PANELS.includes(startOverlay) ? startOverlay : 'root';
+  let focusName = null;                              // chord badge shown alone (null = All)
   const LETTERS = 'CDEFGAB';
   // scale degree 1–7 from letter names, so raised/lowered notes keep their degree (G♯ in A minor = 7)
   const degreeOf = (spelled, tonic) => ((LETTERS.indexOf(spelled[0]) - LETTERS.indexOf(tonic[0]) + 7) % 7) + 1;
 
+  const ROLE_NAMES = ['root', '3rd', '5th', '7th'];
+  const panelState = () => progState?.[overlayPanel] ?? null;
+  const uniqueChords = (st) => {
+    const seen = new Map();
+    for (const c of st?.chords ?? []) if (c && typeof c.name === 'string' && !seen.has(c.name)) seen.set(c.name, c);
+    return [...seen.values()];
+  };
+
   function overlayNotes() {
-    const st = overlayPanel !== 'none' ? progState?.[overlayPanel] : null;
+    const st = panelState();
     if (!st || !Array.isArray(st.chords)) return null;
+
+    // One chord: only its tones, shaded by chord role like the piano (root 900, 3rd 700, 5th 500, 7th 300
+    // = scale shades 1/3/5/7), white ring on the chord's root
+    const chord = focusName ? uniqueChords(st).find((c) => c.name === focusName) : null;
+    if (chord) {
+      const notes = new Map();
+      (chord.tones ?? []).forEach((t, i) => {
+        if (!Number.isInteger(t.pc) || typeof t.spelled !== 'string' || notes.has(t.pc)) return;
+        const rank = Math.min(Number.isInteger(t.rank) ? t.rank : i, 3);
+        notes.set(t.pc, { pc: t.pc, spelled: t.spelled, degree: 1 + 2 * rank, rank, interval: t.interval ?? '', chords: [chord.name] });
+      });
+      const rootTone = (chord.tones ?? []).find((t, i) => (Number.isInteger(t.rank) ? t.rank : i) === 0);
+      return { st, notes, ringPc: rootTone?.pc ?? null, chord };
+    }
+
     const notes = new Map();                         // pc -> {pc, spelled, degree, chords}
     for (const c of st.chords) {
       for (const t of c.tones ?? []) {
@@ -453,7 +483,7 @@ export async function renderGuitarFretboard(opts = {}, legacyOpts = {}) {
     if (Number.isInteger(ringPc) && !notes.has(ringPc) && typeof st.rootChord.rootName === 'string') {
       notes.set(ringPc, { pc: ringPc, spelled: st.rootChord.rootName, degree: degreeOf(st.rootChord.rootName, st.key.tonic), chords: [] });
     }
-    return { st, notes, ringPc };
+    return { st, notes, ringPc, chord: null };
   }
 
   // octave -> shade lookup, taken from the piano when given so the two always match
@@ -482,7 +512,9 @@ export async function renderGuitarFretboard(opts = {}, legacyOpts = {}) {
     const title = svgEl('title');
     const where = `${pretty(midiToNote(s.midi + fret))}, ${fret === 0 ? `string ${s.string} open` : `string ${s.string}, fret ${fret}`}`;
     const inChords = n.chords.length ? ` · in ${n.chords.join(', ')}` : '';
-    title.textContent = `${n.spelled} (degree ${n.degree}${root ? ', root' : ''}) · ${where}${inChords}`;
+    title.textContent = ov.chord
+      ? `${n.spelled} (${ROLE_NAMES[n.rank]} of ${ov.chord.name}${n.interval ? `, ${n.interval}` : ''}) · ${where}`
+      : `${n.spelled} (degree ${n.degree}${root ? ', root' : ''}) · ${where}${inChords}`;
     const c = svgEl('circle', { cx: cx.toFixed(2), cy: cy.toFixed(2), r: r.toFixed(2) }, 'gf-dot-c');
     const t = svgEl('text', {
       x: cx.toFixed(2), y: cy.toFixed(2), 'text-anchor': 'middle', 'dominant-baseline': 'central',
@@ -494,16 +526,42 @@ export async function renderGuitarFretboard(opts = {}, legacyOpts = {}) {
   }
 
   function refreshProgOptions() {
-    const label = { none: 'No progression', root: 'Root', relative: 'Relative' };
+    const label = { root: 'Root', relative: 'Relative' };
     [...progSelect.options].forEach((o) => {
-      const st = o.value !== 'none' ? progState?.[o.value] : null;
-      o.textContent = o.value === 'none' ? label.none : st ? `${label[o.value]} – ${st.key.name}` : `${label[o.value]} progression`;
+      const st = progState?.[o.value];
+      o.textContent = st ? `${label[o.value]} – ${st.key.name}` : `${label[o.value]} progression`;
       o.title = st ? `${st.title} – ${st.key.name}` : '';
-      o.disabled = o.value !== 'none' && !st;
     });
-    if (overlayPanel !== 'none' && !progState?.[overlayPanel]) overlayPanel = 'none';
+    // no relative panel on the page -> fall back to the root progression
+    if (progState && !progState[overlayPanel]) overlayPanel = progState.root ? 'root' : overlayPanel;
     progSelect.value = overlayPanel;
   }
+
+  // Chord badges (same look as the progression panels' sequence badges)
+  function renderBadges() {
+    const chords = uniqueChords(panelState());
+    if (focusName && !chords.some((c) => c.name === focusName)) focusName = null;   // chord left the progression
+    const mk = (text, name, aria) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = `gf-badge${name === null ? ' gf-badge--all' : ''}${focusName === name ? ' is-active' : ''}`;
+      b.textContent = text;
+      b.setAttribute('aria-pressed', String(focusName === name));
+      b.setAttribute('aria-label', aria);
+      b.addEventListener('click', () => api.focusChord(name === null || focusName === name ? null : name));
+      return b;
+    };
+    badges.replaceChildren(...(chords.length
+      ? [mk('All', null, 'Show every tone of the progression'), ...chords.map((c) => mk(c.name, c.name, `Show only the tones of ${c.name}`))]
+      : []));
+    badges.hidden = !chords.length;
+  }
+
+  const emitOverlay = () => {
+    const ov = overlayNotes();
+    emit('guitar:overlay', { panel: overlayPanel, key: ov?.st.key.name ?? null, chord: ov?.chord?.name ?? null,
+      notes: ov ? [...ov.notes.values()].map((n) => n.spelled) : [] });
+  };
 
   let warnedOldEvent = false;
   const onProgression = (e) => {
@@ -515,8 +573,12 @@ export async function renderGuitarFretboard(opts = {}, legacyOpts = {}) {
       }
       return;
     }
+    const before = uniqueChords(panelState()).map((c) => c.name).join('|');
     progState = { root: d.root ?? null, relative: d.relative ?? null };
     refreshProgOptions();
+    // a new chord set (other key or progression) starts again from All
+    if (uniqueChords(panelState()).map((c) => c.name).join('|') !== before) focusName = null;
+    renderBadges();
     render();
   };
   document.addEventListener('progression:change', onProgression);
@@ -529,7 +591,7 @@ export async function renderGuitarFretboard(opts = {}, legacyOpts = {}) {
     prevBtn.disabled = L.from <= 0;
     nextBtn.disabled = L.to >= maxFrets;
     rangeEl.textContent = `Frets ${L.from + 1} – ${L.to}`;
-    const st = overlayPanel !== 'none' ? progState?.[overlayPanel] : null;
+    const st = panelState();
     if (st) {
       status.textContent = `${st.key.name} · ${st.progression.name}`;
       status.title = `${st.title}: ${st.chords.map((c) => c.name).join(' – ')}`;
@@ -608,20 +670,31 @@ export async function renderGuitarFretboard(opts = {}, legacyOpts = {}) {
       winStart = clampStart(Math.floor(fromFret) || 0);
       if (mql.matches) render();
     },
-    /** Progression overlay: 'none' | 'root' | 'relative'. */
+    /** Progression overlay: 'root' | 'relative' (always one of the two). */
     setOverlay(panel) {
-      const next = PANELS.includes(panel) ? panel : 'none';
-      if (next !== 'none' && !progState?.[next]) { console.warn(`guitar-fretboard: no ${next} progression to show yet`); return false; }
-      overlayPanel = next;
-      progSelect.value = next;
+      if (!PANELS.includes(panel)) { console.warn(`guitar-fretboard: overlay must be 'root' or 'relative', not "${panel}"`); return false; }
+      if (progState && !progState[panel]) { console.warn(`guitar-fretboard: no ${panel} progression on the page`); return false; }
+      overlayPanel = panel;
+      focusName = null;                              // other panel, other chords: back to All
+      progSelect.value = panel;
+      renderBadges();
       render();
-      const ov = overlayNotes();
-      emit('guitar:overlay', { panel: next, key: ov?.st.key.name ?? null, notes: ov ? [...ov.notes.values()].map((n) => n.spelled) : [] });
+      emitOverlay();
       return true;
+    },
+    /** Show only one chord's tones (its name as on the badge), or null for All. */
+    focusChord(name) {
+      const next = name && uniqueChords(panelState()).some((c) => c.name === name) ? name : null;
+      if (name && !next) console.warn(`guitar-fretboard: "${name}" is not in the ${overlayPanel} progression`);
+      focusName = next;
+      renderBadges();
+      render();
+      emitOverlay();
+      return next;
     },
     overlay() {
       const ov = overlayNotes();
-      return { panel: ov ? overlayPanel : 'none', key: ov?.st.key.name ?? null, ringPc: ov?.ringPc ?? null,
+      return { panel: overlayPanel, key: ov?.st.key.name ?? null, chord: ov?.chord?.name ?? null, ringPc: ov?.ringPc ?? null,
         notes: ov ? [...ov.notes.values()].map((n) => ({ ...n, chords: [...n.chords] })) : [] };
     },
     isCompact: () => mql.matches,
@@ -636,6 +709,7 @@ export async function renderGuitarFretboard(opts = {}, legacyOpts = {}) {
   };
 
   refreshProgOptions();
+  renderBadges();
   render();
   lastWidth = Math.floor(stage.clientWidth);
   ro.observe(stage);

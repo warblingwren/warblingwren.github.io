@@ -11,6 +11,12 @@
   --gf-control-border: #66666d;
   --gf-focus: #3d7be8;
 
+  /* chord badges — SYNC: .cp-seq-badge in circle-o-5ths.css (same dark pill) */
+  --gf-badge-bg: #2b2b2e;
+  --gf-badge-border: #66666d;
+  --gf-badge-fg: #f2f2f2;
+  --gf-badge-active: #3d7be8;
+
   /* fingerboard: rosewood, cream binding, nickel frets, bone nut, pearl inlays */
   --gf-wood: #4a2a1a;
   --gf-wood-edge: #2a170d;
@@ -50,7 +56,7 @@
   --gf-root-ring: #ffffff;        /* root chord's root note */
 
   /* SYNC: CSS_VERSION in www/js/guitar.js — guitar.js warns in the console if they differ */
-  --gf-css-version: 3;
+  --gf-css-version: 4;
 
   /* geometry read by guitar.js */
   --gf-string-gap: 30px;          /* string spacing (board height = 6 × gap) */
@@ -69,9 +75,10 @@
   text-align: left;               /* ignore page-level centring */
 }
 
-/* --- top row: status (left) + progression and tuning dropdowns (upper right) ----- */
+/* --- top row: status · chord badges · progression and tuning dropdowns (upper right) --- */
 .gf-top {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
@@ -79,7 +86,7 @@
 }
 
 .gf-status {
-  flex: 1 1 auto;
+  flex: 0 1 auto;
   min-width: 0;
   font-size: 14px;
   font-weight: 700;
@@ -89,11 +96,44 @@
   text-overflow: ellipsis;
 }
 
+.gf-badges {
+  display: flex;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.gf-badges[hidden] { display: none; }
+
+.gf-badge {
+  appearance: none;
+  -webkit-appearance: none;
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--gf-badge-border);
+  border-radius: 22px;
+  background: var(--gf-badge-bg);
+  color: var(--gf-badge-fg);
+  font: inherit;
+  font-size: 16px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.gf-badge:hover { border-color: var(--gf-badge-fg); }
+.gf-badge:focus-visible { outline: 3px solid var(--gf-focus); outline-offset: 2px; }
+.gf-badge.is-active { box-shadow: 0 0 0 3px var(--gf-badge-active); }
+.gf-badge--all { font-size: 14px; letter-spacing: 0.02em; }
+
 .gf-selects {
   display: flex;
   flex: 0 1 auto;
   gap: 8px;
   min-width: 0;
+  margin-left: auto;              /* dropdowns stay at the upper right */
 }
 
 .gf-select,
@@ -214,13 +254,15 @@
   .gf { padding: 8px 6px 4px; border-radius: 8px; }
   .gf-top { flex-wrap: wrap; }
   .gf-status { flex: 1 1 100%; }
-  .gf-selects { flex: 1 1 100%; }
+  .gf-badges { flex: 1 1 100%; }
+  .gf-selects { flex: 1 1 100%; margin-left: 0; }
   .gf-select,
   .gf-tuning { flex: 1 1 0; }
 }
 
 @media (max-width: 430px) {
   .gf-status { font-size: 13px; }
+  .gf-badge { padding: 0 12px; font-size: 15px; }
   .gf-selects { flex-direction: column; }            /* stack: both dropdowns full width */
   .gf-select,
   .gf-tuning { width: 100%; font-size: 14px; }

@@ -218,7 +218,7 @@ const sigText = (s) => (s.count === 0 ? 'none (no sharps or flats)'
  *   state(): the chords shown in both panels (same object as 'progression:change' detail.root / .relative)  null if the root container is missing
  * Emits (bubbling): 'progression:change' {key, relativeKey, progression, root, relative}
  *                     root / relative = {panel, title, key:{name, mode, tonic, tonicPc}, progression:{id, name},
- *                                        rootChord:{name, rootName, rootPc}, chords:[{name, roman, tones:[{pc, spelled}]}]}
+ *                                        rootChord:{name, rootName, rootPc}, chords:[{name, roman, tones:[{pc, spelled, rank, interval}]}]}
  *                   'progression:chord' {roman, name, notes} | 'progression:tone' {chord, note, spelled, degree}
  */
 export async function renderCircleProgressions(opts = {}) {
@@ -643,7 +643,8 @@ export async function renderCircleProgressions(opts = {}) {
     key: { name: k.name, mode: k.mode, tonic: k.tonic, tonicPc: k.tonicPc },
     progression: { id: currentProg.id, name: currentProg.name },
     rootChord: { name: ring.name, rootName: ring.rootName, rootPc: ring.rootPc },
-    chords: chords.map((c) => ({ name: c.name, roman: c.roman, tones: c.tones.map((t) => ({ pc: t.pc, spelled: t.spelled })) })),
+    chords: chords.map((c) => ({ name: c.name, roman: c.roman,
+      tones: c.tones.map((t) => ({ pc: t.pc, spelled: t.spelled, rank: t.rank, interval: t.degree })) })),   // rank 0 = chord root
   });
   const asBadgeChord = (c, roman) => ({ name: c.name, rootName: c.rootName, rootPc: c.root, tones: c.tones, roman });
 
