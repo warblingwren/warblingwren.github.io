@@ -214,8 +214,11 @@ const sigText = (s) => (s.count === 0 ? 'none (no sharps or flats)'
  * @param {number} opts.octave         octave of each progression chord's root (default 4)
  * @param {number} opts.velocity       chord volume 0–1 (default 0.7)
  * @param {number} opts.strumMs        delay between chord tones (default 0)
- * @returns {Promise<{circle, setKey, select, element, relativeElement, selectorElement, destroy}|null>}  null if the root container is missing
- * Emits (bubbling): 'progression:change' {key, relativeKey, progression}
+ * @returns {Promise<{circle, setKey, select, state, element, relativeElement, selectorElement, destroy}|null>}
+ *   state(): the chords shown in both panels (same object as 'progression:change' detail.root / .relative)  null if the root container is missing
+ * Emits (bubbling): 'progression:change' {key, relativeKey, progression, root, relative}
+ *                     root / relative = {panel, title, key:{name, mode, tonic, tonicPc}, progression:{id, name},
+ *                                        rootChord:{name, rootName, rootPc}, chords:[{name, roman, tones:[{pc, spelled}]}]}
  *                   'progression:chord' {roman, name, notes} | 'progression:tone' {chord, note, spelled, degree}
  */
 export async function renderCircleProgressions(opts = {}) {
@@ -547,11 +550,13 @@ export async function renderCircleProgressions(opts = {}) {
     }
 
     // root panel: key of the selected chord
+    let relItems = null;
     const rootProg = progIn(rootKey);
     renderKeyBox(root.keyBox, rootKey);
     if (rootProgName) rootProgName.textContent = currentProg.name;
     root.desc.textContent = descIn(rootKey);
-    renderSequence(root, rootProg, renderCards(root, rootKey, rootProg));
+    const rootItems = renderCards(root, rootKey, rootProg);
+    renderSequence(root, rootProg, rootItems);
 
     // "Relative Minor:" / "Relative Major:" = exactly the chord in #minor-chord-data
     relChord = panelMinor ? asBadgeChord(panelMinor, tonicRoman(relKey)) : { ...circle.tonicChord(relKey), roman: tonicRoman(relKey) };
@@ -571,10 +576,18 @@ export async function renderCircleProgressions(opts = {}) {
       rootBadge.textContent = rootChordRef.name;
       rootBadge.setAttribute('aria-label', `Play the root chord ${rootChordRef.name} and highlight it on the keyboard`);
       rel.desc.textContent = descIn(relKey);
-      renderSequence(rel, minorProg, renderCards(rel, relKey, minorProg));
+      relItems = renderCards(rel, relKey, minorProg);
+      renderSequence(rel, minorProg, relItems);
     }
 
-    root.emit('progression:change', { key: rootKey.name, relativeKey: relKey.name, progression: currentProg.id });
+    // Snapshot of exactly what the panels show (read by the guitar fretboard overlay)
+    const rootRing = panelRoot ? asBadgeChord(panelRoot, tonicRoman(rootKey)) : { ...circle.tonicChord(rootKey) };
+    lastState = {
+      root: snapshot('root', root.label, rootKey, rootItems.map((it) => it.chord), rootRing),
+      relative: snapshot('relative', `${relWord()} Progression`, relKey,
+        relItems ? relItems.map((it) => it.chord) : circle.resolve(relKey, progIn(relKey)), relChord),
+    };
+    root.emit('progression:change', { key: rootKey.name, relativeKey: relKey.name, progression: currentProg.id, ...lastState });
   }
 
   // Key a selected chord belongs to.
@@ -623,6 +636,15 @@ export async function renderCircleProgressions(opts = {}) {
   //   selected chord          -> the root progression's key (home key for diminished chords)
   let panelRoot = null;
   let panelMinor = null;
+  let lastState = null;
+  const snapshot = (panel, title, k, chords, ring) => ({
+    panel,
+    title,
+    key: { name: k.name, mode: k.mode, tonic: k.tonic, tonicPc: k.tonicPc },
+    progression: { id: currentProg.id, name: currentProg.name },
+    rootChord: { name: ring.name, rootName: ring.rootName, rootPc: ring.rootPc },
+    chords: chords.map((c) => ({ name: c.name, roman: c.roman, tones: c.tones.map((t) => ({ pc: t.pc, spelled: t.spelled })) })),
+  });
   const asBadgeChord = (c, roman) => ({ name: c.name, rootName: c.rootName, rootPc: c.root, tones: c.tones, roman });
 
   function applyPanels(p) {
@@ -660,6 +682,7 @@ export async function renderCircleProgressions(opts = {}) {
     selectorElement: selector,
     circle,
     setKey,
+    state: () => lastState,
     select: (id) => {
       const p = circle.progression(id);
       if (p) { currentProg = p; select.value = id; render(); }

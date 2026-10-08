@@ -48,10 +48,11 @@ const progressions = await renderCircleProgressions({
 });
 
 const guitar = await renderGuitarFretboard({ 
-	target: 'guitar-fretboard', 
-	dataUrl: 'DATA/guitar_tuning.json' 
+  target: 'guitar-fretboard', 
+  dataUrl: 'DATA/guitar_tuning.json', 
+  piano, 
+  progressions 
 });
-
 
 /*
 const el = document.getElementById('piano-keyboard');
