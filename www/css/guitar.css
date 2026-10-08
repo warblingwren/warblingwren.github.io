@@ -1,0 +1,178 @@
+/* =============================================================================
+   guitar.css — guitar fretboard (#guitar-fretboard), drawn by www/js/guitar.js
+   ========================================================================== */
+
+:root {
+  /* frame + controls (same family as the piano frame) */
+  --gf-frame: #2b2b2e;
+  --gf-fg: #f2f2f2;
+  --gf-muted: #bdbdc2;
+  --gf-control-bg: #3a3a3e;
+  --gf-control-border: #66666d;
+  --gf-focus: #3d7be8;
+
+  /* fingerboard: rosewood, cream binding, nickel frets, bone nut, pearl inlays */
+  --gf-wood: #4a2a1a;
+  --gf-wood-edge: #2a170d;
+  --gf-binding: #efe6d2;
+  --gf-fret-light: #f7f7f8;
+  --gf-fret-dark: #8b8e94;
+  --gf-nut: #f6eedc;
+  --gf-nut-shade: #c9bb98;
+  --gf-pearl: #ffffff;
+  --gf-pearl-mid: #ede8dc;
+  --gf-pearl-shade: #c9c1ad;
+
+  /* strings */
+  --gf-string-plain: #dcdde0;
+  --gf-string-wound: #c4ab7f;
+  --gf-winding: rgba(60, 42, 20, 0.55);
+  --gf-string-hi: rgba(255, 255, 255, 0.75);
+  --gf-string-shadow: rgba(0, 0, 0, 0.5);
+
+  /* open-string labels + fret numbers */
+  --gf-open-bg: #3a3a3e;
+  --gf-open-fg: #f2f2f2;
+  --gf-num: #8f8f96;
+  --gf-num-strong: #f2f2f2;
+
+  /* geometry read by guitar.js */
+  --gf-string-gap: 30px;          /* string spacing (board height = 6 × gap) */
+  --gf-open-col: 40px;            /* open-string column left of the nut */
+}
+
+.gf {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  padding: 10px 10px 6px;
+  border-radius: 10px;
+  background: var(--gf-frame);
+  color: var(--gf-fg);
+  box-sizing: border-box;
+  text-align: left;               /* ignore page-level centring */
+}
+
+/* --- top row: tuning summary (left) + tuning dropdown (upper right) ------------ */
+.gf-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.gf-status {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--gf-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gf-tuning {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 100%;
+  min-height: 44px;
+  padding: 0 40px 0 12px;
+  border: 1px solid var(--gf-control-border);
+  border-radius: 8px;
+  background-color: var(--gf-control-bg);
+  /* chevron: inline SVG data URI (no external request) */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23f2f2f2' stroke-width='2'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  color: var(--gf-fg);
+  font: inherit;
+  font-size: 15px;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+}
+.gf-tuning:hover { border-color: var(--gf-fg); }
+.gf-tuning:focus-visible { outline: 3px solid var(--gf-focus); outline-offset: 2px; }
+.gf-tuning option { background: var(--gf-control-bg); color: var(--gf-fg); }
+
+/* --- fret window controls (narrow screens only) ------------------------------- */
+.gf-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.gf-controls[hidden] { display: none; }
+
+.gf-shift {
+  appearance: none;
+  -webkit-appearance: none;
+  min-width: 44px;
+  min-height: 44px;
+  border: 1px solid var(--gf-control-border);
+  border-radius: 8px;
+  background: var(--gf-control-bg);
+  color: var(--gf-fg);
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.gf-shift:disabled { opacity: 0.35; cursor: default; }
+.gf-shift:focus-visible { outline: 3px solid var(--gf-focus); outline-offset: 2px; }
+
+.gf-range {
+  color: #ddd;
+  font-size: 14px;
+  letter-spacing: 0.04em;
+}
+
+/* --- the drawing --------------------------------------------------------------- */
+.gf-stage { width: 100%; min-width: 0; overflow: hidden; }
+.gf-svg { display: block; }
+
+.gf-c-wood { stop-color: var(--gf-wood); }
+.gf-c-wood-edge { stop-color: var(--gf-wood-edge); }
+.gf-c-fret-light { stop-color: var(--gf-fret-light); }
+.gf-c-fret-dark { stop-color: var(--gf-fret-dark); }
+.gf-c-nut { stop-color: var(--gf-nut); }
+.gf-c-nut-shade { stop-color: var(--gf-nut-shade); }
+.gf-c-pearl { stop-color: var(--gf-pearl); }
+.gf-c-pearl-mid { stop-color: var(--gf-pearl-mid); }
+.gf-c-pearl-shade { stop-color: var(--gf-pearl-shade); }
+
+.gf-grain { opacity: 0.55; mix-blend-mode: multiply; pointer-events: none; }
+.gf-binding { stroke: var(--gf-binding); stroke-width: 2.5; }
+.gf-inlay { stroke: rgba(0, 0, 0, 0.35); stroke-width: 0.75; }
+.gf-fret-shadow { fill: rgba(0, 0, 0, 0.28); }
+.gf-nut { stroke: rgba(0, 0, 0, 0.25); stroke-width: 0.75; }
+
+.gf-string { stroke: var(--gf-string-plain); stroke-linecap: round; }
+.gf-string--wound { stroke: var(--gf-string-wound); }
+.gf-winding { stroke: var(--gf-winding); }
+.gf-string-hi { stroke: var(--gf-string-hi); }
+.gf-string-shadow { stroke: var(--gf-string-shadow); }
+
+.gf-open-dot { fill: var(--gf-open-bg); stroke: rgba(255, 255, 255, 0.25); stroke-width: 1; }
+.gf-open-text { fill: var(--gf-open-fg); font-size: 12px; font-weight: 700; }
+
+.gf-num { fill: var(--gf-num); font-size: 11px; font-weight: 600; }
+.gf-num--inlay { fill: var(--gf-num-strong); font-weight: 700; }
+
+/* =============================================================================
+   BREAKPOINTS — keep at end of file
+   ========================================================================== */
+
+/* SYNC POINT: must match opts.mobileQuery in www/js/guitar.js */
+@media (max-width: 768px) {
+  :root { --gf-string-gap: 34px; --gf-open-col: 36px; }
+  .gf { padding: 8px 6px 4px; border-radius: 8px; }
+}
+
+@media (max-width: 430px) {
+  .gf-status { font-size: 13px; }
+  .gf-tuning { font-size: 14px; padding-right: 34px; background-position: right 10px center; }
+}

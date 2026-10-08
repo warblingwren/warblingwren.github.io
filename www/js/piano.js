@@ -111,8 +111,8 @@ function sliceRange(all, from, to) {
 
 /**
  * Render a piano keyboard.
- * @param {string|HTMLDivElement} target  container id or element (default 'piano-keyboard')
  * @param {object}  opts
+ * @param {string|HTMLDivElement} opts.target  container id or element (default 'piano-keyboard')
  * @param {string}  opts.dataUrl        layout JSON url
  * @param {object}  opts.layout         pre-loaded layout JSON (skips fetch)
  * @param {string}  opts.from           desktop lowest note (default 'A0')
@@ -140,7 +140,12 @@ function sliceRange(all, from, to) {
  *                     'piano:rerender'                 detail {from, to, compact}
  *                     'piano:mute'                     detail {muted}  (piano-audio.js listens on document)
  */
-export async function renderPianoKeyboard(target = 'piano-keyboard', opts = {}) {
+export async function renderPianoKeyboard(opts = {}, legacyOpts = {}) {
+  // Called as renderPianoKeyboard({ target, ... }) like the other render functions.
+  // Older form renderPianoKeyboard('piano-keyboard', { ... }) still works.
+  const legacy = typeof opts === 'string' || opts instanceof HTMLElement;
+  const target = legacy ? opts : (opts?.target ?? 'piano-keyboard');
+  if (legacy) opts = legacyOpts ?? {};
   const {
     dataUrl = 'DATA/piano_tuning.json',
     layout = null,
