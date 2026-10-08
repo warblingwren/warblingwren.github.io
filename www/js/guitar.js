@@ -15,7 +15,16 @@
 //   www/css/guitar.css (same breakpoint as piano.js / piano.css)
 // =============================================================================
 
+import { OCTAVE_FAMILIES, textOn } from './piano.js';
+
 const NOTE_RE = /^([A-G])(#?)([0-8])$/;
+// Progression dots use the piano's colours: hue = octave family of the dot's actual pitch,
+// shade = scale degree, tonic darkest. 1/3/5/7 = 900/700/500/300, the same shades the piano
+// uses for root/3rd/5th/7th (SYNC: ROLE_SHADES in piano.js); 2/4/6 fall in between.
+const DEGREE_SHADES = ['900', '800', '700', '600', '500', '400', '300'];
+const HEX_RE = /^#[0-9a-f]{6}$/i;
+// SYNC: --gf-css-version in www/css/guitar.css. Bump both together when the markup/CSS contract changes.
+const CSS_VERSION = 3;
 const SEMITONE = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
 const NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -92,11 +101,17 @@ function validateTunings(json) {
  * @param {string}  opts.mobileQuery  narrow-screen media query (default '(max-width: 768px)')
  * @param {number}  opts.shiftStep    frets moved per ‹ › click on narrow screens (default 3)
  * @param {number}  opts.taper        fret narrowing: 0 = equal widths, 1 = true scale length (default 0.5)
+ * @param {object}  opts.piano        API returned by renderPianoKeyboard: dot colours use its octave colours
+ *                                    (optional; without it the same default families are read from colors.js)
+ * @param {object}  opts.progressions API returned by renderCircleProgressions (optional; its 'progression:change'
+ *                                    events are also picked up from document)
+ * @param {string}  opts.overlay      initial progression overlay: 'none' | 'root' | 'relative' (default 'none')
  * @returns {Promise<object|null>} API (null if the container is missing):
  *   element, tunings(), tuning(), setTuning(name), noteAt(string, fret),
  *   positionsOf(noteOrPitchClass), range(), shiftFrets(dir), showFrets(fromFret),
- *   isCompact(), destroy()
+ *   setOverlay(panel), overlay(), isCompact(), destroy()
  * Emits on the container (bubbling): 'guitar:tuning'   detail {name, alias, strings:[{string, note}]}
+ *                                    'guitar:overlay'  detail {panel, key, notes:[spelled]}
  *                                    'guitar:rerender' detail {from, to, compact}
  */
 export async function renderGuitarFretboard(opts = {}, legacyOpts = {}) {
@@ -114,6 +129,9 @@ export async function renderGuitarFretboard(opts = {}, legacyOpts = {}) {
     mobileQuery = '(max-width: 768px)',
     shiftStep = 3,
     taper = 0.5,
+    progressions = null,
+    piano = null,
+    overlay: startOverlay = 'none',
   } = opts;
 
   const container = await waitForHost(target);
@@ -129,6 +147,17 @@ export async function renderGuitarFretboard(opts = {}, legacyOpts = {}) {
     json = await res.json();
   }
   const tunings = validateTunings(json);
+
+  // Version checks: say exactly which file is out of step instead of failing silently
+  const cssVersion = parseFloat(getComputedStyle(container).getPropertyValue('--gf-css-version'));
+  if (cssVersion !== CSS_VERSION) {
+    console.warn(`guitar-fretboard: www/css/guitar.css is ${Number.isFinite(cssVersion) ? `version ${cssVersion}` : 'missing or an older version'}; `
+      + `guitar.js expects version ${CSS_VERSION} — dropdown and dot styles may be wrong`);
+  }
+  if (progressions && typeof progressions.state !== 'function') {
+    console.warn('guitar-fretboard: the progressions object has no state() — www/js/circle-o-5ths.js is older than guitar.js; '
+      + 'the progression overlay stays unavailable until it is updated');
+  }
   let current = tunings.find((t) => t.name === startTuning) ?? tunings[0];
 
   const maxFrets = Math.max(1, Math.min(24, Math.floor(frets)));
@@ -141,14 +170,14 @@ export async function renderGuitarFretboard(opts = {}, legacyOpts = {}) {
   container.classList.add('gf');
   const emit = (type, detail) => container.dispatchEvent(new CustomEvent(type, { bubbles: true, detail }));
 
-  // --- static chrome: [status ........ tuning dropdown] / [‹ Frets 1–12 ›] / board ----
+  // --- static chrome: [status .... progression ▾ tuning ▾] / [‹ Frets 1–12 ›] / board ----
   const top = document.createElement('div');
   top.className = 'gf-top';
   const status = document.createElement('div');
   status.className = 'gf-status';
   status.setAttribute('aria-live', 'polite');
   const select = document.createElement('select');
-  select.className = 'gf-tuning';
+  select.className = 'gf-select gf-tuning';
   select.setAttribute('aria-label', 'Guitar tuning');
   for (const t of tunings) {
     const opt = document.createElement('option');
@@ -159,7 +188,23 @@ export async function renderGuitarFretboard(opts = {}, legacyOpts = {}) {
   }
   select.value = current.name;
   select.addEventListener('change', () => api.setTuning(select.value));
-  top.append(status, select);
+
+  // Progression overlay: None / Root progression – C major / Relative progression – A minor
+  const progSelect = document.createElement('select');
+  progSelect.className = 'gf-select gf-prog';
+  progSelect.setAttribute('aria-label', 'Show progression notes on the fretboard');
+  const PANELS = ['none', 'root', 'relative'];
+  for (const v of PANELS) {
+    const opt = document.createElement('option');
+    opt.value = v;
+    progSelect.append(opt);
+  }
+  progSelect.addEventListener('change', () => api.setOverlay(progSelect.value));
+
+  const selects = document.createElement('div');
+  selects.className = 'gf-selects';
+  selects.append(progSelect, select);
+  top.append(status, selects);
 
   const controls = document.createElement('div');
   controls.className = 'gf-controls';
@@ -333,10 +378,31 @@ export async function renderGuitarFretboard(opts = {}, legacyOpts = {}) {
       svg.append(line('gf-string-hi', -w * 0.22, Math.max(0.5, w * 0.35)));
     });
 
-    // open-string column: note name of each open string
+    // progression overlay: every position of every progression tone in the visible frets
+    const ov = overlayNotes();
+    svg.classList.toggle('gf-has-overlay', Boolean(ov));
+    if (ov) {
+      const layer = svgEl('g', {}, 'gf-marks');
+      current.strings.forEach((s, i) => {
+        for (let f = L.from + 1; f <= L.to; f++) {
+          const n = ov.notes.get((s.midi + f) % 12);
+          if (!n) continue;
+          const xl = L.xAtFret(f - 1);
+          const xr = L.xAtFret(f);
+          const cx = (xl + xr) / 2;
+          const r = Math.max(7, Math.min(13, L.gapBody * 0.42, (xr - xl) / 2 - 2));
+          layer.append(dotEl(cx, L.yAt(i, cx), r, n, s, f, ov));
+        }
+      });
+      svg.append(layer);
+    }
+
+    // open-string column: note name of each open string (a dot instead when it is a progression tone)
     current.strings.forEach((s, i) => {
       const y = L.yAt(i, L.x0);
       const r = Math.min(13, L.gapBody * 0.42);
+      const n = ov?.notes.get(s.midi % 12);
+      if (n) { svg.append(dotEl(L.openCol / 2 - 2, y, r, n, s, 0, ov)); return; }
       const g = svgEl('g', {}, 'gf-open');
       const title = svgEl('title');
       title.textContent = `String ${s.string}: ${pretty(s.note)}`;
@@ -357,12 +423,103 @@ export async function renderGuitarFretboard(opts = {}, legacyOpts = {}) {
       svg.append(t);
     }
 
-    // overlay layer reserved for chord dots
-    svg.append(svgEl('g', {}, 'gf-marks'));
-
     stage.replaceChildren(svg);
     return L;
   }
+
+  // --- progression overlay ----------------------------------------------------------
+  // Source: the progression panels' own chords (circle-o-5ths.js state / 'progression:change'),
+  // never recomputed here.
+  let progState = progressions?.state?.() ?? null;
+  let overlayPanel = PANELS.includes(startOverlay) ? startOverlay : 'none';
+  const LETTERS = 'CDEFGAB';
+  // scale degree 1–7 from letter names, so raised/lowered notes keep their degree (G♯ in A minor = 7)
+  const degreeOf = (spelled, tonic) => ((LETTERS.indexOf(spelled[0]) - LETTERS.indexOf(tonic[0]) + 7) % 7) + 1;
+
+  function overlayNotes() {
+    const st = overlayPanel !== 'none' ? progState?.[overlayPanel] : null;
+    if (!st || !Array.isArray(st.chords)) return null;
+    const notes = new Map();                         // pc -> {pc, spelled, degree, chords}
+    for (const c of st.chords) {
+      for (const t of c.tones ?? []) {
+        if (!Number.isInteger(t.pc) || typeof t.spelled !== 'string') continue;
+        if (!notes.has(t.pc)) notes.set(t.pc, { pc: t.pc, spelled: t.spelled, degree: degreeOf(t.spelled, st.key.tonic), chords: [] });
+        const n = notes.get(t.pc);
+        if (!n.chords.includes(c.name)) n.chords.push(c.name);
+      }
+    }
+    const ringPc = st.rootChord?.rootPc;
+    // the root chord's root is always shown (ringed), even if the progression never plays it
+    if (Number.isInteger(ringPc) && !notes.has(ringPc) && typeof st.rootChord.rootName === 'string') {
+      notes.set(ringPc, { pc: ringPc, spelled: st.rootChord.rootName, degree: degreeOf(st.rootChord.rootName, st.key.tonic), chords: [] });
+    }
+    return { st, notes, ringPc };
+  }
+
+  // octave -> shade lookup, taken from the piano when given so the two always match
+  const octaveShades = (() => {
+    const fromPiano = piano?.octaveColors?.();
+    if (fromPiano instanceof Map && fromPiano.size) return fromPiano;
+    const pal = globalThis.material_colors;
+    const map = new Map();
+    // DOM-clobbering guard: an element with id="material_colors" is not a plain object
+    if (!pal || Object.getPrototypeOf(pal) !== Object.prototype) return map;
+    OCTAVE_FAMILIES.forEach((fam, octave) => {
+      map.set(octave, { family: fam, shade: (sh) => (HEX_RE.test(pal[fam]?.[sh] ?? '') ? pal[fam][sh] : '') });
+    });
+    return map;
+  })();
+  const dotColor = (midi, degree) => octaveShades.get(Math.floor(midi / 12) - 1)?.shade(DEGREE_SHADES[degree - 1]) || '';
+
+  function dotEl(cx, cy, r, n, s, fret, ov) {
+    const root = n.pc === ov.ringPc;
+    const g = svgEl('g', {}, `gf-dot gf-deg-${n.degree}${root ? ' is-root' : ''}`);
+    const color = dotColor(s.midi + fret, n.degree);
+    if (color) {                                     // else the CSS fallback shades apply
+      g.style.setProperty('--gf-dot-bg', color);
+      g.style.setProperty('--gf-dot-fg', textOn(color));
+    }
+    const title = svgEl('title');
+    const where = `${pretty(midiToNote(s.midi + fret))}, ${fret === 0 ? `string ${s.string} open` : `string ${s.string}, fret ${fret}`}`;
+    const inChords = n.chords.length ? ` · in ${n.chords.join(', ')}` : '';
+    title.textContent = `${n.spelled} (degree ${n.degree}${root ? ', root' : ''}) · ${where}${inChords}`;
+    const c = svgEl('circle', { cx: cx.toFixed(2), cy: cy.toFixed(2), r: r.toFixed(2) }, 'gf-dot-c');
+    const t = svgEl('text', {
+      x: cx.toFixed(2), y: cy.toFixed(2), 'text-anchor': 'middle', 'dominant-baseline': 'central',
+      'font-size': Math.min(12, r * 0.95).toFixed(1),
+    }, 'gf-dot-t');
+    t.textContent = n.spelled;
+    g.append(title, c, t);
+    return g;
+  }
+
+  function refreshProgOptions() {
+    const label = { none: 'No progression', root: 'Root', relative: 'Relative' };
+    [...progSelect.options].forEach((o) => {
+      const st = o.value !== 'none' ? progState?.[o.value] : null;
+      o.textContent = o.value === 'none' ? label.none : st ? `${label[o.value]} – ${st.key.name}` : `${label[o.value]} progression`;
+      o.title = st ? `${st.title} – ${st.key.name}` : '';
+      o.disabled = o.value !== 'none' && !st;
+    });
+    if (overlayPanel !== 'none' && !progState?.[overlayPanel]) overlayPanel = 'none';
+    progSelect.value = overlayPanel;
+  }
+
+  let warnedOldEvent = false;
+  const onProgression = (e) => {
+    const d = e.detail;
+    if (!d || !('root' in d)) {
+      if (!warnedOldEvent) {
+        warnedOldEvent = true;
+        console.warn("guitar-fretboard: 'progression:change' carries no chords — www/js/circle-o-5ths.js is older than guitar.js");
+      }
+      return;
+    }
+    progState = { root: d.root ?? null, relative: d.relative ?? null };
+    refreshProgOptions();
+    render();
+  };
+  document.addEventListener('progression:change', onProgression);
 
   let lastRange = null;
   function render() {
@@ -372,8 +529,14 @@ export async function renderGuitarFretboard(opts = {}, legacyOpts = {}) {
     prevBtn.disabled = L.from <= 0;
     nextBtn.disabled = L.to >= maxFrets;
     rangeEl.textContent = `Frets ${L.from + 1} – ${L.to}`;
-    status.textContent = current.strings.map((s) => pitchName(s.note)).join(' ');   // low -> high (name is in the dropdown)
-    status.title = current.description;
+    const st = overlayPanel !== 'none' ? progState?.[overlayPanel] : null;
+    if (st) {
+      status.textContent = `${st.key.name} · ${st.progression.name}`;
+      status.title = `${st.title}: ${st.chords.map((c) => c.name).join(' – ')}`;
+    } else {
+      status.textContent = current.strings.map((s) => pitchName(s.note)).join(' ');   // low -> high (name is in the dropdown)
+      status.title = current.description;
+    }
     const key = `${L.from}-${L.to}-${L.compact}`;
     if (key !== lastRange) {
       lastRange = key;
@@ -397,6 +560,7 @@ export async function renderGuitarFretboard(opts = {}, legacyOpts = {}) {
   // --- public API -------------------------------------------------------------
   const api = {
     element: container,
+    version: CSS_VERSION,
     tunings: () => tunings.map((t) => ({ name: t.name, alias: t.alias, description: t.description })),
     tuning: () => ({ name: current.name, alias: current.alias, description: current.description,
       strings: current.strings.map((s) => ({ string: s.string, note: s.note })) }),
@@ -444,8 +608,25 @@ export async function renderGuitarFretboard(opts = {}, legacyOpts = {}) {
       winStart = clampStart(Math.floor(fromFret) || 0);
       if (mql.matches) render();
     },
+    /** Progression overlay: 'none' | 'root' | 'relative'. */
+    setOverlay(panel) {
+      const next = PANELS.includes(panel) ? panel : 'none';
+      if (next !== 'none' && !progState?.[next]) { console.warn(`guitar-fretboard: no ${next} progression to show yet`); return false; }
+      overlayPanel = next;
+      progSelect.value = next;
+      render();
+      const ov = overlayNotes();
+      emit('guitar:overlay', { panel: next, key: ov?.st.key.name ?? null, notes: ov ? [...ov.notes.values()].map((n) => n.spelled) : [] });
+      return true;
+    },
+    overlay() {
+      const ov = overlayNotes();
+      return { panel: ov ? overlayPanel : 'none', key: ov?.st.key.name ?? null, ringPc: ov?.ringPc ?? null,
+        notes: ov ? [...ov.notes.values()].map((n) => ({ ...n, chords: [...n.chords] })) : [] };
+    },
     isCompact: () => mql.matches,
     destroy() {
+      document.removeEventListener('progression:change', onProgression);
       ro.disconnect();
       cancelAnimationFrame(raf);
       mql.removeEventListener('change', onMedia);
@@ -454,6 +635,7 @@ export async function renderGuitarFretboard(opts = {}, legacyOpts = {}) {
     },
   };
 
+  refreshProgOptions();
   render();
   lastWidth = Math.floor(stage.clientWidth);
   ro.observe(stage);
