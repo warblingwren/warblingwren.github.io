@@ -22,18 +22,18 @@ tags: [Warbling Wren]
 			</div>
             <div class="row">
                 <div class="col-md-9 h-100">
-					<div id="root-circle-progressions"></div>
+					<div id="piano-root-circle-progressions"></div>
 				</div>
                 <div class="col-md-3 h-100">
-					<div id="root-chord-data"></div>
+					<div id="piano-root-chord-data"></div>
                 </div>
 			</div>
             <div class="row">
                 <div class="col-md-9 h-100">
-					<div id="minor-circle-progressions"></div>
+					<div id="piano-minor-circle-progressions"></div>
 				</div>
                 <div class="col-md-3 h-100">
-					<div id="minor-chord-data"></div>
+					<div id="piano-minor-chord-data"></div>
                 </div>
 			</div>
             <div class="row">
