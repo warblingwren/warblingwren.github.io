@@ -5,9 +5,11 @@
    ========================================================================== */
 
 :root {
-  --cp-bg: #55555c;              /* lighter grey than the chord controls */
-  --cp-fg: #f2f2f2;
-  --cp-muted: #dcdce0;
+  /* panel grey shared by the chord controls, the progression selector and the root progression panels
+     (piano + guitar) — SYNC: --cc-bg in piano-chords.css. #55555c lightened 20% (mixed 20% toward white). */
+  --cp-bg: #77777d;
+  --cp-fg: #ffffff;              /* white on #77777d = 4.45:1 (light grey labels would drop to 3.25:1) */
+  --cp-muted: #ffffff;
   --cp-rule: #8a8a92;            /* light grey dividers in the key box */
   --cp-roman: #6b6b70;
   --cp-active: #3d7be8;

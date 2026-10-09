@@ -108,6 +108,8 @@ function validateTunings(json) {
  * @param {string}  opts.overlay      initial progression overlay: 'root' | 'relative' (default 'root')
  * @param {boolean} opts.sticky       pin the fretboard to the top of the window while scrolling (default true);
  *                                    with opts.piano it takes over from the pinned keyboard, pushing it up
+ * @param {number}  opts.handoffGap   white space kept between the keyboard and the fretboard while the
+ *                                    keyboard is pushed off screen, in px (default 24)
  * @returns {Promise<object|null>} API (null if the container is missing):
  *   element, tunings(), tuning(), setTuning(name), noteAt(string, fret),
  *   positionsOf(noteOrPitchClass), range(), shiftFrets(dir), showFrets(fromFret),
@@ -140,6 +142,7 @@ export async function renderGuitarFretboard(opts = {}, legacyOpts = {}) {
     piano = null,
     overlay: startOverlay = 'root',
     sticky = true,
+    handoffGap = 24,
   } = opts;
 
   const container = await waitForHost(target);
@@ -792,7 +795,8 @@ export async function renderGuitarFretboard(opts = {}, legacyOpts = {}) {
       if (!stickyEl || !pianoSticky) return;
       const gTop = stickyEl.getBoundingClientRect().top;
       const h = pianoSticky.offsetHeight;
-      piano.setStickyTop(Math.min(pianoTop, gTop - h));   // keyboard bottom never overlaps the fretboard
+      // keyboard bottom stays handoffGap above the fretboard: a strip of page shows between them
+      piano.setStickyTop(Math.min(pianoTop, gTop - h - Math.max(0, Number(handoffGap) || 0)));
     });
   }
   if (sticky) {

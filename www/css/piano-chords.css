@@ -4,7 +4,7 @@
 
 :root {
   /* chord controls panel — lighter grey */
-  --cc-bg: #3d3d42;
+  --cc-bg: #77777d;               /* SYNC: --cp-bg in circle-o-5ths.css (one panel grey for the whole page) */
   --cc-btn-bg: #4d4d53;
   --cc-btn-hover: #5c5c63;
   --cc-btn-border: #66666d;
