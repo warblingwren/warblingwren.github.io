@@ -11,6 +11,11 @@
   --gd-root-ring: #ffffff;
   --gd-focus: #3d7be8;
   --gd-max: 190px;               /* diagram width in cards and chord panels */
+  --gv-fg: #1d1d1f;              /* stepper + octave pill text */
+  --gv-sub: #5f5f66;             /* fret pattern under the count */
+  --gv-control-bg: #ffffff;
+  --gv-control-border: rgba(0, 0, 0, 0.18);
+  --gv-hit: 44px;                /* touch target */
 }
 
 /* the diagram is a button: clicking shows the shape on the fretboard */
@@ -48,6 +53,103 @@
   margin: 12px 0 0;
   font-size: 13px;
   color: var(--gd-label);
+}
+
+/* --- voicing browser: diagram · ‹ n / N › · bass-octave pills ------------------------------ */
+.gv { margin-top: 4px; }
+.gv-diagram .gd { margin-top: 8px; }
+
+.gv-step {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  max-width: 100%;               /* wider than the diagram so the fret pattern is never cut off */
+  margin: 6px auto 0;
+}
+.gv-arrow {
+  appearance: none;
+  -webkit-appearance: none;
+  flex: 0 0 var(--gv-hit);
+  width: var(--gv-hit);
+  height: var(--gv-hit);
+  padding: 0;
+  border: 1px solid var(--gv-control-border);
+  border-radius: 50%;
+  background: var(--gv-control-bg);
+  color: var(--gv-fg);
+  font: inherit;
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.gv-arrow:hover { border-color: var(--gv-fg); }
+.gv-arrow:focus-visible { outline: 3px solid var(--gd-focus); outline-offset: 2px; }
+.gv-arrow:disabled { opacity: 0.35; cursor: default; }
+
+.gv-info {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
+  line-height: 1.15;
+}
+.gv-count { color: var(--gv-fg); font-size: 14px; font-weight: 700; white-space: nowrap; }
+.gv-frets {
+  max-width: 100%;
+  overflow: hidden;
+  letter-spacing: -0.02em;
+  color: var(--gv-sub);
+  font-family: SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.gv-octaves {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--cd-border, rgba(0, 0, 0, 0.12));
+}
+.gv-oct {
+  appearance: none;
+  -webkit-appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: var(--gv-hit);
+  min-height: var(--gv-hit);
+  padding: 0 6px 0 12px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: calc(var(--gv-hit) / 2);
+  background: var(--gv-oct-bg, #eee);
+  color: var(--gv-fg);
+  font: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.gv-oct:hover { border-color: var(--gv-fg); }
+.gv-oct:focus-visible { outline: 3px solid var(--gd-focus); outline-offset: 2px; }
+.gv-oct.is-active { box-shadow: 0 0 0 3px var(--gd-focus); }
+.gv-oct-name { font-size: 15px; font-weight: 700; }
+.gv-oct-n {
+  min-width: 24px;
+  height: 24px;
+  padding: 0 6px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.12);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 24px;
+  text-align: center;
+  box-sizing: border-box;
 }
 
 /* =============================================================================

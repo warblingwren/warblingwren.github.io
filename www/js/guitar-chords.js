@@ -2,13 +2,16 @@
 // guitar-chords.js — guitar versions of the progression panels and chord panels
 //
 // Same layout as the piano panels (circle-o-5ths.js / piano-chords.js, same CSS classes), with a
-// guitar chord diagram (first position, ultimate-guitar style) instead of the one-octave keyboard,
-// and guitar octave rows. Clicks drive the fretboard only (silent):
-//   chord badge / diagram -> that first-position shape on the fretboard
-//   tone circle           -> every place that tone occurs on the neck
-//   octave row label      -> one playable shape of the chord in that octave; a row dot -> that note
-// Shapes are computed for the fretboard's current tuning and checked for playability; a chord or
-// octave with no playable shape is never drawn.
+// guitar chord diagram (ultimate-guitar style) instead of the one-octave keyboard. Clicks drive the
+// fretboard only (silent):
+//   chord badge / sequence badge -> every occurrence of the chord's tones on the neck, exactly like the
+//                                   fretboard's own header badges (role shades, ring on the root)
+//   tone circle                  -> every place that tone occurs on the neck
+//   diagram                      -> the voicing in the diagram, on the fretboard
+//   ‹ › stepper                  -> the previous / next playable voicing (every one on the neck)
+//   octave pill (C2, C3 …)       -> the first voicing whose bass note is in that octave
+// Voicings are computed for the fretboard's current tuning and checked for playability (checkShape);
+// nothing unplayable is ever drawn.
 //
 // Data: the progression panels' own chords (renderCircleProgressions state() / 'progression:change')
 // and the chord panels ('chord:panels' / currentPanels) — never recomputed here.
@@ -20,7 +23,7 @@ import { midiToNote, noteToMidi } from './piano-audio.js';
 import { textOn } from './piano.js';
 import { currentPanels } from './piano-chords.js';
 
-export const VERSION = 1;
+export const VERSION = 2;                 // 2: playableShapes, voicing stepper, badges show every occurrence
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
 // --- playability ------------------------------------------------------------------------------
@@ -86,35 +89,50 @@ export function scoreShape(s) {
     + (s.barre ? 1 : 0) + s.unisons * 2.5 + (s.omitted ? 3 : 0);
 }
 
-export function firstPositionShape(strings, tones, { maxFret = 15 } = {}) {
+// every per-string fret choice in the chord's pitch classes; fretted notes kept within maxSpan
+function walkShapes(strings, tones, maxFret, visit, maxSpan = 3) {
   const pcs = new Set(tones.map((t) => t.pc));
   const options = strings.map((s) => {
     const o = [-1];
     for (let f = 0; f <= maxFret; f++) if (pcs.has((s + f) % 12)) o.push(f);
     return o;
   });
+  const cur = new Array(strings.length);
+  (function walk(i, lo, hi) {
+    if (i === strings.length) { const shape = checkShape(cur, strings, tones, { maxSpan }); if (shape) visit(shape); return; }
+    for (const f of options[i]) {
+      let nlo = lo; let nhi = hi;
+      if (f > 0) { nlo = Math.min(lo, f); nhi = Math.max(hi, f); if (nhi - nlo > maxSpan) continue; }
+      cur[i] = f;
+      walk(i + 1, nlo, nhi);
+    }
+  })(0, Infinity, -Infinity);
+}
+
+export function firstPositionShape(strings, tones, { maxFret = 15 } = {}) {
   let best = null;
   let bestScore = Infinity;
-  const cur = new Array(strings.length);
-  (function walk(i) {
-    if (i === strings.length) {
-      const shape = checkShape(cur, strings, tones);
-      if (shape) { const sc = scoreShape(shape); if (sc < bestScore) { best = shape; bestScore = sc; } }
-      return;
-    }
-    for (const f of options[i]) {
-      if (f > 0) {
-        const fr = cur.slice(0, i).filter((x) => x > 0);
-        if (fr.length && Math.max(...fr, f) - Math.min(...fr, f) > 3) continue;
-      }
-      cur[i] = f;
-      walk(i + 1);
-    }
-  })(0);
+  walkShapes(strings, tones, maxFret, (shape) => { const sc = scoreShape(shape); if (sc < bestScore) { best = shape; bestScore = sc; } });
   return best;
 }
 
 /**
+ * Every playable voicing of the chord on the neck (checkShape rules), root in the bass.
+ * Each shape also carries bass (MIDI of the lowest sounding note) and octave (its octave number).
+ * Order: by bass note (low to high), then by scoreShape — so [0] is the first-position shape and the
+ * shapes of one bass octave sit together.
+ */
+export function playableShapes(strings, tones, { maxFret = 24 } = {}) {
+  const out = [];
+  walkShapes(strings, tones, maxFret, (shape) => {
+    const bass = Math.min(...shape.frets.map((f, i) => (f >= 0 ? strings[i] + f : Infinity)));
+    out.push({ ...shape, bass, octave: Math.floor(bass / 12) - 1, score: scoreShape(shape) });
+  });
+  return out.sort((a, b) => a.bass - b.bass || a.score - b.score);
+}
+
+/**
+ * (Kept for API stability; the panels now use playableShapes.)
  * One playable shape of exactly these pitches (root-position close voicing in one octave):
  * one note per string on adjacent strings, low to high, fretted notes within 4 frets.
  * The lowest, most compact fingering wins. null when the guitar cannot play it.
@@ -207,12 +225,18 @@ export async function renderGuitarProgressions(opts = {}) {
   const stringNo = (i) => strings().length - i;                                     // index 0 -> string 6
   const maxFret = () => guitar.maxFret ?? 24;
 
-  // --- shapes for one chord (cached per tuning) ---------------------------------------------------
+  // --- voicings of one chord (cached per tuning) -------------------------------------------------
+  // {list: playableShapes (bass, then score), start: index of the first-position shape (best score)}
   const cache = new Map();
-  function shapeOf(chord) {
+  function shapesOf(chord) {
     const tun = strings().join(',');
-    const key = `${tun}|${chord.name}|${chord.tones.map((t) => t.pc).join(',')}`;
-    if (!cache.has(key)) cache.set(key, firstPositionShape(strings(), chord.tones));
+    const key = `${tun}|${maxFret()}|${chord.name}|${chord.tones.map((t) => t.pc).join(',')}`;
+    if (!cache.has(key)) {
+      const list = playableShapes(strings(), chord.tones, { maxFret: maxFret() });
+      let start = 0;
+      list.forEach((sh, i) => { if (sh.score < list[start].score) start = i; });
+      cache.set(key, { list, start });
+    }
     return cache.get(key);
   }
   // sounding notes of a shape, each with its chord tone
@@ -244,16 +268,13 @@ export async function renderGuitarProgressions(opts = {}) {
   guitar.element.addEventListener('guitar:overlay', onOverlay);
 
   // --- chord diagram (ultimate-guitar style): strings vertical, low string left ------------------------
-  function diagram(chord, shape, onClick) {
-    if (!shape) {
-      const none = el('div', 'gd-none', 'No playable first-position shape in this tuning');
-      return none;
-    }
+  const fretText = (shape) => shape.frets.map((f) => (f < 0 ? 'x' : f)).join(' ');
+  function diagram(chord, shape, onClick, meta = '') {
     const btn = el('button', 'gd');
     btn.type = 'button';
     const v = voicing(shape, chord);
-    btn.setAttribute('aria-label', `${chord.name} chord shape: ${shape.frets.map((f) => (f < 0 ? 'x' : f)).join(' ')} — show on the fretboard`);
-    btn.title = `${chord.name}: ${shape.frets.map((f) => (f < 0 ? 'x' : f)).join('')}`;
+    btn.setAttribute('aria-label', `${chord.name} chord shape${meta ? ` (${meta})` : ''}: ${fretText(shape)} — show on the fretboard`);
+    btn.title = `${chord.name}: ${fretText(shape)}`;
     const n = shape.frets.length;
     const base = shape.high <= 4 ? 1 : shape.low;                 // first fret row shown
     const W = 150; const X0 = 27; const DX = (W - X0 - 15) / (n - 1);
@@ -300,9 +321,6 @@ export async function renderGuitarProgressions(opts = {}) {
   }
 
   // --- chord section pieces -------------------------------------------------------------------------
-  function shapeList(chord, shape) {
-    return voicing(shape, chord).map((s) => ({ string: s.string, fret: s.fret, spelled: s.spelled, rank: s.rank, interval: s.interval }));
-  }
   function toneCircles(chord, shape, label, card) {
     const row = el('div', 'cd-tones');
     row.setAttribute('role', 'group');
@@ -330,70 +348,112 @@ export async function renderGuitarProgressions(opts = {}) {
     }
     return row;
   }
-  // Octave rows: only octaves with a playable shape; label -> that shape, dot -> that one note
-  function octaveRows(chord, label, card) {
-    const wrapEl = el('div', 'cd-octaves');
-    wrapEl.setAttribute('role', 'group');
-    wrapEl.setAttribute('aria-label', `${chord.name} in each octave on the guitar`);
-    const st = strings();
-    const octaveColors = piano.octaveColors();
-    for (let oct = 1; oct <= 7; oct++) {
-      const rootMidi = (oct + 1) * 12 + chord.rootPc;
-      const voiced = chord.tones.map((t) => ({ ...t, midi: rootMidi + t.semitones, note: midiToNote(rootMidi + t.semitones) }));
-      const shape = octaveShape(st, voiced.map((t) => t.midi), { maxFret: maxFret() });
-      if (!shape) continue;
-      const pos = shape.frets.map((f, i) => (f < 0 ? null : { i, string: stringNo(i), fret: f, midi: st[i] + f })).filter(Boolean);
-      const at = (t) => pos.find((p) => p.midi === t.midi);
-      const pill = el('div', 'cd-octave-pill');
-      pill.setAttribute('role', 'group');
-      pill.setAttribute('aria-label', `${chord.name} in octave ${oct}`);
-      const oc = octaveColors.get(oct);
-      if (oc) pill.style.setProperty('--cd-octave-bg', oc.light);
-      const lab = el('button', 'cd-octave-label', `${chord.rootName}${oct}`);
-      lab.type = 'button';
-      lab.setAttribute('aria-label', `Show ${chord.name} in octave ${oct} on the fretboard: ${voiced.map((t) => t.note).join(', ')}`);
-      lab.addEventListener('click', () => {
-        show(voiced.map((t) => ({ string: at(t).string, fret: at(t).fret, spelled: t.spelled, rank: t.rank, interval: t.interval })),
-          `${chord.name} · octave ${oct}`, chord.name, [pill, card]);
-        card?.classList.add('border-primary');
-      });
-      pill.append(lab);
-      for (const t of voiced) {
-        const b = el('button', 'cd-octave-note');
-        b.type = 'button';
-        const p = at(t);
-        b.title = `${t.interval}: ${t.note} — string ${p.string}, fret ${p.fret}`;
-        b.setAttribute('aria-label', `Show ${t.spelled} (${t.interval}) — ${t.note} on string ${p.string}, fret ${p.fret}`);
-        const dot = el('span', `cd-octave-dot${t.rank === 0 ? ' is-root' : ''}`, t.spelled);
-        const colour = colourOf(t.note, t.rank);
-        dot.style.setProperty('--cd-dot-bg', colour);
-        dot.style.setProperty('--cd-dot-fg', textOn(colour));
-        b.append(dot);
-        b.addEventListener('click', () => {
-          show([{ string: p.string, fret: p.fret, spelled: t.spelled, rank: t.rank, interval: t.interval }],
-            `${t.spelled}${oct} (${t.interval}) · string ${p.string}, fret ${p.fret}`, chord.name, [b, card]);
-          card?.classList.add('border-primary');
-        });
-        pill.append(b);
+  // Every occurrence of the chord's tones on the neck — the same action as the fretboard's header badge.
+  // The fretboard's own focusChord is used when the chord is in its current progression (or in the
+  // panel's own progression, which the fretboard then switches to), so its header badge lights too;
+  // otherwise (a chord-data chord outside both progressions) the same picture via showPositions.
+  function showEverywhere(chord, prog, activate, card) {
+    const inProg = (p) => p && (progState?.[p]?.chords ?? []).some((c) => c.name === chord.name);
+    const now = guitar.overlay?.().panel ?? null;
+    const use = typeof guitar.focusChord === 'function' ? [now, prog].find(inProg) : null;
+    if (use) {
+      if (use !== now) guitar.setOverlay(use);
+      guitar.focusChord(chord.name);               // emits 'guitar:overlay' -> clearActive()
+      clearActive();
+      for (const n of activate) n?.classList.add('is-active');
+      document.dispatchEvent(new CustomEvent('guitar-chords:show', { detail: { title: chord.name } }));
+    } else {
+      const st = strings();
+      const list = [];
+      for (const t of chord.tones) {
+        st.forEach((open, i) => { for (let f = 0; f <= maxFret(); f++) if ((open + f) % 12 === t.pc) list.push({ string: stringNo(i), fret: f, spelled: t.spelled, rank: t.rank, interval: t.interval }); });
       }
-      wrapEl.append(pill);
+      show(list, `${chord.name} · every position`, chord.name, activate);
     }
-    if (!wrapEl.children.length) wrapEl.append(el('div', 'gd-none', 'No playable octave shapes in this tuning'));
-    return wrapEl;
+    card?.classList.add('border-primary');
   }
-  // badge + tones + diagram + octave rows (cards and chord panels share it)
-  function chordBody(chord, label, card) {
-    const shape = shapeOf(chord);
-    const showShape = (trigger) => {
-      if (!shape) return;
-      show(shapeList(chord, shape), `${chord.name} · first position`, chord.name, [trigger, card]);
+
+  // Voicing browser: diagram (click = show it) · ‹ n / N › stepper · one pill per bass octave
+  function voicings(chord, label, card) {
+    const { list, start } = shapesOf(chord);
+    const box = el('div', 'gv');
+    if (!list.length) {
+      box.append(el('div', 'gd-none', 'No playable shape of this chord in this tuning'));
+      return box;
+    }
+    let idx = start;
+    const slot = el('div', 'gv-diagram');
+    const step = el('div', 'gv-step');
+    const prev = el('button', 'gv-arrow', '‹');
+    const next = el('button', 'gv-arrow', '›');
+    prev.type = 'button'; next.type = 'button';
+    prev.setAttribute('aria-label', `Previous ${chord.name} voicing`);
+    next.setAttribute('aria-label', `Next ${chord.name} voicing`);
+    const info = el('div', 'gv-info');
+    info.setAttribute('aria-live', 'polite');
+    const count = el('span', 'gv-count');
+    const frets = el('span', 'gv-frets');
+    info.append(count, frets);
+    step.append(prev, info, next);
+    if (list.length < 2) { prev.disabled = true; next.disabled = true; }
+
+    const octs = el('div', 'gv-octaves');
+    octs.setAttribute('role', 'group');
+    octs.setAttribute('aria-label', `${chord.name} voicings by bass octave`);
+    const octaveColors = piano.octaveColors();
+    const pills = new Map();                       // octave -> button
+    for (const sh of list) {
+      if (pills.has(sh.octave)) { pills.get(sh.octave).count += 1; continue; }
+      const b = el('button', 'gv-oct');
+      b.type = 'button';
+      const oc = octaveColors.get(sh.octave);
+      if (oc) b.style.setProperty('--gv-oct-bg', oc.light);
+      b.count = 1;
+      const first = list.indexOf(sh);
+      b.addEventListener('click', () => select(first, true));
+      pills.set(sh.octave, b);
+      octs.append(b);
+    }
+    for (const [oct, b] of pills) {
+      b.append(el('span', 'gv-oct-name', `${chord.rootName}${oct}`), el('span', 'gv-oct-n', String(b.count)));
+      b.setAttribute('aria-label', `${b.count} ${chord.name} voicing${b.count > 1 ? 's' : ''} with the bass ${chord.rootName}${oct} — show the first`);
+      b.title = `${b.count} voicing${b.count > 1 ? 's' : ''} with ${chord.rootName}${oct} in the bass`;
+    }
+
+    let diag = null;
+    function showShape(trigger) {
+      const sh = list[idx];
+      show(voicing(sh, chord).map((s) => ({ string: s.string, fret: s.fret, spelled: s.spelled, rank: s.rank, interval: s.interval })),
+        `${chord.name} · voicing ${idx + 1} of ${list.length} · ${fretText(sh)}`, chord.name, [trigger, diag, pills.get(sh.octave), card]);
       card?.classList.add('border-primary');
-    };
+    }
+    function select(i, toFretboard) {
+      idx = (i + list.length) % list.length;
+      const sh = list[idx];
+      const meta = `voicing ${idx + 1} of ${list.length}`;
+      diag = diagram(chord, sh, (btn) => showShape(btn), meta);
+      slot.replaceChildren(diag);
+      count.textContent = `${idx + 1} / ${list.length}`;
+      frets.textContent = fretText(sh);
+      if (toFretboard) showShape(null);
+    }
+    prev.addEventListener('click', () => select(idx - 1, true));
+    next.addEventListener('click', () => select(idx + 1, true));
+    select(idx, false);
+    box.append(slot, step, octs);
+    box.firstShape = () => list[start];
+    return box;
+  }
+
+  // badge + tones + voicing browser (cards and chord panels share it)
+  function chordBody(chord, label, card, prog) {
+    const { list, start } = shapesOf(chord);
+    const showAll = (trigger) => showEverywhere(chord, prog, [trigger, card], card);
     const badge = el('button', 'cd-name', chord.name);
     badge.type = 'button';
-    badge.setAttribute('aria-label', `Show the ${chord.name} shape on the fretboard`);
-    badge.addEventListener('click', () => showShape(badge));
-    return { badge, showShape, parts: [toneCircles(chord, shape, label, card), diagram(chord, shape, showShape), octaveRows(chord, label, card)] };
+    badge.setAttribute('aria-label', `Show every ${chord.name} tone on the fretboard`);
+    badge.addEventListener('click', () => showAll(badge));
+    return { badge, showAll, parts: [toneCircles(chord, list[start] ?? null, label, card), voicings(chord, label, card)] };
   }
 
   // --- progression panels (same markup as circle-o-5ths.js) -----------------------------------------
@@ -416,7 +476,7 @@ export async function renderGuitarProgressions(opts = {}) {
     hostEl.append(wrap);
     roots.push(wrap);
     new ResizeObserver(() => layoutCards(cards)).observe(cards);
-    return { wrap, title, keyBox, controls, note, seq, desc, cards };
+    return { wrap, variant, title, keyBox, controls, note, seq, desc, cards };
   }
   function layoutCards(cards) {
     const cols = [...cards.children];
@@ -440,11 +500,9 @@ export async function renderGuitarProgressions(opts = {}) {
       const row = el('div', 'cp-rel');
       const b = el('button', 'cp-rel-badge', st.badge.chord.name);
       b.type = 'button';
-      b.setAttribute('aria-label', `Show the ${st.badge.chord.name} shape on the fretboard`);
-      b.addEventListener('click', () => {
-        const shape = shapeOf(st.badge.chord);
-        if (shape) show(shapeList(st.badge.chord, shape), `${st.badge.chord.name} · first position`, st.badge.chord.name, [b]);
-      });
+      b.setAttribute('aria-label', `Show every ${st.badge.chord.name} tone on the fretboard`);
+      // the badge chord belongs to the other panel (Root Chord C in the relative panel, and vice versa)
+      b.addEventListener('click', () => showEverywhere(st.badge.chord, panel.variant === 'relative' ? 'root' : 'relative', [b], null));
       row.append(el('span', 'cp-rel-label', st.badge.label), b);
       items.push(row);
     }
@@ -462,12 +520,12 @@ export async function renderGuitarProgressions(opts = {}) {
       const body = el('div', 'card-body cd cd--compact');
       const rn = el('span', 'cp-card-roman', chord.roman);
       const label = `${st.title} ${chord.roman}: ${chord.name}`;
-      const { badge, showShape, parts } = chordBody(chord, label, card);
+      const { badge, showAll, parts } = chordBody(chord, label, card, panel.variant);
       body.append(rn, badge, ...parts);
       card.append(body);
       col.append(card);
       panel.cards.append(col);
-      shows.push(showShape);
+      shows.push(showAll);
     });
     layoutCards(panel.cards);
     // sequence badges, in order (every bar for bar-based forms)
@@ -478,7 +536,7 @@ export async function renderGuitarProgressions(opts = {}) {
       if (i > 0) { const sep = el('span', 'cp-seq-sep', st.sequence.bars ? '|' : '–'); sep.setAttribute('aria-hidden', 'true'); panel.seq.append(sep); }
       const b = el('button', 'cp-seq-badge', chord.name);
       b.type = 'button';
-      b.setAttribute('aria-label', `${st.sequence.bars ? `Bar ${i + 1}: ` : ''}show the ${chord.name} shape on the fretboard`);
+      b.setAttribute('aria-label', `${st.sequence.bars ? `Bar ${i + 1}: ` : ''}show every ${chord.name} tone on the fretboard`);
       b.addEventListener('click', () => shows[idx](b));
       panel.seq.append(b);
     });
@@ -493,14 +551,14 @@ export async function renderGuitarProgressions(opts = {}) {
     roots.push(panel);
     return panel;
   }
-  function renderChordPanel(panel, info, title) {
+  function renderChordPanel(panel, info, title, prog) {
     if (!panel) return;
     panel.replaceChildren();
     panel.hidden = !info;
     if (!info) return;
     const chord = { name: info.name, rootName: info.rootName, rootPc: info.root,
       tones: info.tones.map((t) => ({ pc: t.pc, spelled: t.spelled, rank: t.rank, interval: t.degree, semitones: t.semitones })) };
-    const { badge, parts } = chordBody(chord, `${title} Chord ${chord.name}`, null);
+    const { badge, parts } = chordBody(chord, /Chord$/.test(title) ? `${title} ${chord.name}` : `${title} Chord ${chord.name}`, null, prog);
     panel.append(el('div', 'cd-title', title), badge, ...parts);
   }
 
@@ -518,8 +576,8 @@ export async function renderGuitarProgressions(opts = {}) {
       if (relPanel) renderPanel(relPanel, progState.relative);
     }
     if (panels) {
-      renderChordPanel(dataPanel, panels.root, 'Root Chord');
-      renderChordPanel(relDataPanel, panels.minor, panels.relation === 'major' ? 'Relative Major' : 'Relative Minor');
+      renderChordPanel(dataPanel, panels.root, 'Root Chord', 'root');
+      renderChordPanel(relDataPanel, panels.minor, panels.relation === 'major' ? 'Relative Major' : 'Relative Minor', 'relative');
     }
   }
   const onProgression = (e) => { if (e.detail && 'root' in e.detail) { progState = { root: e.detail.root, relative: e.detail.relative }; refresh(); } };

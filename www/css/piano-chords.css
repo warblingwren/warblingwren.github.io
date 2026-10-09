@@ -31,7 +31,7 @@
   --cd-circle: 52px;
 
   /* SYNC: CSS_VERSION in www/js/piano-chords.js — piano-chords.js warns in the console if they differ */
-  --cc-css-version: 5;
+  --cc-css-version: 6;
 }
 
 /* --- chord controls: type dropdown + one row of 12 buttons ------------------ */
@@ -193,6 +193,7 @@
   -webkit-appearance: none;
   display: inline-block;
   min-height: 44px;
+  min-width: 44px;               /* one-letter chords (C, F) stay a full touch target */
   padding: 0 18px;
   margin-bottom: 14px;
   border: none;
@@ -355,6 +356,7 @@
   --mk-black-bg: #1d1d1f;        /* = --pk-black-bg */
   --mk-black-ratio: 0.6;         /* = --pk-black-ratio */
   --mk-black-h: 62%;             /* = --pk-black-h */
+  --mk-focus: #3d7be8;           /* active / focus ring — SYNC: --gd-focus in guitar-chords.css */
 }
 
 .mk {
@@ -364,8 +366,25 @@
   border-radius: 6px;
   background: var(--mk-frame);
   box-sizing: border-box;
-  pointer-events: none;          /* display only */
+  pointer-events: none;          /* display only (div.mk) */
 }
+
+/* clickable diagram (button.mk.mk--play): plays the drawn chord and shows it on the keyboard */
+.mk--play {
+  appearance: none;
+  -webkit-appearance: none;
+  display: block;
+  border: none;
+  font: inherit;
+  text-align: left;
+  pointer-events: auto;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.mk--play .mk-board { pointer-events: none; }  /* the button is the click target */
+.mk--play:hover { filter: brightness(1.08); }
+.mk--play:focus-visible { outline: 3px solid var(--mk-focus); outline-offset: 2px; }
+.mk--play.is-active { box-shadow: 0 0 0 3px var(--mk-focus); }
 
 .mk-board {
   position: relative;

@@ -20,8 +20,8 @@ import { textOn } from './piano.js';
 // Version handshake. Bump both together when the markup/CSS contract changes.
 //   VERSION      — read by circle-o-5ths.js, which warns if this file is older than it expects
 //   --cc-css-version in www/css/piano-chords.css — checked below
-export const VERSION = 5;
-const CSS_VERSION = 5;
+export const VERSION = 6;                  // 6: renderMiniKeyboard({onPlay}) — clickable, playing diagram
+const CSS_VERSION = 6;
 
 // Small SVG builder (no innerHTML: works under strict Content-Security-Policy / Trusted Types)
 const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -313,22 +313,36 @@ export function miniWindow(midis) {
  * @param {object} o.piano   API returned by renderPianoKeyboard (colours)
  * @param {string} o.name    chord name, for the accessible label
  * @param {{note:string, spelled:string, rank:number}[]} o.tones  voiced chord tones, e.g. C4 E4 G4
- * @returns {HTMLDivElement}
+ * @param {Function} [o.onPlay]  (shownTones, element) => void — makes the diagram a button. shownTones are
+ *        the tones exactly as drawn (an inversion when the window folds them), lowest first; each keeps its
+ *        fields with note set to the drawn pitch.
+ * @returns {HTMLDivElement|HTMLButtonElement}  div.mk (display only) or button.mk.mk--play
  */
 export function renderMiniKeyboard(o) {
-  const { piano, name, tones } = o;
-  const wrap = document.createElement('div');
-  wrap.className = 'mk';
+  const { piano, name, tones, onPlay = null } = o;
+  const playable = typeof onPlay === 'function';
+  const wrap = document.createElement(playable ? 'button' : 'div');
+  wrap.className = playable ? 'mk mk--play' : 'mk';
+  if (playable) wrap.type = 'button';
   const voiced = tones.map((t) => ({ t, m: noteToMidi(t.note) })).filter((x) => x.m !== null);
   if (!voiced.length) return wrap;
   const { start, end, notes } = miniWindow(voiced.map((x) => x.m));
   const toneByMidi = new Map(voiced.map((x, i) => [notes[i], x.t]));   // position in the window -> tone
   // like the large keyboard: every key of a chord pitch class is shaded, chord tones are labelled
   const chordPcs = new Set(notes.map((m) => m % 12));
-  wrap.setAttribute('role', 'img');
-  wrap.setAttribute('aria-label', `${name} on the keyboard: ${tones.map((t) => t.spelled).join(' ')}`);
+  const shown = voiced.map((x, i) => ({ ...x.t, note: midiToNote(notes[i]) }))
+    .sort((a, b) => noteToMidi(a.note) - noteToMidi(b.note));
+  if (playable) {
+    wrap.setAttribute('aria-label', `Play ${name} (${shown.map((t) => t.note).join(' ')}) and highlight it on the keyboard`);
+    wrap.title = `${name}: ${shown.map((t) => t.note).join(' ')}`;
+    wrap.addEventListener('click', () => onPlay(shown.map((t) => ({ ...t })), wrap));
+  } else {
+    wrap.setAttribute('role', 'img');
+    wrap.setAttribute('aria-label', `${name} on the keyboard: ${tones.map((t) => t.spelled).join(' ')}`);
+  }
 
-  const board = document.createElement('div');
+  // spans (not divs): phrasing content is what a <button> may hold
+  const board = document.createElement('span');
   board.className = 'mk-board';
   let whiteIdx = 0;
   for (let m = start; m <= end; m++) {
@@ -336,7 +350,7 @@ export function renderMiniKeyboard(o) {
     const white = WHITE_PCS.has(pc);
     if (white) whiteIdx += 1;
     const note = midiToNote(m);
-    const key = document.createElement('div');
+    const key = document.createElement('span');
     key.className = `mk-key mk-${white ? 'white' : 'black'}`;
     key.dataset.note = note;                          // data-* only (no id/name: DOM clobbering)
     if (!white) key.style.setProperty('--mk-pos', String(whiteIdx));   // sits on the line after white key #whiteIdx
@@ -454,7 +468,8 @@ export function renderChordControls(opts = {}) {
   function chordMarks(tones) {
     const list = tones.map((t) => ({ note: t.note, label: t.spelled, badge: t.degree, rank: t.rank, root: t.rank === 0 }));
     const played = new Set(tones.map((t) => t.note));
-    for (const n of piano.notesWithPitchClass(tones[0].pc)) {
+    const root = tones.find((t) => t.rank === 0) ?? tones[0];   // inversions (mini keyboard) are not root-first
+    for (const n of piano.notesWithPitchClass(root.pc)) {
       if (!played.has(n)) list.push({ note: n, badge: 'R', rank: 0, root: true });
     }
     return list;
@@ -522,7 +537,8 @@ export function renderChordControls(opts = {}) {
   // Title + chord badge + tone circles + octave rows (same layout for root and relative chord)
   function chordSection(chord, tones, title) {
     // keyboard indicator text for anything clicked in this section
-    const label = `${title} Chord ${chord.name}`;          // 'Root Chord Fm' / 'Relative Major Chord A♭'
+    // 'Root Chord Fm' / 'Relative Major Chord A♭' (the title 'Root Chord' already ends in 'Chord')
+    const label = /Chord$/.test(title) ? `${title} ${chord.name}` : `${title} Chord ${chord.name}`;
     const heading = document.createElement('div');
     heading.className = 'cd-title';
     heading.textContent = title;
@@ -568,8 +584,18 @@ export function renderChordControls(opts = {}) {
       item.append(deg, btn);
       row.append(item);
     }
-    // one-octave diagram of the chord, under the tone circles
-    const mini = renderMiniKeyboard({ piano, name: chord.name, tones });
+    // one-octave diagram of the chord, under the tone circles: click plays exactly the drawn pitches
+    const mini = renderMiniKeyboard({
+      piano, name: chord.name, tones,
+      onPlay: (shown, node) => {
+        clearPanelActive();
+        node.classList.add('is-active');
+        piano.clearPlayed();
+        showChordOnKeys(shown);
+        piano.setStatus(`${label} · ${shown.map((t) => t.note).join(' ')}`);
+        audio.playChord(shown.map((t) => t.note), velocity, strumMs);
+      },
+    });
     return [heading, name, row, mini, renderOctaves(chord, label)];
   }
 
