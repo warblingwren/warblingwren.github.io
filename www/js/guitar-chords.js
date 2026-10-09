@@ -443,7 +443,10 @@ export async function renderGuitarProgressions(opts = {}) {
       return pill;
     }
 
-    // small slider: [1] —●— [N]; the rail is the 44px touch target, the visible track and thumb are small
+    // small slider: [1] —●— [N]. The rail is the 44px touch target; the visible track and thumb are small.
+    // While dragging, the thumb follows the pointer pixel for pixel (grabbed look: larger thumb with a halo
+    // and a "n / N" bubble); the voicing changes whenever the nearest step changes, at most once per frame;
+    // on release the thumb glides onto that step.
     function slider(n, name, getIdx, onChange) {
       const wrap = el('div', 'gv-slider');
       const first = el('button', 'gv-end', '1');
@@ -460,43 +463,84 @@ export async function renderGuitarProgressions(opts = {}) {
       const track = el('div', 'gv-track');
       const fill = el('div', 'gv-fill');
       const thumb = el('div', 'gv-thumb');
+      const bubble = el('span', 'gv-bubble');
+      bubble.setAttribute('aria-hidden', 'true');
+      thumb.append(bubble);
       track.append(fill);
       rail.append(track, thumb);
       wrap.append(first, rail, last);
-      const set = () => {
-        const i = getIdx();
-        const pct = `${(i / (n - 1)) * 100}%`;
+
+      const place = (frac) => {                       // 0..1
+        const pct = `${frac * 100}%`;
         thumb.style.left = pct;
         fill.style.width = pct;
+      };
+      const label = () => {
+        const i = getIdx();
+        bubble.textContent = `${i + 1} / ${n}`;
         rail.setAttribute('aria-valuenow', String(i + 1));
         rail.setAttribute('aria-valuetext', `voicing ${i + 1} of ${n}`);
         rail.title = `${name}: voicing ${i + 1} of ${n}`;
         first.disabled = i === 0;
         last.disabled = i === n - 1;
       };
-      const go = (i, live) => { const j = Math.min(n - 1, Math.max(0, i)); if (j !== getIdx() || !live) onChange(j, live); set(); };
-      first.addEventListener('click', () => go(getIdx() - 1, false));
-      last.addEventListener('click', () => go(getIdx() + 1, false));
-      const at = (x) => { const r = track.getBoundingClientRect(); return Math.round(Math.min(1, Math.max(0, r.width ? (x - r.left) / r.width : 0)) * (n - 1)); };
+      const snap = () => { place(getIdx() / (n - 1)); label(); };
+      const step = (i) => { const j = Math.min(n - 1, Math.max(0, i)); onChange(j, false); snap(); };
+      first.addEventListener('click', () => step(getIdx() - 1));
+      last.addEventListener('click', () => step(getIdx() + 1));
+
+      // --- dragging ---
+      let dragging = false;
+      let pending = null;
+      let raf = 0;
+      let box = null;                                 // track rect, read once per drag (no layout reads per move)
+      const fracAt = (x) => Math.min(1, Math.max(0, box.width ? (x - box.left) / box.width : 0));
+      const flush = () => {
+        raf = 0;
+        if (pending !== null && pending !== getIdx()) onChange(pending, true);
+        pending = null;
+        label();
+      };
+      const follow = (x) => {
+        const f = fracAt(x);
+        place(f);                                     // continuous: the thumb stays under the finger
+        const i = Math.round(f * (n - 1));
+        if (i !== getIdx()) { pending = i; if (!raf) raf = requestAnimationFrame(flush); }
+      };
       rail.addEventListener('pointerdown', (e) => {
         if (e.button !== 0) return;
+        e.preventDefault();                           // no text selection / focus flicker while dragging
+        rail.focus({ preventScroll: true });
         rail.setPointerCapture?.(e.pointerId);
+        box = track.getBoundingClientRect();
+        dragging = true;
         rail.classList.add('is-dragging');
-        go(at(e.clientX), false);
+        follow(e.clientX);
       });
-      rail.addEventListener('pointermove', (e) => { if (rail.classList.contains('is-dragging')) go(at(e.clientX), true); });
-      const end = (e) => { rail.classList.remove('is-dragging'); rail.releasePointerCapture?.(e.pointerId); };
+      rail.addEventListener('pointermove', (e) => { if (dragging) follow(e.clientX); });
+      const end = (e) => {
+        if (!dragging) return;
+        dragging = false;
+        if (raf) { cancelAnimationFrame(raf); raf = 0; }
+        if (pending !== null && pending !== getIdx()) onChange(pending, false);
+        else onChange(getIdx(), false);              // a tap on the rail shows the voicing under it
+        pending = null;
+        rail.classList.remove('is-dragging');       // re-enables the glide transition
+        rail.releasePointerCapture?.(e.pointerId);
+        snap();
+      };
       rail.addEventListener('pointerup', end);
       rail.addEventListener('pointercancel', end);
+      rail.addEventListener('lostpointercapture', end);
       rail.addEventListener('keydown', (e) => {
-        const step = { ArrowLeft: -1, ArrowDown: -1, ArrowRight: 1, ArrowUp: 1, PageDown: -10, PageUp: 10 }[e.key];
-        if (step) go(getIdx() + step, false);
-        else if (e.key === 'Home') go(0, false);
-        else if (e.key === 'End') go(n - 1, false);
+        const d = { ArrowLeft: -1, ArrowDown: -1, ArrowRight: 1, ArrowUp: 1, PageDown: -10, PageUp: 10 }[e.key];
+        if (d) step(getIdx() + d);
+        else if (e.key === 'Home') step(0);
+        else if (e.key === 'End') step(n - 1);
         else return;
         e.preventDefault();
       });
-      set();
+      snap();
       return wrap;
     }
 
@@ -512,7 +556,6 @@ export async function renderGuitarProgressions(opts = {}) {
       // a hidden copy of the octave's widest voicing shares the grid cell: constant row size, the slider never moves
       const widest = shapes.reduce((a, b) => (b.sounding > a.sounding ? b : a), shapes[0]);
       let pill = null;
-      let raf = 0;
       const title = () => `${chord.name} · ${chord.rootName}${oct} · voicing ${idx + 1} of ${n} · ${fretText(shapes[idx])}`;
       const toDiagramAndBoard = (trigger) => {
         setDiagram(shapes[idx], title(), () => pill);
@@ -531,10 +574,10 @@ export async function renderGuitarProgressions(opts = {}) {
       render();
       block.append(row);
       if (n > 1) {
-        block.append(slider(n, `${chord.rootName}${oct}`, () => idx, (i, live) => {
+        block.append(slider(n, `${chord.rootName}${oct}`, () => idx, (i) => {
           idx = i;
           render();
-          if (live) { cancelAnimationFrame(raf); raf = requestAnimationFrame(() => toDiagramAndBoard(null)); } else toDiagramAndBoard(null);
+          toDiagramAndBoard(null);                   // the slider calls this at most once per frame
         }));
       }
       rows.append(block);
@@ -581,8 +624,7 @@ export async function renderGuitarProgressions(opts = {}) {
     const cols = [...cards.children];
     if (!cols.length) return;
     const tones = Number(cards.dataset.tones) || 3;
-    // a six-string voicing row on one line: label + 6 circles + card padding (SYNC: .cd--compact octave sizes)
-    const minCol = Math.max(200, 125 + 34 * tones, 290);
+    const minCol = Math.max(200, 125 + 34 * tones);   // same as the piano cards (SYNC: circle-o-5ths.js layoutCards)
     const perRow = Math.max(1, Math.min(cols.length, Math.floor(cards.clientWidth / minCol)));
     const pct = `${100 / perRow}%`;
     for (const c of cols) { c.style.flex = `0 0 ${pct}`; c.style.maxWidth = pct; }

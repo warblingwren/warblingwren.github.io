@@ -19,7 +19,8 @@
   --gv-track: rgba(0, 0, 0, 0.15);
   --gv-track-fill: #3d7be8;      /* = --gd-focus */
   --gv-track-h: 4px;
-  --gv-track-top: 8px;           /* track near the top of the touch strip = close to its row */
+  --gv-track-top: 12px;          /* track near the top of the touch strip = close to its row */
+  --gv-halo: rgba(61, 123, 232, 0.25);   /* grabbed thumb */
   --gv-thumb: 16px;              /* visible thumb; the 44px strip is the touch target */
 }
 
@@ -64,17 +65,48 @@
 .gv { margin-top: 4px; container-type: inline-size; container-name: gv; }   /* narrow panels: see the end of the file */
 .gv-diagram .gd { margin-top: 8px; }
 
-/* one block per octave: the voicing row, and its slider right under it (same width as the row) */
-.cd-octaves.gv-octaves { gap: 10px; }
-.gv-octave { display: flex; flex-direction: column; align-items: stretch; max-width: 100%; }
+/* one block per octave: the voicing row, and its slider right under it (same width as the row).
+   Spacing: row -> track 12px; track -> next row 34px (the rest of the slider's 44px touch strip + gap). */
+.cd-octaves.gv-octaves { gap: 4px; }
+.gv-octave { display: flex; flex-direction: column; align-items: stretch; min-width: 0; max-width: 100%; }
 
-/* voicing row: the pill and its hidden widest copy share one grid cell (constant size) */
-.gv-voicing { display: grid; justify-items: start; align-items: end; }   /* pill sits on the slider */
-.gv-voicing > .cd-octave-pill { grid-area: 1 / 1; }
+/* voicing row: always ONE line (constant height, so the slider never moves). The pill and a hidden copy of
+   the octave's widest voicing share one grid cell (constant width). In narrow cards the note circles
+   shrink to fit instead of wrapping. */
+.gv-voicing {
+  display: grid;
+  grid-template-columns: minmax(0, max-content);
+  justify-items: start;
+  align-items: end;
+  max-width: 100%;
+}
+.gv-voicing > .cd-octave-pill { grid-area: 1 / 1; flex-wrap: nowrap; max-width: 100%; min-width: 0; }
 .gv-voicing > .gv-ghost { visibility: hidden; pointer-events: none; }
+.gv-voicing .cd-octave-label { flex: 0 0 auto; }
+.gv-voicing .cd-octave-note {
+  display: flex;
+  flex: 1 1 34px;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  max-width: 34px;
+  padding: 0;
+}
+.gv-voicing .cd-octave-dot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--cd-dot);
+  max-width: calc(100% - 3px);   /* shrinks with its button in narrow cards, keeping a small gap */
+  min-width: 0;
+  height: auto;
+  aspect-ratio: 1 / 1;
+  padding: 0;
+  line-height: 1;
+}
 
-/* small slider. The visible track sits at the TOP of a 44px touch strip, so it reads as part of the row
-   just above it while the touch target stays 44px tall. */
+/* small slider. The visible track sits near the TOP of a 44px touch strip, so it reads as part of the
+   row just above it while the touch target stays 44px tall. */
 .gv-slider {
   display: flex;
   align-items: flex-start;
@@ -90,7 +122,7 @@
   justify-content: center;
   min-width: var(--gv-hit);
   height: var(--gv-hit);
-  padding: 3px 0 0;
+  padding: calc(var(--gv-track-top) - 5px) 0 0;
   border: none;
   border-radius: 8px;
   background: transparent;
@@ -112,8 +144,10 @@
   min-width: 0;
   height: var(--gv-hit);
   margin: 0 8px;                 /* room for the thumb at either end */
-  cursor: pointer;
+  cursor: grab;
   touch-action: pan-y;           /* horizontal drags move the slider, vertical ones still scroll the page */
+  user-select: none;
+  -webkit-user-select: none;
   -webkit-tap-highlight-color: transparent;
   outline: none;
 }
@@ -139,10 +173,40 @@
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
   box-sizing: border-box;
   pointer-events: none;
+  /* glide onto the step after a tap, a key or a release (off while dragging: the thumb follows the finger) */
+  transition: left 140ms ease-out, transform 120ms ease-out, background-color 120ms, box-shadow 120ms;
 }
-.gv-rail.is-dragging { cursor: grabbing; }
-.gv-rail.is-dragging .gv-thumb { transform: translate(-50%, -50%) scale(1.15); }
+.gv-fill { transition: width 140ms ease-out; }
+.gv-rail:hover .gv-thumb { transform: translate(-50%, -50%) scale(1.15); }
 .gv-rail:focus-visible .gv-thumb { box-shadow: 0 0 0 3px var(--gd-focus); }
+
+/* grabbed: larger filled thumb with a halo, and the "n / N" bubble under it */
+.gv-rail.is-dragging { cursor: grabbing; }
+.gv-rail.is-dragging .gv-thumb,
+.gv-rail.is-dragging .gv-fill { transition: transform 120ms ease-out, background-color 120ms, box-shadow 120ms; }
+.gv-rail.is-dragging .gv-thumb {
+  transform: translate(-50%, -50%) scale(1.4);
+  background: var(--gv-track-fill);
+  box-shadow: 0 0 0 6px var(--gv-halo), 0 2px 6px rgba(0, 0, 0, 0.35);
+}
+.gv-bubble {
+  position: absolute;
+  top: calc(100% + 3px);           /* below the thumb, in the touch strip: never covers the row above */
+  left: 50%;
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: var(--gv-fg);
+  color: #ffffff;
+  font-size: 8px;                /* shown at 1.4× with the grabbed thumb */
+  font-weight: 700;
+  line-height: 1.3;
+  white-space: nowrap;
+  transform: translateX(-50%);
+  opacity: 0;
+  transition: opacity 120ms;
+  pointer-events: none;
+}
+.gv-rail.is-dragging .gv-bubble { opacity: 1; }
 
 /* =============================================================================
    BREAKPOINTS — keep at end of file
@@ -154,7 +218,7 @@
 
 /* narrow chord panels (col-md-3 at tablet widths): no room for 1 · rail · N on one line —
    the rail takes the full width and 1 / N sit under its two ends */
-@container gv (max-width: 220px) {
+@container gv (max-width: 150px) {
   .gv-octave { align-self: stretch; }
   .gv-slider {
     display: grid;
