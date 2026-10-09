@@ -214,7 +214,7 @@ const sigText = (s) => (s.count === 0 ? 'none (no sharps or flats)'
  * @param {number} opts.octave         octave of each progression chord's root (default 4)
  * @param {number} opts.velocity       chord volume 0–1 (default 0.7)
  * @param {number} opts.strumMs        delay between chord tones (default 0)
- * @returns {Promise<{circle, setKey, select, state, element, relativeElement, selectorElement, destroy}|null>}
+ * @returns {Promise<{circle, setKey, select, randomProgression, state, element, relativeElement, selectorElement, destroy}|null>}
  *   state(): the chords shown in both panels (same object as 'progression:change' detail.root / .relative)  null if the root container is missing
  * Emits (bubbling): 'progression:change' {key, relativeKey, progression, root, relative}
  *                     root / relative = {panel, title, key:{name, mode, tonic, tonicPc}, progression:{id, name},
@@ -635,6 +635,18 @@ export async function renderCircleProgressions(opts = {}) {
     render();
   });
 
+  // Random progression (never the current one), from the same list as the dropdown
+  function pickRandomProgression() {
+    const pool = [...circle.progressions('major'), ...circle.progressions('minor')].filter((p) => p !== currentProg);
+    if (!pool.length) return currentProg.id;
+    currentProg = pool[Math.floor(Math.random() * pool.length)];
+    select.value = currentProg.id;
+    return currentProg.id;
+  }
+  // Chord controls' Random button: switch progression now; the chord selection that follows redraws
+  const onRandom = () => pickRandomProgression();
+  document.addEventListener('chord:random', onRandom);
+
   // Follow the chord-data panels: their two chords are used exactly, never recomputed.
   //   #minor-chord-data chord -> "Relative Minor:"/"Relative Major:" badge + the relative progression's key (same root)
   //   #root-chord-data chord  -> "Root Chord:" badge
@@ -689,6 +701,7 @@ export async function renderCircleProgressions(opts = {}) {
     circle,
     setKey,
     state: () => lastState,
+    randomProgression: () => { const id = pickRandomProgression(); render(); return id; },
     select: (id) => {
       const p = circle.progression(id);
       if (p) { currentProg = p; select.value = id; render(); }
@@ -696,6 +709,7 @@ export async function renderCircleProgressions(opts = {}) {
     destroy() {
       document.removeEventListener('chord:panels', onPanels);
       document.removeEventListener('piano:press', onKeyPress);
+      document.removeEventListener('chord:random', onRandom);
       panels.forEach((w) => w.remove());
       selector?.remove();
     },

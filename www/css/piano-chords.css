@@ -50,11 +50,19 @@
   box-sizing: border-box;
 }
 
+/* [chord type ▾] [🎲 Random] */
+.cc-head {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
 .cc-type {
   display: block;
   min-height: 44px;
   max-width: 100%;
-  margin-bottom: 10px;
+  min-width: 0;
   padding: 0 40px 0 12px;
   border: 1px solid var(--cc-btn-border);
   border-radius: 8px;
@@ -75,6 +83,31 @@
 .cc-type:focus-visible { outline: 3px solid var(--cc-focus); outline-offset: 2px; }
 .cc-type option,
 .cc-type optgroup { background: var(--cc-select-bg); color: var(--cc-select-fg); }
+
+/* Random button: same frame as the dropdown beside it */
+.cc-random {
+  appearance: none;
+  -webkit-appearance: none;
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--cc-btn-border);
+  border-radius: 8px;
+  background: var(--cc-select-bg);
+  color: var(--cc-select-fg);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.cc-random:hover { border-color: var(--cc-btn-fg); }
+.cc-random:focus-visible { outline: 3px solid var(--cc-focus); outline-offset: 2px; }
+.cc-random:active { background: var(--cc-btn-hover); }
 
 .cc-grid {
   display: grid;
@@ -335,8 +368,8 @@
   position: relative;
   display: flex;
   width: 100%;
-  aspect-ratio: 7 / 2.6;
-  max-height: 130px;
+  aspect-ratio: 7 / 3.12;        /* 20% taller than 7 / 2.6 */
+  max-height: 156px;             /* 130px + 20% */
 }
 
 .mk-key { box-sizing: border-box; display: flex; justify-content: center; }
@@ -407,7 +440,7 @@
 
 @media (max-width: 768px) {
   .cc-group { padding: 10px 8px; border-radius: 8px; }
-  .cc-type { width: 100%; }
+  .cc-type { flex: 1 1 auto; width: auto; }        /* dropdown fills the row beside the Random button */
   .cd { padding: 12px; border-radius: 8px; }
   :root { --cd-margin-top: 20px; }
 }
@@ -415,6 +448,7 @@
 @media (max-width: 430px) {
   .cc-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
   .cc-btn { font-size: 14px; }
+  .cc-random span { display: none; }                /* icon only on phones (44px square) */
   :root { --cd-circle: 48px; }
   .cd-tones { gap: 12px; }
 }

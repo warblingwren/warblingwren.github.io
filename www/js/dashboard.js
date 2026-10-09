@@ -10,17 +10,48 @@ const IDS = {
   chordControls: 'root-chords',
   progressionSelector: 'progression-selector',
   piano: 'piano-keyboard',
-  rootChordData: 'piano-root-chord-data',
-  minorChordData: 'piano-minor-chord-data',
-  rootProgressions: 'piano-root-circle-progressions',
-  minorProgressions: 'piano-minor-circle-progressions',
+  pianoRootChordData: 'piano-root-chord-data',
+  pianoMinorChordData: 'piano-minor-chord-data',
+  pianoRootProgressions: 'piano-root-circle-progressions',
+  pianoMinorProgressions: 'piano-minor-circle-progressions',
   guitar: 'guitar-fretboard',
 };
 
-const piano = await renderPianoKeyboard({ target: IDS.piano, dataUrl: 'DATA/piano_tuning.json', scrollTo: 'C4', mobileOctaves: 2, mobileQuery: '(max-width: 768px)' });
-const audio = createPianoAudio({ baseUrl: 'DATA/piano/', ext: 'mp3', missing: ['A0', 'A#0', 'B0'] });
-piano.element.addEventListener('piano:press',   (e) => audio.play(e.detail.note));
+const piano = await renderPianoKeyboard({ 
+  target: IDS.piano, 
+  dataUrl: 'DATA/piano_tuning.json', 
+  scrollTo: 'C3', 
+  mobileOctaves: 2, 
+  mobileQuery: '(max-width: 768px)' 
+});
+
+const audio = createPianoAudio({ 
+  baseUrl: 'DATA/piano/', 
+  ext: 'mp3', 
+  missing: ['A0', 'A#0', 'B0'] 
+});
+
+piano.element.addEventListener('piano:press', (e) => audio.play(e.detail.note));
 piano.element.addEventListener('piano:release', (e) => audio.release(e.detail.note));
-const chords = renderChordControls({ piano, audio, target: IDS.chordControls, dataTarget: IDS.rootChordData, relativeTarget: IDS.minorChordData });
-const progressions = await renderCircleProgressions({ piano, audio, target: IDS.rootProgressions, relativeTarget: IDS.minorProgressions, selectorTarget: IDS.progressionSelector });
-const guitar = await renderGuitarFretboard({ target: IDS.guitar, dataUrl: 'DATA/guitar_tuning.json', piano, progressions });
+
+const chords = renderChordControls({ 
+  piano, audio, 
+  target: IDS.chordControls, 
+  dataTarget: IDS.pianoRootChordData, 
+  relativeTarget: 
+  IDS.pianoMinorChordData 
+});
+
+const progressions = await renderCircleProgressions({ 
+  piano, audio, 
+  target: IDS.pianoRootProgressions, 
+  relativeTarget: IDS.pianoMinorProgressions, 
+  selectorTarget: IDS.progressionSelector 
+});
+
+const guitar = await renderGuitarFretboard({ 
+  target: IDS.guitar, 
+  dataUrl: 'DATA/guitar_tuning.json', 
+  piano, 
+  progressions 
+});
