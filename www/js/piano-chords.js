@@ -17,6 +17,27 @@
 import { midiToNote, noteToMidi } from './piano-audio.js';
 import { textOn } from './piano.js';
 
+// Version handshake. Bump both together when the markup/CSS contract changes.
+//   VERSION      — read by circle-o-5ths.js, which warns if this file is older than it expects
+//   --cc-css-version in www/css/piano-chords.css — checked below
+export const VERSION = 5;
+const CSS_VERSION = 5;
+
+// Small SVG builder (no innerHTML: works under strict Content-Security-Policy / Trusted Types)
+const SVG_NS = 'http://www.w3.org/2000/svg';
+function svgIcon(children, size = 20) {
+  const svg = document.createElementNS(SVG_NS, 'svg');
+  for (const [k, v] of Object.entries({ viewBox: '0 0 24 24', width: size, height: size, 'aria-hidden': 'true', focusable: 'false' })) {
+    svg.setAttribute(k, String(v));
+  }
+  for (const [tag, attrs] of children) {
+    const n = document.createElementNS(SVG_NS, tag);
+    for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, String(v));
+    svg.append(n);
+  }
+  return svg;
+}
+
 // semis = semitones above root; letters = letter steps above root letter; label = degree text
 const R   = { semis: 0,  letters: 0, label: 'R' };
 const M2  = { semis: 2,  letters: 1, label: '2' };
@@ -258,34 +279,33 @@ const getHost = (id) => {
 // Same colours as the large keyboard (piano.keyColors / piano.roleColor): octave-tinted white keys,
 // chord keys in the octave's chord shade, note name on each chord key (black keys: in a circle
 // shaded by chord role). Display only.
-// Window: chord inside one octave -> C–B of that octave; chord crossing an octave -> the 7 white
-// keys (with the black keys between them) that best centre the chord, or 8 when 7 cannot hold it.
+// Window: always exactly one octave with all 5 black keys and clean white-key edges — C–B (2+3)
+// or F–E (3+2). The chord is shown as voiced when it fits one of them; otherwise the fewest
+// possible tones move by an octave (an inversion), so every chord tone is always in view.
 const WHITE_PCS = new Set([0, 2, 4, 5, 7, 9, 11]);
-const BLACK_LEFT = { 1: 1, 3: 2, 6: 4, 8: 5, 10: 6 };   // black pc -> white keys to its left within C–B
+const WINDOW_STARTS = [0, 5];                            // C–B and F–E: the only octaves with 5 whole black keys
 
+/**
+ * @param {number[]} midis  voiced chord tones
+ * @returns {{start:number, end:number, notes:number[]}}  window (start..end inclusive) + tone positions inside it
+ */
 export function miniWindow(midis) {
   const lo = Math.min(...midis);
   const hi = Math.max(...midis);
-  if (Math.floor(lo / 12) === Math.floor(hi / 12)) {
-    const c = Math.floor(lo / 12) * 12;
-    return { start: c, end: c + 11 };
-  }
   const centre = (lo + hi) / 2;
-  // 7 white keys when the chord fits; otherwise 8 (e.g. Bmaj7 B–D♯–F♯–A♯ -> B4–B5), so the window
-  // always starts and ends on a white key and no black key hangs off the edge
-  for (const count of [7, 8]) {
-    let best = null;
-    for (let start = lo - 12; start <= lo; start++) {
-      if (!WHITE_PCS.has(((start % 12) + 12) % 12)) continue;
-      let end = start;
-      for (let whites = 1; whites < count;) { end += 1; if (WHITE_PCS.has(end % 12)) whites += 1; }
-      if (hi > end) continue;
-      const off = Math.abs((start + end) / 2 - centre);
-      if (!best || off < best.off - 1e-9) best = { start, end, off };
+  let best = null;
+  for (const pcStart of WINDOW_STARTS) {
+    const first = lo - ((((lo - pcStart) % 12) + 12) % 12);   // window start at or below the lowest tone
+    for (const start of [first - 12, first, first + 12]) {
+      const notes = midis.map((m) => start + ((((m - start) % 12) + 12) % 12));
+      const moved = notes.filter((n, i) => n !== midis[i]).length;
+      const off = Math.abs(start + 5.5 - centre);
+      if (!best || moved < best.moved || (moved === best.moved && off < best.off - 1e-9)) {
+        best = { start, end: start + 11, notes, moved, off };
+      }
     }
-    if (best) return { start: best.start, end: best.end };
   }
-  return { start: lo, end: hi };
+  return { start: best.start, end: best.end, notes: best.notes };
 }
 
 /**
@@ -299,15 +319,12 @@ export function renderMiniKeyboard(o) {
   const { piano, name, tones } = o;
   const wrap = document.createElement('div');
   wrap.className = 'mk';
-  const toneByMidi = new Map();
-  for (const t of tones) {
-    const m = noteToMidi(t.note);
-    if (m !== null) toneByMidi.set(m, t);
-  }
-  // like the large keyboard: every key of a chord pitch class is shaded, voiced tones are labelled
-  const chordPcs = new Set([...toneByMidi.keys()].map((m) => m % 12));
-  if (!toneByMidi.size) return wrap;
-  const { start, end } = miniWindow([...toneByMidi.keys()]);
+  const voiced = tones.map((t) => ({ t, m: noteToMidi(t.note) })).filter((x) => x.m !== null);
+  if (!voiced.length) return wrap;
+  const { start, end, notes } = miniWindow(voiced.map((x) => x.m));
+  const toneByMidi = new Map(voiced.map((x, i) => [notes[i], x.t]));   // position in the window -> tone
+  // like the large keyboard: every key of a chord pitch class is shaded, chord tones are labelled
+  const chordPcs = new Set(notes.map((m) => m % 12));
   wrap.setAttribute('role', 'img');
   wrap.setAttribute('aria-label', `${name} on the keyboard: ${tones.map((t) => t.spelled).join(' ')}`);
 
@@ -364,14 +381,16 @@ export function renderMiniKeyboard(o) {
  * @param {number} opts.octave      octave of the played chord root (default 4)
  * @param {number} opts.strumMs     delay between chord tones, 0 = simultaneous (default 0)
  * @param {number} opts.velocity    chord volume 0–1 (default 0.7)
- * @returns {{select:Function, clear:Function, destroy:Function, element:HTMLDivElement}}
- *          select('C'), select('Cdim7'), select('Bm7♭5') …
+ * @returns {{select:Function, random:Function, clear:Function, destroy:Function, element:HTMLDivElement}}
+ *          select('C'), select('Cdim7'), select('Bm7♭5') …   random(): the Random button's action
  *          showType('maj7') switches the button row (dropdown values = group ids)
  * Emits on the controls element: 'chord:select' detail {name, quality, group, rootName, root, notes, spelled}
  *                                'chord:type'   detail {type, title}
  *                                'chord:tone'   detail {chord, note, spelled, degree} | 'chord:clear'
  *                                'chord:octave' detail {chord, octave, notes}
  * Dispatches on document: 'chord:panels' detail {selected, root, minor} — the chords shown in the two panels
+ *                         'chord:random' detail {name} — Random button, sent just before that chord is selected
+ *                                        (circle-o-5ths.js picks a random progression on it)
  *                                'chord:octave-note' detail {chord, octave, note, spelled, degree}
  */
 export function renderChordControls(opts = {}) {
@@ -393,6 +412,11 @@ export function renderChordControls(opts = {}) {
   if (!hostId) throw new TypeError('piano-chords: opts.target (or opts.after) is required — the id of the chord controls <div>');
   const host = getDiv(hostId);
   if (!host) throw new TypeError(`piano-chords: #${hostId} is not a <div>`);
+  const cssVersion = parseFloat(getComputedStyle(host).getPropertyValue('--cc-css-version'));
+  if (cssVersion !== CSS_VERSION) {
+    console.warn(`piano-chords: www/css/piano-chords.css is ${Number.isFinite(cssVersion) ? `version ${cssVersion}` : 'missing or an older version'}; `
+      + `piano-chords.js expects version ${CSS_VERSION} — chord controls may be styled wrongly`);
+  }
   if (!dataTarget) console.warn('piano-chords: opts.dataTarget not given — root chord panel not shown');
   if (!relativeTarget) console.warn('piano-chords: opts.relativeTarget not given — relative chord panel not shown');
   let warnedNoData = false;
@@ -706,7 +730,36 @@ export function renderChordControls(opts = {}) {
 
   typeSelect.addEventListener('change', () => showType(typeSelect.value));
 
-  box.append(typeSelect, grid);
+  // Random: any chord of any type (never the one already showing) + a random progression.
+  // 'chord:random' goes out first so the progressions switch before the chord redraws them.
+  const all = [...chordsByGroup.values()].flat();
+  function random() {
+    const pool = all.filter((c) => c !== activeChord);
+    const chord = pool[Math.floor(Math.random() * pool.length)];
+    document.dispatchEvent(new CustomEvent('chord:random', { detail: { name: chord.name } }));
+    select(chord);
+    return chord.name;
+  }
+  const randomBtn = document.createElement('button');
+  randomBtn.type = 'button';
+  randomBtn.className = 'cc-random';
+  randomBtn.setAttribute('aria-label', 'Random chord and progression');
+  randomBtn.title = 'Random chord and progression';
+  // dice icon + label, built as DOM nodes (no innerHTML)
+  const pip = (cx, cy) => ['circle', { cx, cy, r: 1.6, fill: 'currentColor' }];
+  const randomLabel = document.createElement('span');
+  randomLabel.textContent = 'Random';
+  randomBtn.append(
+    svgIcon([['rect', { x: 3, y: 3, width: 18, height: 18, rx: 4, fill: 'none', stroke: 'currentColor', 'stroke-width': 2 }],
+      pip(8, 8), pip(16, 8), pip(12, 12), pip(8, 16), pip(16, 16)]),
+    randomLabel,
+  );
+  randomBtn.addEventListener('click', random);
+
+  const head = document.createElement('div');       // [chord type ▾] [🎲 Random]
+  head.className = 'cc-head';
+  head.append(typeSelect, randomBtn);
+  box.append(head, grid);
   wrap.append(box);
   showType('major'); // default: Major chords
 
@@ -724,6 +777,7 @@ export function renderChordControls(opts = {}) {
       const chord = byName.get(name);
       if (chord) select(chord);
     },
+    random,
     showType,
     active: () => activeChord?.name ?? null,
     clear,

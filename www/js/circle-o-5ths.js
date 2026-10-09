@@ -19,6 +19,11 @@
 import { midiToNote } from './piano-audio.js';
 import { textOn } from './piano.js';
 import { renderMiniKeyboard, renderOctaveRows, currentPanels } from './piano-chords.js';
+import * as chordsModule from './piano-chords.js';
+
+// piano-chords.js this file was built with (Random button, mini keyboards). A namespace import is used
+// so an older piano-chords.js is reported in the console instead of breaking the page.
+const EXPECTED_CHORDS_VERSION = 5;
 
 const LETTERS = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
 const LETTER_PC = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
@@ -236,6 +241,10 @@ export async function renderCircleProgressions(opts = {}) {
   } = opts;
 
   if (!piano || !audio) throw new TypeError('circle-o-5ths: piano and audio are required');
+  if (chordsModule.VERSION !== EXPECTED_CHORDS_VERSION) {
+    console.warn(`circle-o-5ths: www/js/piano-chords.js is ${chordsModule.VERSION ? `version ${chordsModule.VERSION}` : 'an older version'}; `
+      + `circle-o-5ths.js expects version ${EXPECTED_CHORDS_VERSION} — the Random button and other recent features will be missing`);
+  }
 
   // Containers: exactly the ids the caller names (waits if not in the DOM yet). No fallback ids.
   if (!target) {

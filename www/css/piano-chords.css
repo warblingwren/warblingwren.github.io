@@ -29,6 +29,9 @@
   --cd-relative-bg: #ffffff;
   --cd-relative-border: #00bcd4; /* Material Cyan 500 */
   --cd-circle: 52px;
+
+  /* SYNC: CSS_VERSION in www/js/piano-chords.js — piano-chords.js warns in the console if they differ */
+  --cc-css-version: 5;
 }
 
 /* --- chord controls: type dropdown + one row of 12 buttons ------------------ */

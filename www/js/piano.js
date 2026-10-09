@@ -211,18 +211,27 @@ export async function renderPianoKeyboard(opts = {}, legacyOpts = {}) {
   const prettyNote = (n) => n.replace('#', '♯');
   let muted = Boolean(startMuted);  // persists across re-renders
   let muteEl = null;
-  const SPEAKER = '<path d="M3 9v6h4l5 5V4L7 9H3z" fill="currentColor"/>';
-  const ICON_ON = `<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false">${SPEAKER}`
-    + '<path d="M16.5 12a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4zM14 3.2v2.1a7 7 0 0 1 0 13.4v2.1a9 9 0 0 0 0-17.6z" fill="currentColor"/></svg>';
-  const ICON_OFF = `<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false">${SPEAKER}`
-    + '<path d="M15 9l6 6M21 9l-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></svg>';
+  // Mute icons, built as DOM nodes (no innerHTML: works under strict Content-Security-Policy / Trusted Types)
+  const SVG_NS = 'http://www.w3.org/2000/svg';
+  const speakerIcon = (extra) => {
+    const svg = document.createElementNS(SVG_NS, 'svg');
+    for (const [k, v] of Object.entries({ viewBox: '0 0 24 24', width: 22, height: 22, 'aria-hidden': 'true', focusable: 'false' })) svg.setAttribute(k, String(v));
+    for (const attrs of [{ d: 'M3 9v6h4l5 5V4L7 9H3z', fill: 'currentColor' }, extra]) {
+      const path = document.createElementNS(SVG_NS, 'path');
+      for (const [k, v] of Object.entries(attrs)) path.setAttribute(k, v);
+      svg.append(path);
+    }
+    return svg;
+  };
+  const ICON_ON = () => speakerIcon({ d: 'M16.5 12a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4zM14 3.2v2.1a7 7 0 0 1 0 13.4v2.1a9 9 0 0 0 0-17.6z', fill: 'currentColor' });
+  const ICON_OFF = () => speakerIcon({ d: 'M15 9l6 6M21 9l-6 6', stroke: 'currentColor', 'stroke-width': '2', 'stroke-linecap': 'round', fill: 'none' });
   function paintMute() {
     if (!muteEl) return;
     muteEl.classList.toggle('is-muted', muted);
     muteEl.setAttribute('aria-pressed', String(muted));
     muteEl.setAttribute('aria-label', muted ? 'Unmute keyboard sound' : 'Mute keyboard sound');
     muteEl.title = muted ? 'Sound off — click to unmute' : 'Sound on — click to mute';
-    muteEl.innerHTML = muted ? ICON_OFF : ICON_ON;  // static markup only, no data
+    muteEl.replaceChildren(muted ? ICON_OFF() : ICON_ON());
   }
   function setMuted(on) {
     const next = Boolean(on);
