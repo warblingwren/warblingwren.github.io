@@ -41,6 +41,22 @@ tags: [Warbling Wren]
 					<div id="guitar-fretboard"></div>
 				</div>
 			</div>
+            <div class="row">
+                <div class="col-md-9 h-100">
+					<div id="guitar-root-circle-progressions"></div>
+				</div>
+                <div class="col-md-3 h-100">
+					<div id="guitar-root-chord-data"></div>
+                </div>
+			</div>
+            <div class="row">
+                <div class="col-md-9 h-100">
+					<div id="guitar-minor-circle-progressions"></div>
+				</div>
+                <div class="col-md-3 h-100">
+					<div id="guitar-minor-chord-data"></div>
+                </div>
+			</div>
 		</div>
 	</div>
 </div>

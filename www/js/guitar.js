@@ -15,7 +15,7 @@
 //   www/css/guitar.css (same breakpoint as piano.js / piano.css)
 // =============================================================================
 
-import { OCTAVE_FAMILIES, textOn } from './piano.js';
+import { OCTAVE_FAMILIES, textOn, stickyTargetFor } from './piano.js';
 
 const NOTE_RE = /^([A-G])(#?)([0-8])$/;
 // Progression dots use the piano's colours: hue = octave family of the dot's actual pitch,
@@ -24,7 +24,7 @@ const NOTE_RE = /^([A-G])(#?)([0-8])$/;
 const DEGREE_SHADES = ['900', '800', '700', '600', '500', '400', '300'];
 const HEX_RE = /^#[0-9a-f]{6}$/i;
 // SYNC: --gf-css-version in www/css/guitar.css. Bump both together when the markup/CSS contract changes.
-const CSS_VERSION = 4;
+const CSS_VERSION = 5;
 const SEMITONE = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
 const NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -106,10 +106,13 @@ function validateTunings(json) {
  * @param {object}  opts.progressions API returned by renderCircleProgressions (optional; its 'progression:change'
  *                                    events are also picked up from document)
  * @param {string}  opts.overlay      initial progression overlay: 'root' | 'relative' (default 'root')
+ * @param {boolean} opts.sticky       pin the fretboard to the top of the window while scrolling (default true);
+ *                                    with opts.piano it takes over from the pinned keyboard, pushing it up
  * @returns {Promise<object|null>} API (null if the container is missing):
  *   element, tunings(), tuning(), setTuning(name), noteAt(string, fret),
  *   positionsOf(noteOrPitchClass), range(), shiftFrets(dir), showFrets(fromFret),
- *   setOverlay(panel), overlay(), focusChord(name|null), isCompact(), destroy()
+ *   setOverlay(panel), overlay(), focusChord(name|null), showPositions(list, {title}), clearPositions(),
+ *   maxFret, isCompact(), destroy()
  * Emits on the container (bubbling): 'guitar:tuning'   detail {name, alias, strings:[{string, note}]}
  *                                    'guitar:overlay'  detail {panel, key, chord, notes:[spelled]}
  *                                    'guitar:rerender' detail {from, to, compact}
@@ -136,6 +139,7 @@ export async function renderGuitarFretboard(opts = {}, legacyOpts = {}) {
     progressions = null,
     piano = null,
     overlay: startOverlay = 'root',
+    sticky = true,
   } = opts;
 
   const container = await waitForHost(target);
@@ -395,7 +399,7 @@ export async function renderGuitarFretboard(opts = {}, legacyOpts = {}) {
       const layer = svgEl('g', {}, 'gf-marks');
       current.strings.forEach((s, i) => {
         for (let f = L.from + 1; f <= L.to; f++) {
-          const n = ov.notes.get((s.midi + f) % 12);
+          const n = ov.custom ? ov.custom.get(`${s.string}:${f}`) : ov.notes.get((s.midi + f) % 12);
           if (!n) continue;
           const xl = L.xAtFret(f - 1);
           const xr = L.xAtFret(f);
@@ -411,7 +415,7 @@ export async function renderGuitarFretboard(opts = {}, legacyOpts = {}) {
     current.strings.forEach((s, i) => {
       const y = L.yAt(i, L.x0);
       const r = Math.min(13, L.gapBody * 0.42);
-      const n = ov?.notes.get(s.midi % 12);
+      const n = ov?.custom ? ov.custom.get(`${s.string}:0`) : ov?.notes.get(s.midi % 12);
       if (n) { svg.append(dotEl(L.openCol / 2 - 2, y, r, n, s, 0, ov)); return; }
       const g = svgEl('g', {}, 'gf-open');
       const title = svgEl('title');
@@ -462,8 +466,11 @@ export async function renderGuitarFretboard(opts = {}, legacyOpts = {}) {
     return [...seen.values()];
   };
 
+  // Exact positions from the guitar chord panels (a chord shape, an octave shape, every place of one tone)
+  let custom = null;                                 // {title, positions: Map 'string:fret' -> note}
   function overlayNotes() {
     const st = panelState();
+    if (custom) return { st, custom: custom.positions, notes: new Map(), ringPc: custom.ringPc, chord: custom.chord ?? null };
     if (!st || !Array.isArray(st.chords)) return null;
 
     // One chord: only its tones, shaded by chord role like the piano (root 900, 3rd 700, 5th 500, 7th 300
@@ -523,8 +530,8 @@ export async function renderGuitarFretboard(opts = {}, legacyOpts = {}) {
     const title = svgEl('title');
     const where = `${pretty(midiToNote(s.midi + fret))}, ${fret === 0 ? `string ${s.string} open` : `string ${s.string}, fret ${fret}`}`;
     const inChords = n.chords.length ? ` · in ${n.chords.join(', ')}` : '';
-    title.textContent = ov.chord
-      ? `${n.spelled} (${ROLE_NAMES[n.rank]} of ${ov.chord.name}${n.interval ? `, ${n.interval}` : ''}) · ${where}`
+    title.textContent = ov.custom || ov.chord
+      ? `${n.spelled} (${ROLE_NAMES[n.rank] ?? ''}${ov.chord ? ` of ${ov.chord.name}` : ''}${n.interval ? `, ${n.interval}` : ''}) · ${where}`
       : `${n.spelled} (degree ${n.degree}${root ? ', root' : ''}) · ${where}${inChords}`;
     const c = svgEl('circle', { cx: cx.toFixed(2), cy: cy.toFixed(2), r: r.toFixed(2) }, 'gf-dot-c');
     const t = svgEl('text', {
@@ -555,11 +562,12 @@ export async function renderGuitarFretboard(opts = {}, legacyOpts = {}) {
     const mk = (text, name, aria) => {
       const b = document.createElement('button');
       b.type = 'button';
-      b.className = `gf-badge${name === null ? ' gf-badge--all' : ''}${focusName === name ? ' is-active' : ''}`;
+      const on = !custom && focusName === name;
+      b.className = `gf-badge${name === null ? ' gf-badge--all' : ''}${on ? ' is-active' : ''}`;
       b.textContent = text;
-      b.setAttribute('aria-pressed', String(focusName === name));
+      b.setAttribute('aria-pressed', String(on));
       b.setAttribute('aria-label', aria);
-      b.addEventListener('click', () => api.focusChord(name === null || focusName === name ? null : name));
+      b.addEventListener('click', () => api.focusChord(name === null || (!custom && focusName === name) ? null : name));
       return b;
     };
     badges.replaceChildren(...(chords.length
@@ -588,7 +596,7 @@ export async function renderGuitarFretboard(opts = {}, legacyOpts = {}) {
     progState = { root: d.root ?? null, relative: d.relative ?? null };
     refreshProgOptions();
     // a new chord set (other key or progression) starts again from All
-    if (uniqueChords(panelState()).map((c) => c.name).join('|') !== before) focusName = null;
+    if (uniqueChords(panelState()).map((c) => c.name).join('|') !== before) { focusName = null; custom = null; }
     renderBadges();
     render();
   };
@@ -603,7 +611,10 @@ export async function renderGuitarFretboard(opts = {}, legacyOpts = {}) {
     nextBtn.disabled = L.to >= maxFrets;
     rangeEl.textContent = `Frets ${L.from + 1} – ${L.to}`;
     const st = panelState();
-    if (st) {
+    if (custom?.title) {
+      status.textContent = custom.title;             // e.g. "C · first position" / "C in octave 3"
+      status.title = custom.title;
+    } else if (st) {
       status.textContent = `${st.key.name} · ${st.progression.name}`;
       status.title = `${st.title}: ${st.chords.map((c) => c.name).join(' – ')}`;
     } else {
@@ -643,6 +654,8 @@ export async function renderGuitarFretboard(opts = {}, legacyOpts = {}) {
       if (t === current) return true;
       current = t;
       select.value = t.name;
+      custom = null;                                 // string/fret positions belong to the old tuning
+      renderBadges();
       render();
       emit('guitar:tuning', api.tuning());
       return true;
@@ -686,6 +699,7 @@ export async function renderGuitarFretboard(opts = {}, legacyOpts = {}) {
       if (!PANELS.includes(panel)) { console.warn(`guitar-fretboard: overlay must be 'root' or 'relative', not "${panel}"`); return false; }
       if (progState && !progState[panel]) { console.warn(`guitar-fretboard: no ${panel} progression on the page`); return false; }
       overlayPanel = panel;
+      custom = null;
       focusName = tonicChordName();                  // other panel: start on its root chord (cleaner than All)
       progSelect.value = panel;
       renderBadges();
@@ -698,6 +712,7 @@ export async function renderGuitarFretboard(opts = {}, legacyOpts = {}) {
       const next = name && uniqueChords(panelState()).some((c) => c.name === name) ? name : null;
       if (name && !next) console.warn(`guitar-fretboard: "${name}" is not in the ${overlayPanel} progression`);
       focusName = next;
+      custom = null;
       renderBadges();
       render();
       emitOverlay();
@@ -708,8 +723,46 @@ export async function renderGuitarFretboard(opts = {}, legacyOpts = {}) {
       return { panel: overlayPanel, key: ov?.st.key.name ?? null, chord: ov?.chord?.name ?? null, ringPc: ov?.ringPc ?? null,
         notes: ov ? [...ov.notes.values()].map((n) => ({ ...n, chords: [...n.chords] })) : [] };
     },
+    /**
+     * Show exact positions (from the guitar chord panels): [{string 1–6, fret, spelled, rank, interval?}].
+     * Colours: the piano's octave colour of each sounding pitch at its chord-role shade; rank 0 gets the ring.
+     * Narrow screens move the 12-fret window so the shape is in view.
+     */
+    showPositions(list, { title = '', chord = null } = {}) {
+      const positions = new Map();
+      let ringPc = null;
+      for (const p of list ?? []) {
+        const s = current.strings.find((x) => x.string === p.string);
+        if (!s || !Number.isInteger(p.fret) || p.fret < 0 || p.fret > maxFrets) continue;
+        const rank = Math.min(Math.max(Number(p.rank) || 0, 0), 3);
+        const pc = (s.midi + p.fret) % 12;
+        if (rank === 0) ringPc = pc;
+        positions.set(`${p.string}:${p.fret}`, { pc, spelled: String(p.spelled ?? pitchName(midiToNote(s.midi + p.fret))), degree: 1 + 2 * rank, rank, interval: p.interval ?? '', chords: [] });
+      }
+      custom = { positions, ringPc, chord: chord ? { name: String(chord) } : null, title };
+      const frets = [...positions.keys()].map((k) => Number(k.split(':')[1])).filter((f) => f > 0);
+      if (frets.length && mql.matches) {
+        const lo = Math.min(...frets); const hi = Math.max(...frets);
+        if (lo <= clampStart(winStart) || hi > clampStart(winStart) + winFrets) winStart = clampStart(lo - 1);
+      }
+      renderBadges();
+      render();
+      if (title) status.textContent = title;
+      emit('guitar:positions', { title, count: positions.size });
+      return positions.size;
+    },
+    clearPositions() {
+      if (!custom) return;
+      custom = null;
+      renderBadges();
+      render();
+    },
+    get maxFret() { return maxFrets; },
     isCompact: () => mql.matches,
     destroy() {
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
+      stickyEl?.classList.remove('gf-sticky');
       document.removeEventListener('progression:change', onProgression);
       ro.disconnect();
       cancelAnimationFrame(raf);
@@ -725,5 +778,33 @@ export async function renderGuitarFretboard(opts = {}, legacyOpts = {}) {
   render();
   lastWidth = Math.floor(stage.clientWidth);
   ro.observe(stage);
+
+  // --- sticky: the fretboard pins to the top of the window; as it scrolls up to the pinned piano it
+  // pushes the keyboard up (the keyboard's bottom edge follows the fretboard's top edge) and takes over.
+  // Scrolling back down reverses it. Same climbing rule as the piano (stickyTargetFor in piano.js).
+  let stickyEl = null;
+  let raf2 = 0;
+  const pianoSticky = piano?.stickyElement?.() ?? null;
+  const pianoTop = piano?.stickyTop?.() ?? 0;
+  function onScroll() {
+    cancelAnimationFrame(raf2);
+    raf2 = requestAnimationFrame(() => {
+      if (!stickyEl || !pianoSticky) return;
+      const gTop = stickyEl.getBoundingClientRect().top;
+      const h = pianoSticky.offsetHeight;
+      piano.setStickyTop(Math.min(pianoTop, gTop - h));   // keyboard bottom never overlaps the fretboard
+    });
+  }
+  if (sticky) {
+    stickyEl = stickyTargetFor(container);
+    if (pianoSticky && (stickyEl === pianoSticky || stickyEl.contains(pianoSticky) || pianoSticky.contains(stickyEl))) {
+      console.warn('guitar-fretboard: the fretboard and the piano share one sticky element — put them in separate rows to hand off');
+    } else {
+      stickyEl.classList.add('gf-sticky');
+      window.addEventListener('scroll', onScroll, { passive: true });
+      window.addEventListener('resize', onScroll, { passive: true });
+      onScroll();
+    }
+  }
   return api;
 }

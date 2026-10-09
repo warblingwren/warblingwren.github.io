@@ -75,6 +75,22 @@ function buildOctaveColors(palette, families, lightShade, accentShade) {
   return map;
 }
 
+// Element to pin for a sticky component: position:sticky only sticks within its parent, so climb out
+// of single-child wrappers and horizontal rows (e.g. .row > .col > #target) to the element whose
+// parent holds the rest of the page content. Shared with guitar.js (same rule for both instruments).
+export function stickyTargetFor(el) {
+  let node = el;
+  while (node.parentElement && node.parentElement !== document.body) {
+    const parent = node.parentElement;
+    const ps = getComputedStyle(parent);
+    const onlyChild = parent.children.length === 1;
+    const sideBySide = ps.display.includes('flex') && ps.flexDirection.startsWith('row');
+    if (!onlyChild && !sideBySide) break;
+    node = parent;
+  }
+  return node;
+}
+
 function resolveContainer(target) {
   // DOM-clobbering guard: accept only a real HTMLDivElement
   const el = typeof target === 'string' ? document.getElementById(target) : target;
@@ -592,6 +608,13 @@ export async function renderPianoKeyboard(opts = {}, legacyOpts = {}) {
     // Every layout note (visible or not) with this pitch class, e.g. 0 -> ['C1', … 'C8']
     notesWithPitchClass: (pc) => all.filter((k) => pitchClassOf(k.note_ref) === ((pc % 12) + 12) % 12).map((k) => k.note_ref),
     roleColor,
+    /** The pinned element (null when sticky is off) and its top offset in px — guitar.js lowers it
+     *  (negative values) to push the keyboard up as the fretboard arrives. */
+    stickyElement: () => stickyEl,
+    setStickyTop(px) {
+      stickyEl?.style.setProperty('--pk-sticky-top', `${Math.round(Number(px) || 0)}px`);
+    },
+    stickyTop: () => Number(stickyTop) || 0,
     /** Header slot in the top row (left of the mute button); persists across re-renders. */
     header: () => headerEl,
     /** Move the activity line into `parent` (e.g. the header), before `before` if given. */
@@ -668,16 +691,7 @@ export async function renderPianoKeyboard(opts = {}, legacyOpts = {}) {
   // the rest of the page content.
   let stickyEl = null;
   if (sticky) {
-    stickyEl = container;
-    while (stickyEl.parentElement && stickyEl.parentElement !== document.body) {
-      const parent = stickyEl.parentElement;
-      const ps = getComputedStyle(parent);
-      const onlyChild = parent.children.length === 1;
-      // a horizontal flex row (e.g. Bootstrap .row): its columns sit side by side, so stick the row
-      const sideBySide = ps.display.includes('flex') && ps.flexDirection.startsWith('row');
-      if (!onlyChild && !sideBySide) break;
-      stickyEl = parent;
-    }
+    stickyEl = stickyTargetFor(container);
     stickyEl.classList.add('pk-sticky');
     stickyEl.style.setProperty('--pk-sticky-top', `${Number(stickyTop) || 0}px`);
     for (let a = stickyEl.parentElement; a && a !== document.body && a !== document.documentElement; a = a.parentElement) {

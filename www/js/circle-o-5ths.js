@@ -222,8 +222,9 @@ const sigText = (s) => (s.count === 0 ? 'none (no sharps or flats)'
  * @returns {Promise<{circle, setKey, select, randomProgression, showOnPiano, state, element, relativeElement, selectorElement, destroy}|null>}
  *   state(): the chords shown in both panels (same object as 'progression:change' detail.root / .relative)  null if the root container is missing
  * Emits (bubbling): 'progression:change' {key, relativeKey, progression, root, relative}
- *                     root / relative = {panel, title, key:{name, mode, tonic, tonicPc}, progression:{id, name},
- *                                        rootChord:{name, rootName, rootPc}, chords:[{name, roman, tones:[{pc, spelled, rank, interval}]}]}
+ *                     root / relative = {panel, title, key:{name, mode, tonic, tonicPc}, signature, description, note,
+ *                                        progression:{id, name}, sequence:{bars, order}, rootChord, badge:{label, chord},
+ *                                        chords:[{name, roman, rootName, rootPc, tones:[{pc, spelled, rank, interval, semitones}]}]}
  *                   'progression:chord' {roman, name, notes} | 'progression:tone' {chord, note, spelled, degree}
  */
 export async function renderCircleProgressions(opts = {}) {
@@ -600,9 +601,11 @@ export async function renderCircleProgressions(opts = {}) {
     // Snapshot of exactly what the panels show (read by the guitar fretboard overlay)
     const rootRing = panelRoot ? asBadgeChord(panelRoot, tonicRoman(rootKey)) : { ...circle.tonicChord(rootKey) };
     lastState = {
-      root: snapshot('root', root.label, rootKey, rootItems.map((it) => it.chord), rootRing),
+      root: snapshot('root', root.label, rootKey, rootItems.map((it) => it.chord), rootRing,
+        { label: `${relWord()}:`, chord: relChord }),
       relative: snapshot('relative', relWord(), relKey,
-        relItems ? relItems.map((it) => it.chord) : circle.resolve(relKey, progIn(relKey)), relChord),
+        relItems ? relItems.map((it) => it.chord) : circle.resolve(relKey, progIn(relKey)), relChord,
+        { label: 'Root Chord:', chord: rootRing }),
     };
     // exactly the chords on the cards (with semitones, for voicing on the keyboard)
     phChords = {
@@ -809,14 +812,22 @@ export async function renderCircleProgressions(opts = {}) {
   let panelRoot = null;
   let panelMinor = null;
   let lastState = null;
-  const snapshot = (panel, title, k, chords, ring) => ({
+  // Everything a panel shows, so another view (the guitar panels) can draw the same layout without
+  // recomputing any music: key box, description, chord order, badge chords, chords with voicing data.
+  const toneData = (t) => ({ pc: t.pc, spelled: t.spelled, rank: t.rank, interval: t.degree, semitones: t.semitones });   // rank 0 = chord root
+  const chordData = (c) => ({ name: c.name, roman: c.roman, rootName: c.rootName, rootPc: c.rootPc, tones: c.tones.map(toneData) });
+  const snapshot = (panel, title, k, chords, ring, badge) => ({
     panel,
     title,
     key: { name: k.name, mode: k.mode, tonic: k.tonic, tonicPc: k.tonicPc },
+    signature: sigText(k.signature),
+    description: descIn(k),
+    note: keyNote,
     progression: { id: currentProg.id, name: currentProg.name },
-    rootChord: { name: ring.name, rootName: ring.rootName, rootPc: ring.rootPc },
-    chords: chords.map((c) => ({ name: c.name, roman: c.roman,
-      tones: c.tones.map((t) => ({ pc: t.pc, spelled: t.spelled, rank: t.rank, interval: t.degree })) })),   // rank 0 = chord root
+    sequence: Array.isArray(progIn(k).bars) ? { bars: true, order: [...progIn(k).bars] } : { bars: false, order: chords.map((_, i) => i) },
+    rootChord: chordData(ring),
+    badge: badge ? { label: badge.label, chord: chordData(badge.chord) } : null,   // "Relative Minor: Am" / "Root Chord: C"
+    chords: chords.map(chordData),
   });
   const asBadgeChord = (c, roman) => ({ name: c.name, rootName: c.rootName, rootPc: c.root, tones: c.tones, roman });
 

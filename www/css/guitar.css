@@ -56,7 +56,7 @@
   --gf-root-ring: #ffffff;        /* root chord's root note */
 
   /* SYNC: CSS_VERSION in www/js/guitar.js — guitar.js warns in the console if they differ */
-  --gf-css-version: 4;
+  --gf-css-version: 5;
 
   /* geometry read by guitar.js */
   --gf-string-gap: 30px;          /* string spacing (board height = 6 × gap) */
@@ -200,6 +200,16 @@
 /* --- the drawing --------------------------------------------------------------- */
 .gf-stage { width: 100%; min-width: 0; overflow: hidden; }
 .gf-svg { display: block; }
+
+/* --- sticky fretboard (class added by guitar.js) — takes over from the pinned piano ---------- */
+.gf-sticky {
+  position: -webkit-sticky;
+  position: sticky;
+  top: 0;
+  z-index: 1021;                  /* just above the pinned piano (1020); below Bootstrap modals (1050) */
+  background: var(--gf-sticky-bg, #ffffff);
+}
+.gf.gf-sticky { background: var(--gf-frame); }
 
 .gf-c-wood { stop-color: var(--gf-wood); }
 .gf-c-wood-edge { stop-color: var(--gf-wood-edge); }

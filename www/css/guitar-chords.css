@@ -1,0 +1,59 @@
+/* =============================================================================
+   guitar-chords.css — guitar chord diagrams in the guitar progression / chord panels
+   (the panels themselves reuse .cp-* from circle-o-5ths.css and .cd-* from piano-chords.css)
+   ========================================================================== */
+
+:root {
+  --gd-line: #8a8a92;            /* strings + frets */
+  --gd-nut: #1d1d1f;
+  --gd-label: #6b6b70;           /* "5fr", muted × */
+  --gd-barre: rgba(29, 29, 31, 0.18);
+  --gd-root-ring: #ffffff;
+  --gd-focus: #3d7be8;
+  --gd-max: 190px;               /* diagram width in cards and chord panels */
+}
+
+/* the diagram is a button: clicking shows the shape on the fretboard */
+.gd {
+  appearance: none;
+  -webkit-appearance: none;
+  display: block;
+  width: 100%;
+  max-width: var(--gd-max);
+  margin: 12px auto 0;
+  padding: 4px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.gd:hover { background: rgba(0, 0, 0, 0.04); }
+.gd:focus-visible { outline: 3px solid var(--gd-focus); outline-offset: 2px; }
+.gd.is-active { box-shadow: 0 0 0 3px var(--gd-focus); }
+
+.gd-svg { display: block; width: 100%; height: auto; overflow: visible; }
+.gd-fret,
+.gd-string { stroke: var(--gd-line); stroke-width: 1.4; }
+.gd-nut { fill: var(--gd-nut); }
+.gd-base { fill: var(--gd-label); font-size: 11px; font-weight: 700; }
+.gd-mute { fill: var(--gd-label); font-size: 15px; font-weight: 700; }
+.gd-barre { fill: var(--gd-barre); }
+.gd-dot-c { stroke: rgba(0, 0, 0, 0.25); stroke-width: 1; }
+.gd-dot-t { font-weight: 700; pointer-events: none; }
+/* chord root: white ring with a dark outline, like the fretboard and the piano */
+.gd-dot.is-root .gd-dot-c { stroke: var(--gd-root-ring); stroke-width: 2.5; filter: drop-shadow(0 0 1.2px rgba(0, 0, 0, 0.9)); }
+
+.gd-none {
+  margin: 12px 0 0;
+  font-size: 13px;
+  color: var(--gd-label);
+}
+
+/* =============================================================================
+   BREAKPOINTS — keep at end of file
+   ========================================================================== */
+
+@media (max-width: 430px) {
+  :root { --gd-max: 170px; }
+}

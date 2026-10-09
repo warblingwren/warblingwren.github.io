@@ -4,6 +4,7 @@ import { createPianoAudio } from './piano-audio.js';
 import { renderChordControls } from './piano-chords.js';
 import { renderCircleProgressions } from './circle-o-5ths.js';
 import { renderGuitarFretboard } from './guitar.js';
+import { renderGuitarProgressions } from './guitar-chords.js';
 
 // Element ids — the ONLY place the JavaScript names them. SYNC: must match index.html.
 const IDS = {
@@ -15,6 +16,10 @@ const IDS = {
   rootProgressions: 'piano-root-circle-progressions',
   minorProgressions: 'piano-minor-circle-progressions',
   guitar: 'guitar-fretboard',
+  guitarRootProgressions: 'guitar-root-circle-progressions',
+  guitarRootChordData: 'guitar-root-chord-data',
+  guitarMinorProgressions: 'guitar-minor-circle-progressions',
+  guitarMinorChordData: 'guitar-minor-chord-data',
 };
 
 // Octave chords are played and drawn in (C3 = a fuller tone); the keyboard opens on the same octave
@@ -27,3 +32,4 @@ piano.element.addEventListener('piano:release', (e) => audio.release(e.detail.no
 const chords = renderChordControls({ piano, audio, target: IDS.chordControls, dataTarget: IDS.rootChordData, relativeTarget: IDS.minorChordData, octave: CHORD_OCTAVE });
 const progressions = await renderCircleProgressions({ piano, audio, target: IDS.rootProgressions, relativeTarget: IDS.minorProgressions, selectorTarget: IDS.progressionSelector, octave: CHORD_OCTAVE });
 const guitar = await renderGuitarFretboard({ target: IDS.guitar, dataUrl: 'DATA/guitar_tuning.json', piano, progressions });
+const guitarChords = await renderGuitarProgressions({ guitar, piano, progressions, target: IDS.guitarRootProgressions, dataTarget: IDS.guitarRootChordData, relativeTarget: IDS.guitarMinorProgressions, relativeDataTarget: IDS.guitarMinorChordData });
