@@ -16,6 +16,10 @@
   --gv-control-bg: #ffffff;
   --gv-control-border: rgba(0, 0, 0, 0.18);
   --gv-hit: 44px;                /* touch target */
+  --gv-track: rgba(0, 0, 0, 0.15);
+  --gv-track-fill: #3d7be8;      /* = --gd-focus */
+  --gv-track-h: 6px;
+  --gv-thumb: 30px;              /* visible thumb; the 44px rail is the touch target */
 }
 
 /* the diagram is a button: clicking shows the shape on the fretboard */
@@ -55,102 +59,90 @@
   color: var(--gd-label);
 }
 
-/* --- voicing browser: diagram · ‹ n / N › · bass-octave pills ------------------------------ */
+/* --- voicing browser: diagram · voicing row (.cd-octaves, as on the piano) · 1 —●— N slider ---------- */
 .gv { margin-top: 4px; }
 .gv-diagram .gd { margin-top: 8px; }
 
-.gv-step {
+/* voicing row: the pill and its hidden widest copy share one grid cell (constant height) */
+.cd-octaves.gv-voicing { display: grid; justify-items: start; align-items: start; }
+.gv-voicing > .cd-octave-pill { grid-area: 1 / 1; }
+.gv-voicing > .gv-ghost { visibility: hidden; pointer-events: none; }
+
+.gv-slider {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 6px;
-  max-width: 100%;               /* wider than the diagram so the fret pattern is never cut off */
-  margin: 6px auto 0;
+  gap: 4px;
+  margin-top: 10px;
 }
-.gv-arrow {
+/* the end numbers: tap 1 to step back, N to step forward */
+.gv-end {
   appearance: none;
   -webkit-appearance: none;
-  flex: 0 0 var(--gv-hit);
-  width: var(--gv-hit);
-  height: var(--gv-hit);
-  padding: 0;
-  border: 1px solid var(--gv-control-border);
-  border-radius: 50%;
-  background: var(--gv-control-bg);
-  color: var(--gv-fg);
-  font: inherit;
-  font-size: 26px;
-  font-weight: 700;
-  line-height: 1;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-}
-.gv-arrow:hover { border-color: var(--gv-fg); }
-.gv-arrow:focus-visible { outline: 3px solid var(--gd-focus); outline-offset: 2px; }
-.gv-arrow:disabled { opacity: 0.35; cursor: default; }
-
-.gv-info {
-  display: flex;
-  flex: 1 1 auto;
-  flex-direction: column;
-  align-items: center;
-  min-width: 0;
-  line-height: 1.15;
-}
-.gv-count { color: var(--gv-fg); font-size: 14px; font-weight: 700; white-space: nowrap; }
-.gv-frets {
-  max-width: 100%;
-  overflow: hidden;
-  letter-spacing: -0.02em;
-  color: var(--gv-sub);
-  font-family: SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: 12px;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-
-.gv-octaves {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 6px;
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px solid var(--cd-border, rgba(0, 0, 0, 0.12));
-}
-.gv-oct {
-  appearance: none;
-  -webkit-appearance: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
+  flex: 0 0 auto;
   min-width: var(--gv-hit);
   min-height: var(--gv-hit);
-  padding: 0 6px 0 12px;
-  border: 1px solid rgba(0, 0, 0, 0.12);
+  padding: 0 6px;
+  border: none;
   border-radius: calc(var(--gv-hit) / 2);
-  background: var(--gv-oct-bg, #eee);
+  background: transparent;
   color: var(--gv-fg);
   font: inherit;
+  font-size: 14px;
+  font-weight: 700;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
-.gv-oct:hover { border-color: var(--gv-fg); }
-.gv-oct:focus-visible { outline: 3px solid var(--gd-focus); outline-offset: 2px; }
-.gv-oct.is-active { box-shadow: 0 0 0 3px var(--gd-focus); }
-.gv-oct-name { font-size: 15px; font-weight: 700; }
-.gv-oct-n {
-  min-width: 24px;
-  height: 24px;
-  padding: 0 6px;
-  border-radius: 12px;
-  background: rgba(0, 0, 0, 0.12);
-  font-size: 12px;
-  font-weight: 700;
-  line-height: 24px;
-  text-align: center;
-  box-sizing: border-box;
+.gv-end:hover { background: rgba(0, 0, 0, 0.06); }
+.gv-end:focus-visible { outline: 3px solid var(--gd-focus); outline-offset: -2px; }
+.gv-end:disabled { color: var(--gv-sub); opacity: 0.45; cursor: default; background: transparent; }
+
+/* the rail is the drag / click target (44px tall); the visible track is thin */
+.gv-rail {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  height: var(--gv-hit);
+  margin: 0 14px;                /* room for the thumb at either end */
+  cursor: pointer;
+  touch-action: pan-y;           /* horizontal drags move the slider, vertical ones still scroll the page */
+  -webkit-tap-highlight-color: transparent;
+  outline: none;
 }
+.gv-track {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: var(--gv-track-h);
+  margin-top: calc(var(--gv-track-h) / -2);
+  border-radius: calc(var(--gv-track-h) / 2);
+  background: var(--gv-track);
+}
+.gv-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--gv-track-fill);
+}
+.gv-thumb {
+  position: absolute;
+  top: 50%;
+  width: var(--gv-thumb);
+  height: var(--gv-thumb);
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--gv-track-fill);
+  border-radius: 50%;
+  background: var(--gv-control-bg);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  box-sizing: border-box;
+  pointer-events: none;
+}
+.gv-thumb-n { color: var(--gv-fg); font-size: 11px; font-weight: 700; line-height: 1; }
+.gv-rail.is-dragging { cursor: grabbing; }
+.gv-rail.is-dragging .gv-thumb { transform: translate(-50%, -50%) scale(1.1); }
+.gv-rail:focus-visible .gv-thumb { box-shadow: 0 0 0 3px var(--gd-focus); }
 
 /* =============================================================================
    BREAKPOINTS — keep at end of file
