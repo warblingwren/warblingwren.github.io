@@ -1,14 +1,17 @@
 // =============================================================================
-// piano-audio.js — Web Audio sampler for piano keyboard
-// Plays DATA/piano/<stem>.<ext>; missing samples are pitch-shifted from the
+// piano-audio.js — Web Audio sampler for the piano keyboard (and, through createSampler, the guitar)
+// Plays <baseUrl><stem>.<ext>; missing samples are pitch-shifted from the
 // nearest available sample within ±maxShift semitones.
 //
 // Default behaviour (ringUntilNext: true): a played key or chord rings until the
 // next key or chord is played; key-up does not cut the sound.
+//
+// createSampler(opts)     — the shared engine (guitar-audio.js uses it with DATA/guitar/)
+// createPianoAudio(opts)  — createSampler with the piano defaults (unchanged API)
 // =============================================================================
 //
 // SYNC POINT (note_ref -> sample filename): '#' -> 's'   e.g. 'C#4' -> 'Cs4'
-//   Must match: piano.js noteToFileStem, Python backend (future), DATA/piano/*
+//   Must match: piano.js noteToFileStem, Python backend (future), DATA/piano/*, DATA/guitar/*
 // =============================================================================
 
 const NOTE_RE = /^([A-G])(#?)([0-8])$/;
@@ -27,8 +30,14 @@ export function midiToNote(midi) {
 
 const fileStem = (note) => note.replace('#', 's');
 
+/** Piano sampler: createSampler with the piano defaults (DATA/piano/, 'piano:mute'). Same API as before. */
+export function createPianoAudio(opts = {}) {
+  return createSampler({ name: 'piano-audio', baseUrl: 'DATA/piano/', muteEvent: 'piano:mute', ...opts });
+}
+
 /**
  * @param {object} opts
+ * @param {string} opts.name           prefix for console messages (default 'sampler')
  * @param {string} opts.baseUrl        sample directory (default 'DATA/piano/')
  * @param {string} opts.ext            sample extension (default 'mp3')
  * @param {number} opts.volume         master gain 0–1 (default 0.8)
@@ -36,12 +45,18 @@ const fileStem = (note) => note.replace('#', 's');
  * @param {boolean} opts.ringUntilNext true = sound rings until the next play; key-up ignored (default true)
  * @param {number} opts.maxShift       max semitones to pitch-shift a fallback sample (default 3)
  * @param {string[]} opts.missing      note_refs with no sample file — skipped without a request
+ * @param {string[]} opts.range        [lowest, highest] note_ref with a sample file, e.g. ['D2', 'D5'];
+ *                                     notes outside are never requested (no 404s) and play pitch-shifted
+ *                                     from the nearest sample inside (default: no limit)
+ * @param {number} opts.strumMs        default delay between chord notes for playChord (default 0)
  * @param {boolean} opts.muted         start muted (default false)
- * @param {EventTarget|null} opts.muteEvents  listens here for 'piano:mute' {muted} from the
- *                                     keyboard's mute button (default document; null = don't listen)
+ * @param {string} opts.muteEvent      event name carrying {muted} from the instrument's mute button
+ *                                     (default 'piano:mute')
+ * @param {EventTarget|null} opts.muteEvents  listens here for opts.muteEvent (default document; null = don't listen)
  */
-export function createPianoAudio(opts = {}) {
+export function createSampler(opts = {}) {
   const {
+    name = 'sampler',
     baseUrl = 'DATA/piano/',
     ext = 'mp3',
     volume = 0.8,
@@ -49,12 +64,18 @@ export function createPianoAudio(opts = {}) {
     ringUntilNext = true,
     maxShift = 3,
     missing = [],
+    range = null,
+    strumMs: defaultStrum = 0,
     muted: startMuted = false,
+    muteEvent = 'piano:mute',
     muteEvents = document,
   } = opts;
 
   const Ctx = window.AudioContext || window.webkitAudioContext;
-  if (!Ctx) throw new Error('piano-audio: Web Audio API not supported');
+  if (!Ctx) throw new Error(`${name}: Web Audio API not supported`);
+  const lo = Array.isArray(range) ? noteToMidi(range[0]) : null;
+  const hi = Array.isArray(range) ? noteToMidi(range[1]) : null;
+  const inRange = (m) => (lo === null || m >= lo) && (hi === null || m <= hi);
 
   const ctx = new Ctx();
   const master = ctx.createGain();
@@ -70,7 +91,7 @@ export function createPianoAudio(opts = {}) {
 
   // --- loading ------------------------------------------------------------
   function loadMidi(midi) {
-    if (missingSet.has(midiToNote(midi))) return Promise.resolve(null); // known gap: no 404
+    if (missingSet.has(midiToNote(midi)) || !inRange(midi)) return Promise.resolve(null); // known gap: no 404
     if (!buffers.has(midi)) {
       const url = `${baseUrl}${fileStem(midiToNote(midi))}.${ext}`;
       const p = fetch(url, { credentials: 'same-origin' })
@@ -82,17 +103,18 @@ export function createPianoAudio(opts = {}) {
     return buffers.get(midi);
   }
 
-  // Exact sample, else nearest within ±maxShift (prefer sample above)
+  // Exact sample, else nearest within ±maxShift (prefer sample above; outside opts.range: the nearest edge)
   async function resolve(midi) {
     const exact = await loadMidi(midi);
     if (exact) return { buffer: exact, rate: 1 };
     for (let d = 1; d <= maxShift; d++) {
       for (const src of [midi + d, midi - d]) {
+        if (!inRange(src)) continue;
         const buf = await loadMidi(src);
         if (buf) return { buffer: buf, rate: 2 ** ((midi - src) / 12) };
       }
     }
-    console.warn(`piano-audio: no sample within ±${maxShift} of ${midiToNote(midi)}`);
+    console.warn(`${name}: no sample within ±${maxShift} of ${midiToNote(midi)}`);
     return null;
   }
 
@@ -155,7 +177,7 @@ export function createPianoAudio(opts = {}) {
     return strike([note], velocity);
   }
 
-  function playChord(notes, velocity = 0.7, strumMs = 0) {
+  function playChord(notes, velocity = 0.7, strumMs = defaultStrum) {
     return strike(notes, velocity, strumMs);
   }
 
@@ -178,9 +200,9 @@ export function createPianoAudio(opts = {}) {
     return muted;
   }
 
-  // The keyboard's mute button emits 'piano:mute' (bubbles to document)
-  if (muteEvents && typeof muteEvents.addEventListener === 'function') {
-    muteEvents.addEventListener('piano:mute', (e) => setMuted(Boolean(e.detail && e.detail.muted)));
+  // The instrument's mute button emits opts.muteEvent ('piano:mute' / 'guitar:mute'), bubbling to document
+  if (muteEvent && muteEvents && typeof muteEvents.addEventListener === 'function') {
+    muteEvents.addEventListener(muteEvent, (e) => setMuted(Boolean(e.detail && e.detail.muted)));
   }
 
   function preload(notes) {

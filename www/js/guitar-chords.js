@@ -3,9 +3,10 @@
 //
 // Same layout as the piano panels (circle-o-5ths.js / piano-chords.js, same CSS classes), with a
 // guitar chord diagram (ultimate-guitar style) instead of the one-octave keyboard. Clicks drive the
-// fretboard only (silent):
+// fretboard, and sound through opts.audio (guitar-audio.js) — chords strummed low string to high:
 //   chord badge / sequence badge -> every occurrence of the chord's tones on the neck, exactly like the
-//                                   fretboard's own header badges (role shades, ring on the root)
+//                                   fretboard's own header badges (role shades, ring on the root); strums the
+//                                   first-position shape (the header badges do too, via 'guitar:badge')
 //   tone circle                  -> every place that tone occurs on the neck
 //   diagram                      -> the voicing in the diagram, on the fretboard
 //   octave rows [C3 (C)(E)(G)…]  -> one row per octave of the voicing's lowest note; label = that voicing on
@@ -25,7 +26,7 @@ import { midiToNote, noteToMidi } from './piano-audio.js';
 import { textOn } from './piano.js';
 import { currentPanels } from './piano-chords.js';
 
-export const VERSION = 4;                 // 4: one voicing row + small slider per octave; 3: neck order; 2: playableShapes
+export const VERSION = 5;                 // 5: sound (opts.audio); 4: one voicing row + slider per octave; 3: neck order
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
 // --- playability ------------------------------------------------------------------------------
@@ -191,6 +192,9 @@ const svgEl = (tag, attrs = {}, cls) => {
 /**
  * @param {object} opts
  * @param {object} opts.guitar          API returned by renderGuitarFretboard (tuning, showPositions)
+ * @param {object} opts.audio           API returned by createGuitarAudio (guitar-audio.js); omit = silent
+ * @param {number} opts.velocity        chord / note volume 0–1 (default 0.7)
+ * @param {number} opts.strumMs         delay between strings when a chord is strummed (default: the audio's, 30)
  * @param {object} opts.piano           API returned by renderPianoKeyboard (octave colours)
  * @param {object} opts.progressions    API returned by renderCircleProgressions (state())
  * @param {string} opts.target          root progressions container id (required)
@@ -202,7 +206,7 @@ const svgEl = (tag, attrs = {}, cls) => {
  * Emits on document: 'guitar-chords:show' detail {title}
  */
 export async function renderGuitarProgressions(opts = {}) {
-  const { guitar, piano, progressions, target = null, relativeTarget = null, dataTarget = null, relativeDataTarget = null } = opts;
+  const { guitar, piano, progressions, audio = null, velocity = 0.7, strumMs, target = null, relativeTarget = null, dataTarget = null, relativeDataTarget = null } = opts;
   if (!guitar || !piano) throw new TypeError('guitar-chords: guitar and piano are required');
   if (!target) {
     console.error('guitar-chords: opts.target is required (the id of the root guitar progressions element) — guitar progressions not shown');
@@ -253,6 +257,18 @@ export async function renderGuitarProgressions(opts = {}) {
   }
   const colourOf = (note, rank) => piano.roleColor(note, rank) || '#555';
 
+  // --- sound ---------------------------------------------------------------------------------------
+  if (audio && typeof audio.playChord !== 'function') console.warn('guitar-chords: opts.audio has no playChord() — pass createGuitarAudio()');
+  const canPlay = Boolean(audio && typeof audio.playChord === 'function');
+  // a voicing exactly as fretted: low string first (strum order), each string's own pitch
+  const strum = (shape) => {
+    if (!canPlay || !shape) return;
+    const st = strings();
+    const notes = shape.frets.map((f, i) => (f < 0 ? null : midiToNote(st[i] + f))).filter(Boolean);
+    audio.playChord(notes, velocity, strumMs);
+  };
+  const pluck = (note) => { if (canPlay && note) audio.play(note, velocity); };
+
   // --- active states ------------------------------------------------------------------------------
   const roots = [];
   const clearActive = () => roots.forEach((r) => {
@@ -268,6 +284,15 @@ export async function renderGuitarProgressions(opts = {}) {
   // the fretboard's own header controls take over: clear the panels' active marks
   const onOverlay = () => clearActive();
   guitar.element.addEventListener('guitar:overlay', onOverlay);
+  // the fretboard's header chord badges: strum that chord's first-position shape (like the piano header badges)
+  const onBadge = (e) => {
+    const name = e.detail?.chord;
+    if (!name) return;
+    const panel = guitar.overlay?.().panel ?? 'root';
+    const chord = (progState?.[panel]?.chords ?? []).find((c) => c.name === name);
+    if (chord) { const { list, start } = shapesOf(chord); strum(list[start]); }
+  };
+  guitar.element.addEventListener('guitar:badge', onBadge);
 
   // --- chord diagram (ultimate-guitar style): strings vertical, low string left ------------------------
   const fretText = (shape) => shape.frets.map((f) => (f < 0 ? 'x' : f)).join(' ');
@@ -343,6 +368,7 @@ export async function renderGuitarProgressions(opts = {}) {
         const list = [];
         st.forEach((open, i) => { for (let f = 0; f <= maxFret(); f++) if ((open + f) % 12 === t.pc) list.push({ string: stringNo(i), fret: f, spelled: t.spelled, rank: t.rank, interval: t.interval }); });
         show(list, `${label} · ${t.spelled} (${t.interval})`, chord.name, [btn, card]);
+        pluck(sounding ? sounding.note : midiToNote(48 + t.pc));   // the pitch the circle is coloured for
         card?.classList.add('border-primary');
       });
       item.append(el('div', 'cd-degree', t.interval), btn);
@@ -355,6 +381,8 @@ export async function renderGuitarProgressions(opts = {}) {
   // panel's own progression, which the fretboard then switches to), so its header badge lights too;
   // otherwise (a chord-data chord outside both progressions) the same picture via showPositions.
   function showEverywhere(chord, prog, activate, card) {
+    const { list: shapes, start } = shapesOf(chord);
+    strum(shapes[start]);                          // the first-position shape (as the diagram opens)
     const inProg = (p) => p && (progState?.[p]?.chords ?? []).some((c) => c.name === chord.name);
     const now = guitar.overlay?.().panel ?? null;
     const use = typeof guitar.focusChord === 'function' ? [now, prog].find(inProg) : null;
@@ -399,7 +427,8 @@ export async function renderGuitarProgressions(opts = {}) {
     let diagShape = null;
     let diagPill = () => null;                            // the row currently drawn in the diagram
     let diagTitle = '';
-    function showShape(sh, title, trigger, pillEl) {
+    function showShape(sh, title, trigger, pillEl, sound = true) {
+      if (sound) strum(sh);
       show(voicing(sh, chord).map(posOf), title, chord.name, [trigger, diag, pillEl, card]);
       card?.classList.add('border-primary');
     }
@@ -435,6 +464,7 @@ export async function renderGuitarProgressions(opts = {}) {
         if (onLabel) {
           b.addEventListener('click', () => {
             show([posOf(s)], `${s.note} (${s.interval} of ${chord.name}) · ${where(s)}`, chord.name, [b, card]);
+            pluck(s.note);
             card?.classList.add('border-primary');
           });
         }
@@ -557,9 +587,9 @@ export async function renderGuitarProgressions(opts = {}) {
       const widest = shapes.reduce((a, b) => (b.sounding > a.sounding ? b : a), shapes[0]);
       let pill = null;
       const title = () => `${chord.name} · ${chord.rootName}${oct} · voicing ${idx + 1} of ${n} · ${fretText(shapes[idx])}`;
-      const toDiagramAndBoard = (trigger) => {
+      const toDiagramAndBoard = (trigger, sound = true) => {
         setDiagram(shapes[idx], title(), () => pill);
-        showShape(shapes[idx], title(), trigger, pill);
+        showShape(shapes[idx], title(), trigger, pill, sound);
       };
       const render = () => {
         pill = buildPill(shapes[idx], oct, (lab) => toDiagramAndBoard(lab));
@@ -574,10 +604,10 @@ export async function renderGuitarProgressions(opts = {}) {
       render();
       block.append(row);
       if (n > 1) {
-        block.append(slider(n, `${chord.rootName}${oct}`, () => idx, (i) => {
+        block.append(slider(n, `${chord.rootName}${oct}`, () => idx, (i, live) => {
           idx = i;
           render();
-          toDiagramAndBoard(null);                   // the slider calls this at most once per frame
+          toDiagramAndBoard(null, !live);            // at most once per frame; silent while dragging, strums on release
         }));
       }
       rows.append(block);
@@ -737,6 +767,7 @@ export async function renderGuitarProgressions(opts = {}) {
       document.removeEventListener('chord:panels', onPanels);
       guitar.element.removeEventListener('guitar:tuning', onTuning);
       guitar.element.removeEventListener('guitar:overlay', onOverlay);
+      guitar.element.removeEventListener('guitar:badge', onBadge);
       roots.forEach((r) => r.remove());
     },
   };

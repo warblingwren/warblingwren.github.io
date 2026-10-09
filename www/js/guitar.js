@@ -24,7 +24,7 @@ const NOTE_RE = /^([A-G])(#?)([0-8])$/;
 const DEGREE_SHADES = ['900', '800', '700', '600', '500', '400', '300'];
 const HEX_RE = /^#[0-9a-f]{6}$/i;
 // SYNC: --gf-css-version in www/css/guitar.css. Bump both together when the markup/CSS contract changes.
-const CSS_VERSION = 5;
+const CSS_VERSION = 6;                       // 6: mute button (.gf-mute)
 const SEMITONE = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
 const NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -110,14 +110,19 @@ function validateTunings(json) {
  *                                    with opts.piano it takes over from the pinned keyboard, pushing it up
  * @param {number}  opts.handoffGap   white space kept between the keyboard and the fretboard while the
  *                                    keyboard is pushed off screen, in px (default 24)
+ * @param {boolean} opts.muteButton   show the sound toggle at the upper right (default true), like the piano's
+ * @param {boolean} opts.muted        start muted (default false)
  * @returns {Promise<object|null>} API (null if the container is missing):
  *   element, tunings(), tuning(), setTuning(name), noteAt(string, fret),
  *   positionsOf(noteOrPitchClass), range(), shiftFrets(dir), showFrets(fromFret),
  *   setOverlay(panel), overlay(), focusChord(name|null), showPositions(list, {title}), clearPositions(),
- *   maxFret, isCompact(), destroy()
+ *   setMuted(bool), isMuted(), maxFret, isCompact(), destroy()
  * Emits on the container (bubbling): 'guitar:tuning'   detail {name, alias, strings:[{string, note}]}
  *                                    'guitar:overlay'  detail {panel, key, chord, notes:[spelled]}
  *                                    'guitar:rerender' detail {from, to, compact}
+ *                                    'guitar:mute'     detail {muted}  (guitar-audio.js listens on document)
+ *                                    'guitar:badge'    detail {chord}  a header chord badge was clicked
+ *                                                      (chord name, or null for All) — guitar-chords.js plays it
  */
 export async function renderGuitarFretboard(opts = {}, legacyOpts = {}) {
   // Called as renderGuitarFretboard({ target, ... }) like the other render functions.
@@ -143,6 +148,8 @@ export async function renderGuitarFretboard(opts = {}, legacyOpts = {}) {
     overlay: startOverlay = 'root',
     sticky = true,
     handoffGap = 24,
+    muteButton = true,
+    muted: startMuted = false,
   } = opts;
 
   const container = await waitForHost(target);
@@ -222,6 +229,47 @@ export async function renderGuitarFretboard(opts = {}, legacyOpts = {}) {
   selects.className = 'gf-selects';
   selects.append(progSelect, select);
   top.append(status, badges, selects);
+
+  // Sound toggle (same as the piano's): emits 'guitar:mute' {muted}; icons built as DOM nodes (no innerHTML)
+  let muted = Boolean(startMuted);
+  let muteEl = null;
+  const MUTE_NS = 'http://www.w3.org/2000/svg';
+  const iconEl = (tag, attrs) => {
+    const n = document.createElementNS(MUTE_NS, tag);
+    for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, String(v));
+    return n;
+  };
+  const speakerIcon = (extra) => {
+    const svg = iconEl('svg', { viewBox: '0 0 24 24', width: 22, height: 22, 'aria-hidden': 'true', focusable: 'false' });
+    for (const attrs of [{ d: 'M3 9v6h4l5 5V4L7 9H3z', fill: 'currentColor' }, extra]) svg.append(iconEl('path', attrs));
+    return svg;
+  };
+  const ICON_ON = () => speakerIcon({ d: 'M16.5 12a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4zM14 3.2v2.1a7 7 0 0 1 0 13.4v2.1a9 9 0 0 0 0-17.6z', fill: 'currentColor' });
+  const ICON_OFF = () => speakerIcon({ d: 'M15 9l6 6M21 9l-6 6', stroke: 'currentColor', 'stroke-width': '2', 'stroke-linecap': 'round', fill: 'none' });
+  function paintMute() {
+    if (!muteEl) return;
+    muteEl.classList.toggle('is-muted', muted);
+    muteEl.setAttribute('aria-pressed', String(muted));
+    muteEl.setAttribute('aria-label', muted ? 'Unmute guitar sound' : 'Mute guitar sound');
+    muteEl.title = muted ? 'Sound off — click to unmute' : 'Sound on — click to mute';
+    muteEl.replaceChildren(muted ? ICON_OFF() : ICON_ON());
+  }
+  function setMuted(on) {
+    const next = Boolean(on);
+    const changed = next !== muted;
+    muted = next;
+    paintMute();
+    if (changed) emit('guitar:mute', { muted });
+    return muted;
+  }
+  if (muteButton) {
+    muteEl = document.createElement('button');
+    muteEl.type = 'button';
+    muteEl.className = 'gf-mute';
+    muteEl.addEventListener('click', () => setMuted(!muted));
+    paintMute();
+    top.append(muteEl);
+  }
 
   const controls = document.createElement('div');
   controls.className = 'gf-controls';
@@ -570,7 +618,10 @@ export async function renderGuitarFretboard(opts = {}, legacyOpts = {}) {
       b.textContent = text;
       b.setAttribute('aria-pressed', String(on));
       b.setAttribute('aria-label', aria);
-      b.addEventListener('click', () => api.focusChord(name === null || (!custom && focusName === name) ? null : name));
+      b.addEventListener('click', () => {
+        const next = api.focusChord(name === null || (!custom && focusName === name) ? null : name);
+        emit('guitar:badge', { chord: next });       // guitar-chords.js plays the chord (its first-position shape)
+      });
       return b;
     };
     badges.replaceChildren(...(chords.length
@@ -760,6 +811,9 @@ export async function renderGuitarFretboard(opts = {}, legacyOpts = {}) {
       renderBadges();
       render();
     },
+    /** Sound toggle; emits 'guitar:mute' {muted} so guitar-audio.js silences every play path. */
+    setMuted: (on) => setMuted(on),
+    isMuted: () => muted,
     get maxFret() { return maxFrets; },
     isCompact: () => mql.matches,
     destroy() {

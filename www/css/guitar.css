@@ -10,6 +10,11 @@
   --gf-control-bg: #3a3a3e;
   --gf-control-border: #66666d;
   --gf-focus: #3d7be8;
+  /* sound toggle — SYNC: --pk-mute-* in piano.css (same button) */
+  --gf-mute-bg: #3a3a3e;
+  --gf-mute-fg: #f2f2f2;
+  --gf-muted-bg: #c62828;        /* Material Red 800 — sound is off */
+  --gf-muted-fg: #ffffff;
 
   /* chord badges — SYNC: .cp-seq-badge in circle-o-5ths.css (same dark pill) */
   --gf-badge-bg: #2b2b2e;
@@ -56,7 +61,7 @@
   --gf-root-ring: #ffffff;        /* root chord's root note */
 
   /* SYNC: CSS_VERSION in www/js/guitar.js — guitar.js warns in the console if they differ */
-  --gf-css-version: 5;
+  --gf-css-version: 6;
 
   /* geometry read by guitar.js */
   --gf-string-gap: 30px;          /* string spacing (board height = 6 × gap) */
@@ -164,6 +169,29 @@
 .gf-select option,
 .gf-tuning option { background: var(--gf-control-bg); color: var(--gf-fg); }
 
+/* --- sound toggle (upper right, same as the piano's .pk-mute) ---------------------- */
+.gf-mute {
+  appearance: none;
+  -webkit-appearance: none;
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1px solid #555;
+  border-radius: 22px;
+  background: var(--gf-mute-bg);
+  color: var(--gf-mute-fg);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color 80ms linear;
+}
+.gf-mute:hover { border-color: var(--gf-mute-fg); }
+.gf-mute:focus-visible { outline: 3px solid var(--gf-focus); outline-offset: 2px; }
+.gf-mute.is-muted { background: var(--gf-muted-bg); border-color: var(--gf-muted-bg); color: var(--gf-muted-fg); }
+
 /* --- fret window controls (narrow screens only) ------------------------------- */
 .gf-controls {
   display: flex;
@@ -263,7 +291,9 @@
   :root { --gf-string-gap: 34px; --gf-open-col: 36px; }
   .gf { padding: 8px 6px 4px; border-radius: 8px; }
   .gf-top { flex-wrap: wrap; }
-  .gf-status { flex: 1 1 100%; }
+  .gf-status { flex: 1 1 0; }                       /* first line: status + sound toggle (as on the piano) */
+  .gf-mute { order: -1; margin-left: auto; }
+  .gf-status { order: -2; }
   .gf-badges { flex: 1 1 100%; }
   .gf-selects { flex: 1 1 100%; margin-left: 0; }
   .gf-select,

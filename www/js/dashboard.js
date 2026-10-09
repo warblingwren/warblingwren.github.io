@@ -1,6 +1,7 @@
 import './colors.js';
 import { renderPianoKeyboard } from './piano.js';
 import { createPianoAudio } from './piano-audio.js';
+import { createGuitarAudio } from './guitar-audio.js';
 import { renderChordControls } from './piano-chords.js';
 import { renderCircleProgressions } from './circle-o-5ths.js';
 import { renderGuitarFretboard } from './guitar.js';
@@ -32,4 +33,5 @@ piano.element.addEventListener('piano:release', (e) => audio.release(e.detail.no
 const chords = renderChordControls({ piano, audio, target: IDS.chordControls, dataTarget: IDS.rootChordData, relativeTarget: IDS.minorChordData, octave: CHORD_OCTAVE });
 const progressions = await renderCircleProgressions({ piano, audio, target: IDS.rootProgressions, relativeTarget: IDS.minorProgressions, selectorTarget: IDS.progressionSelector, octave: CHORD_OCTAVE });
 const guitar = await renderGuitarFretboard({ target: IDS.guitar, dataUrl: 'DATA/guitar_tuning.json', piano, progressions });
-const guitarChords = await renderGuitarProgressions({ guitar, piano, progressions, target: IDS.guitarRootProgressions, dataTarget: IDS.guitarRootChordData, relativeTarget: IDS.guitarMinorProgressions, relativeDataTarget: IDS.guitarMinorChordData });
+const guitarAudio = createGuitarAudio({ baseUrl: 'DATA/guitar/', ext: 'mp3' });
+const guitarChords = await renderGuitarProgressions({ guitar, piano, audio: guitarAudio, progressions, target: IDS.guitarRootProgressions, dataTarget: IDS.guitarRootChordData, relativeTarget: IDS.guitarMinorProgressions, relativeDataTarget: IDS.guitarMinorChordData });
