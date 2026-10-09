@@ -7,13 +7,13 @@ import { renderGuitarFretboard } from './guitar.js';
 
 // Element ids — the ONLY place the JavaScript names them. SYNC: must match index.html.
 const IDS = {
-  piano: 'piano-keyboard',
   chordControls: 'root-chords',
-  rootChordData: 'root-chord-data',
-  minorChordData: 'minor-chord-data',
-  rootProgressions: 'root-circle-progressions',
-  minorProgressions: 'minor-circle-progressions',
   progressionSelector: 'progression-selector',
+  piano: 'piano-keyboard',
+  rootChordData: 'piano-root-chord-data',
+  minorChordData: 'piano-minor-chord-data',
+  rootProgressions: 'piano-root-circle-progressions',
+  minorProgressions: 'piano-minor-circle-progressions',
   guitar: 'guitar-fretboard',
 };
 
