@@ -20,7 +20,7 @@ import { textOn } from './piano.js';
 // Version handshake. Bump both together when the markup/CSS contract changes.
 //   VERSION      — read by circle-o-5ths.js, which warns if this file is older than it expects
 //   --cc-css-version in www/css/piano-chords.css — checked below
-export const VERSION = 6;                  // 6: renderMiniKeyboard({onPlay}) — clickable, playing diagram
+export const VERSION = 7;                  // 7: renderOctaveRows({onVoicing}), highlightVoicing; 6: renderMiniKeyboard({onPlay})
 const CSS_VERSION = 6;
 
 // Small SVG builder (no innerHTML: works under strict Content-Security-Policy / Trusted Types)
@@ -116,8 +116,40 @@ export function spellTone(rootName, semis, letterSteps) {
  * @param {Function} [o.emit]      (type, detail) => void
  * @returns {HTMLDivElement}
  */
+/**
+ * Show only these pitches on the keyboard (no chord shading, no root badges elsewhere): each key filled in
+ * its chord-role colour and labelled. Used by the octave-row labels and the clickable one-octave diagrams.
+ * @param {object} piano  API returned by renderPianoKeyboard
+ * @param {{note, spelled, degree, rank}[]} tones
+ */
+export function highlightVoicing(piano, tones) {
+  // narrow screens show 2 octaves: move the keyboard window so the whole voicing is in view
+  if (piano.isCompact?.() && typeof piano.shiftOctave === 'function') {
+    const want = tones.map((t) => noteToMidi(t.note)).filter((m) => m !== null);
+    for (let guard = 0; guard < 9 && want.length; guard++) {
+      const shown = [...piano.keys().keys()].map(noteToMidi).filter((m) => m !== null);
+      const lo = Math.min(...shown); const hi = Math.max(...shown);
+      const dir = Math.min(...want) < lo ? -1 : Math.max(...want) > hi ? 1 : 0;
+      if (!dir) break;
+      const before = lo;
+      piano.shiftOctave(dir);
+      if (Math.min(...[...piano.keys().keys()].map(noteToMidi).filter((m) => m !== null)) === before) break;   // at the end of the keyboard
+    }
+  }
+  piano.clearChord();
+  piano.clearPlayed();
+  piano.markNotes(tones.map((t) => ({
+    note: t.note, label: t.spelled, badge: t.degree, rank: t.rank, root: t.rank === 0, fill: true,
+  })));
+}
+
+/**
+ * o.onVoicing (optional): (voicedTones, octave) => void — called when an octave label is clicked, so the
+ * caller can redraw its one-octave diagram with that voicing.
+ */
 export function renderOctaveRows(o) {
   const { piano, audio, name, rootName, rootPc, tones, onSelect = () => {}, emit = () => {},
+    onVoicing = null,
     statusLabel = name,
     velocity = 0.7, strumMs = 0 } = o;
 
@@ -127,13 +159,7 @@ export function renderOctaveRows(o) {
   wrapEl.setAttribute('aria-label', `${name} in each octave`);
   const octaveColors = piano.octaveColors();
 
-  const highlight = (list) => {
-    piano.clearChord();
-    piano.clearPlayed();
-    piano.markNotes(list.map((t) => ({
-      note: t.note, label: t.spelled, badge: t.degree, rank: t.rank, root: t.rank === 0, fill: true,
-    })));
-  };
+  const highlight = (list) => highlightVoicing(piano, list);
 
   for (let oct = 1; oct <= 7; oct++) {
     const rootMidi = (oct + 1) * 12 + rootPc;
@@ -155,6 +181,7 @@ export function renderOctaveRows(o) {
     label.setAttribute('aria-label', `Play ${name} in octave ${oct}: ${voiced.map((t) => t.note).join(', ')}`);
     label.addEventListener('click', () => {
       onSelect();
+      onVoicing?.(voiced.map((t) => ({ ...t })), oct);   // before marking: the caller may redraw its diagram
       pill.classList.add('is-active');
       highlight(voiced);
       audio.playChord(voiced.map((t) => t.note), velocity, strumMs);
@@ -584,19 +611,22 @@ export function renderChordControls(opts = {}) {
       item.append(deg, btn);
       row.append(item);
     }
-    // one-octave diagram of the chord, under the tone circles: click plays exactly the drawn pitches
-    const mini = renderMiniKeyboard({
-      piano, name: chord.name, tones,
-      onPlay: (shown, node) => {
-        clearPanelActive();
-        node.classList.add('is-active');
-        piano.clearPlayed();
-        showChordOnKeys(shown);
-        piano.setStatus(`${label} · ${shown.map((t) => t.note).join(' ')}`);
-        audio.playChord(shown.map((t) => t.note), velocity, strumMs);
-      },
-    });
-    return [heading, name, row, mini, renderOctaves(chord, label)];
+    // one-octave diagram of the chord, under the tone circles. It shows the voicing last chosen in the
+    // octave rows (default: the chord at opts.octave); a click shows only those drawn pitches and plays them.
+    const playMini = (shown, node) => {
+      clearPanelActive();
+      node.classList.add('is-active');
+      highlightVoicing(piano, shown);
+      piano.setStatus(`${label} · ${shown.map((t) => t.note).join(' ')}`);
+      audio.playChord(shown.map((t) => t.note), velocity, strumMs);
+    };
+    let mini = renderMiniKeyboard({ piano, name: chord.name, tones, onPlay: playMini });
+    const setMini = (voiced) => {
+      const next = renderMiniKeyboard({ piano, name: chord.name, tones: voiced, onPlay: playMini });
+      mini.replaceWith(next);
+      mini = next;
+    };
+    return [heading, name, row, mini, renderOctaves(chord, label, setMini)];
   }
 
   const clearPanelActive = () =>
@@ -623,7 +653,7 @@ export function renderChordControls(opts = {}) {
     emit('chord:tone', { chord: chord.name, note: t.note, spelled: t.spelled, degree: t.degree });
   }
 
-  function renderOctaves(chord, label) {
+  function renderOctaves(chord, label, onVoicing = null) {
     return renderOctaveRows({
       piano, audio, velocity, strumMs,
       name: chord.name,
@@ -636,6 +666,7 @@ export function renderChordControls(opts = {}) {
         degree: t.label,
       })),
       onSelect: clearPanelActive,
+      onVoicing,
       emit,
       statusLabel: label,
     });

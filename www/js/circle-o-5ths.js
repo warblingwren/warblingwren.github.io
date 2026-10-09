@@ -18,12 +18,12 @@
 
 import { midiToNote } from './piano-audio.js';
 import { textOn } from './piano.js';
-import { renderMiniKeyboard, renderOctaveRows, currentPanels } from './piano-chords.js';
+import { renderMiniKeyboard, renderOctaveRows, currentPanels, highlightVoicing } from './piano-chords.js';
 import * as chordsModule from './piano-chords.js';
 
 // piano-chords.js this file was built with (Random button, mini keyboards). A namespace import is used
 // so an older piano-chords.js is reported in the console instead of breaking the page.
-const EXPECTED_CHORDS_VERSION = 6;
+const EXPECTED_CHORDS_VERSION = 7;
 
 const LETTERS = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
 const LETTER_PC = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
@@ -413,7 +413,25 @@ export async function renderCircleProgressions(opts = {}) {
         row.append(item);
       }
 
-      // Octave rows (same component as #root-chord-data): label plays the chord, circles single notes
+      // one-octave diagram (same component as the chord-data panels): shows the voicing last chosen in the
+      // octave rows (default: the chord at opts.octave); a click shows only those drawn pitches and plays them
+      const playMini = (shown, node) => {
+        clearActive();
+        card.classList.add('is-active', 'border-primary');
+        node.classList.add('is-active');
+        highlightVoicing(piano, shown);
+        audio.playChord(shown.map((t) => t.note), velocity, strumMs);
+        piano.setStatus(`${label} · ${shown.map((t) => t.note).join(' ')}`);
+        emit('progression:chord', { roman: chord.roman, name: chord.name, notes: shown.map((t) => t.note) });
+      };
+      let mini = renderMiniKeyboard({ piano, name: chord.name, tones, onPlay: playMini });
+      const setMini = (voiced) => {
+        const next = renderMiniKeyboard({ piano, name: chord.name, tones: voiced, onPlay: playMini });
+        mini.replaceWith(next);
+        mini = next;
+      };
+
+      // Octave rows (same component as #root-chord-data): label plays the chord and redraws the diagram, circles single notes
       const octaves = renderOctaveRows({
         piano, audio, velocity, strumMs,
         name: chord.name,
@@ -421,15 +439,9 @@ export async function renderCircleProgressions(opts = {}) {
         rootPc: chord.rootPc,
         tones: chord.tones,
         onSelect: () => { clearActive(); card.classList.add('is-active', 'border-primary'); },
+        onVoicing: setMini,
         statusLabel: label,
         emit,
-      });
-
-      // one-octave diagram of the chord, under the tone circles (same component as the chord-data panels):
-      // click plays exactly the drawn pitches and shows them on the keyboard
-      const mini = renderMiniKeyboard({
-        piano, name: chord.name, tones,
-        onPlay: (shown, node) => playChord(chord, card, node, emit, `${label} · ${shown.map((t) => t.note).join(' ')}`, shown),
       });
       body.append(rn, badge, row, mini, octaves);
       card.append(body);

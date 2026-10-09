@@ -8,8 +8,9 @@
 //                                   fretboard's own header badges (role shades, ring on the root)
 //   tone circle                  -> every place that tone occurs on the neck
 //   diagram                      -> the voicing in the diagram, on the fretboard
-//   voicing row [C3 (C)(G)(C)(E)] -> label = that voicing on the fretboard, a circle = that one note
-//   1 ——●—— N slider             -> every playable voicing, nut to high frets: drag, click the rail,
+//   octave rows [C3 (C)(E)(G)…]  -> one row per octave of the voicing's lowest note; label = that voicing on
+//                                   the fretboard and in the diagram, a circle = that one note
+//   1 —●— N slider under a row   -> that octave's voicings, nut to high frets: drag, click the rail,
 //                                   or tap 1 / N to step back / forward (arrow keys too)
 // Voicings are computed for the fretboard's current tuning and checked for playability (checkShape);
 // nothing unplayable is ever drawn.
@@ -24,7 +25,7 @@ import { midiToNote, noteToMidi } from './piano-audio.js';
 import { textOn } from './piano.js';
 import { currentPanels } from './piano-chords.js';
 
-export const VERSION = 3;                 // 3: voicing row + 1…N slider (neck order); 2: playableShapes, badges show every occurrence
+export const VERSION = 4;                 // 4: one voicing row + small slider per octave; 3: neck order; 2: playableShapes
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
 // --- playability ------------------------------------------------------------------------------
@@ -374,9 +375,11 @@ export async function renderGuitarProgressions(opts = {}) {
     card?.classList.add('border-primary');
   }
 
-  // Voicing browser: diagram (click = show it) · the voicing as a piano-style row [C3 (C)(G)(C)(E)…] ·
-  // a 1 … N slider (drag, click the track, or tap 1 / N to step back / forward) when there is more than one.
-  // Voicings run from the nut up the neck (playableShapes order), so sliding moves along the fretboard.
+  // Voicing browser: the diagram (click = show it on the fretboard), then one piano-style row per octave
+  // [C3 (C)(E)(G)(C)(E)] — the octave of the voicing's lowest note — each with its own small 1 … N slider
+  // right under it when that octave has more than one voicing (drag, click the rail, tap 1 / N to step).
+  // Voicings in an octave run from the nut up the neck (playableShapes order). A row label or a slider
+  // move shows that voicing on the fretboard and in the diagram.
   function voicings(chord, label, card) {
     const { list, start } = shapesOf(chord);
     const box = el('div', 'gv');
@@ -384,36 +387,40 @@ export async function renderGuitarProgressions(opts = {}) {
       box.append(el('div', 'gd-none', 'No playable shape of this chord in this tuning'));
       return box;
     }
-    let idx = start;
     const slot = el('div', 'gv-diagram');
-    const row = el('div', 'cd-octaves gv-voicing');   // same component as the piano octave rows
-    row.setAttribute('role', 'group');
-    row.setAttribute('aria-label', `${chord.name} voicing on the guitar`);
+    const rows = el('div', 'cd-octaves gv-octaves');      // same component as the piano octave rows
+    rows.setAttribute('role', 'group');
+    rows.setAttribute('aria-label', `${chord.name} voicings in each octave on the guitar`);
     const octaveColors = piano.octaveColors();
-    let diag = null;
-    let pill = null;
-
     const posOf = (s) => ({ string: s.string, fret: s.fret, spelled: s.spelled, rank: s.rank, interval: s.interval });
     const where = (s) => (s.fret === 0 ? `string ${s.string} open` : `string ${s.string}, fret ${s.fret}`);
-    function showShape(trigger) {
-      const sh = list[idx];
-      show(voicing(sh, chord).map(posOf), `${chord.name} · voicing ${idx + 1} of ${list.length} · ${fretText(sh)}`,
-        chord.name, [trigger, diag, pill, card]);
+
+    let diag = null;
+    let diagShape = null;
+    let diagPill = () => null;                            // the row currently drawn in the diagram
+    let diagTitle = '';
+    function showShape(sh, title, trigger, pillEl) {
+      show(voicing(sh, chord).map(posOf), title, chord.name, [trigger, diag, pillEl, card]);
       card?.classList.add('border-primary');
     }
-    // the voicing, exactly like a piano octave row: label = the bass note, one circle per sounding string (low -> high)
-    function buildPill(sh) {
+    function setDiagram(sh, title, pillFn) {
+      diagShape = sh; diagTitle = title; diagPill = pillFn;
+      diag = diagram(chord, sh, (btn) => showShape(diagShape, diagTitle, btn, diagPill()), title);
+      slot.replaceChildren(diag);
+    }
+
+    // one piano-style pill for a voicing: label = lowest note, one circle per sounding string (low -> high)
+    function buildPill(sh, oct, onLabel) {
       const v = voicing(sh, chord).sort((x, y) => x.midi - y.midi || x.i - y.i);
       const pill = el('div', 'cd-octave-pill');
       pill.setAttribute('role', 'group');
-      pill.setAttribute('aria-label', `${chord.name} voicing ${idx + 1}: ${v.map((s) => s.note).join(', ')}`);
-      const oc = octaveColors.get(sh.octave);
+      const oc = octaveColors.get(oct);
       if (oc) pill.style.setProperty('--cd-octave-bg', oc.light);
-      const lab = el('button', 'cd-octave-label', `${chord.rootName}${sh.octave}`);
+      const lab = el('button', 'cd-octave-label', `${chord.rootName}${oct}`);
       lab.type = 'button';
       lab.title = `${chord.name}: ${fretText(sh)}`;
-      lab.setAttribute('aria-label', `Show ${chord.name} voicing ${idx + 1} of ${list.length} on the fretboard: ${fretText(sh)}`);
-      lab.addEventListener('click', () => showShape(lab));
+      lab.setAttribute('aria-label', `Show ${chord.name} in octave ${oct} on the fretboard: ${fretText(sh)}`);
+      if (onLabel) lab.addEventListener('click', () => onLabel(lab));
       pill.append(lab);
       for (const s of v) {
         const b = el('button', 'cd-octave-note');
@@ -425,112 +432,115 @@ export async function renderGuitarProgressions(opts = {}) {
         dot.style.setProperty('--cd-dot-bg', colour);
         dot.style.setProperty('--cd-dot-fg', textOn(colour));
         b.append(dot);
-        b.addEventListener('click', () => {
-          show([posOf(s)], `${s.note} (${s.interval} of ${chord.name}) · ${where(s)}`, chord.name, [b, card]);
-          card?.classList.add('border-primary');
-        });
+        if (onLabel) {
+          b.addEventListener('click', () => {
+            show([posOf(s)], `${s.note} (${s.interval} of ${chord.name}) · ${where(s)}`, chord.name, [b, card]);
+            card?.classList.add('border-primary');
+          });
+        }
         pill.append(b);
       }
       return pill;
     }
-    // A hidden copy of the voicing with the most strings sits in the same grid cell, so the row keeps one
-    // height for every voicing and the slider under it never moves while it is dragged.
-    const widest = list.reduce((a, b) => (b.sounding > a.sounding ? b : a), list[0]);
-    function renderRow(sh) {
-      pill = buildPill(sh);
-      const ghost = buildPill(widest);
-      ghost.classList.add('gv-ghost');
-      ghost.setAttribute('aria-hidden', 'true');
-      ghost.inert = true;
-      ghost.querySelectorAll('button').forEach((b) => { b.tabIndex = -1; });
-      row.replaceChildren(pill, ghost);
-    }
 
-    // --- slider: [1] ——●—— [N] ---------------------------------------------------------------------
-    let slider = null;
-    let setThumb = () => {};
-    if (list.length > 1) {
-      const n = list.length;
-      slider = el('div', 'gv-slider');
+    // small slider: [1] —●— [N]; the rail is the 44px touch target, the visible track and thumb are small
+    function slider(n, name, getIdx, onChange) {
+      const wrap = el('div', 'gv-slider');
       const first = el('button', 'gv-end', '1');
       const last = el('button', 'gv-end', String(n));
       first.type = 'button'; last.type = 'button';
-      first.setAttribute('aria-label', `Previous ${chord.name} voicing (toward voicing 1)`);
-      last.setAttribute('aria-label', `Next ${chord.name} voicing (toward voicing ${n})`);
+      first.setAttribute('aria-label', `Previous ${name} voicing`);
+      last.setAttribute('aria-label', `Next ${name} voicing`);
       const rail = el('div', 'gv-rail');
       rail.tabIndex = 0;
       rail.setAttribute('role', 'slider');
-      rail.setAttribute('aria-label', `${chord.name} voicing`);
+      rail.setAttribute('aria-label', `${name} voicing`);
       rail.setAttribute('aria-valuemin', '1');
       rail.setAttribute('aria-valuemax', String(n));
       const track = el('div', 'gv-track');
       const fill = el('div', 'gv-fill');
       const thumb = el('div', 'gv-thumb');
-      const num = el('span', 'gv-thumb-n');
-      thumb.append(num);
       track.append(fill);
       rail.append(track, thumb);
-      slider.append(first, rail, last);
-      setThumb = () => {
-        const pct = `${(idx / (n - 1)) * 100}%`;
+      wrap.append(first, rail, last);
+      const set = () => {
+        const i = getIdx();
+        const pct = `${(i / (n - 1)) * 100}%`;
         thumb.style.left = pct;
         fill.style.width = pct;
-        num.textContent = String(idx + 1);
-        rail.setAttribute('aria-valuenow', String(idx + 1));
-        rail.setAttribute('aria-valuetext', `voicing ${idx + 1} of ${n}: ${fretText(list[idx])}`);
-        first.disabled = idx === 0;
-        last.disabled = idx === n - 1;
+        rail.setAttribute('aria-valuenow', String(i + 1));
+        rail.setAttribute('aria-valuetext', `voicing ${i + 1} of ${n}`);
+        rail.title = `${name}: voicing ${i + 1} of ${n}`;
+        first.disabled = i === 0;
+        last.disabled = i === n - 1;
       };
-      first.addEventListener('click', () => select(idx - 1, true));
-      last.addEventListener('click', () => select(idx + 1, true));
-      // drag / click on the rail; the fretboard follows, one redraw per frame
-      let raf = 0;
-      const at = (clientX) => {
-        const r = track.getBoundingClientRect();
-        const t = r.width ? (clientX - r.left) / r.width : 0;
-        return Math.round(Math.min(1, Math.max(0, t)) * (n - 1));
-      };
-      const move = (clientX) => {
-        const i = at(clientX);
-        if (i === idx) return;
-        select(i, false);
-        cancelAnimationFrame(raf);
-        raf = requestAnimationFrame(() => showShape(null));
-      };
+      const go = (i, live) => { const j = Math.min(n - 1, Math.max(0, i)); if (j !== getIdx() || !live) onChange(j, live); set(); };
+      first.addEventListener('click', () => go(getIdx() - 1, false));
+      last.addEventListener('click', () => go(getIdx() + 1, false));
+      const at = (x) => { const r = track.getBoundingClientRect(); return Math.round(Math.min(1, Math.max(0, r.width ? (x - r.left) / r.width : 0)) * (n - 1)); };
       rail.addEventListener('pointerdown', (e) => {
         if (e.button !== 0) return;
         rail.setPointerCapture?.(e.pointerId);
         rail.classList.add('is-dragging');
-        const i = at(e.clientX);
-        select(i, false);
-        showShape(null);
+        go(at(e.clientX), false);
       });
-      rail.addEventListener('pointermove', (e) => { if (rail.classList.contains('is-dragging')) move(e.clientX); });
+      rail.addEventListener('pointermove', (e) => { if (rail.classList.contains('is-dragging')) go(at(e.clientX), true); });
       const end = (e) => { rail.classList.remove('is-dragging'); rail.releasePointerCapture?.(e.pointerId); };
       rail.addEventListener('pointerup', end);
       rail.addEventListener('pointercancel', end);
       rail.addEventListener('keydown', (e) => {
         const step = { ArrowLeft: -1, ArrowDown: -1, ArrowRight: 1, ArrowUp: 1, PageDown: -10, PageUp: 10 }[e.key];
-        if (step) select(Math.min(n - 1, Math.max(0, idx + step)), true);
-        else if (e.key === 'Home') select(0, true);
-        else if (e.key === 'End') select(n - 1, true);
+        if (step) go(getIdx() + step, false);
+        else if (e.key === 'Home') go(0, false);
+        else if (e.key === 'End') go(n - 1, false);
         else return;
         e.preventDefault();
       });
+      set();
+      return wrap;
     }
 
-    function select(i, toFretboard) {
-      idx = Math.min(list.length - 1, Math.max(0, i));
-      const sh = list[idx];
-      diag = diagram(chord, sh, (btn) => showShape(btn), `voicing ${idx + 1} of ${list.length}`);
-      slot.replaceChildren(diag);
-      renderRow(sh);
-      setThumb();
-      if (toFretboard) showShape(null);
+    // group by the octave of the lowest note (neck order kept inside each octave)
+    const groups = new Map();
+    for (const sh of list) { if (!groups.has(sh.octave)) groups.set(sh.octave, []); groups.get(sh.octave).push(sh); }
+    for (const [oct, shapes] of [...groups].sort((a, b) => a[0] - b[0])) {
+      const n = shapes.length;
+      const best = shapes.reduce((bi, sh, i) => (sh.score < shapes[bi].score ? i : bi), 0);
+      let idx = shapes.includes(list[start]) ? shapes.indexOf(list[start]) : best;
+      const block = el('div', 'gv-octave');
+      const row = el('div', 'gv-voicing');
+      // a hidden copy of the octave's widest voicing shares the grid cell: constant row size, the slider never moves
+      const widest = shapes.reduce((a, b) => (b.sounding > a.sounding ? b : a), shapes[0]);
+      let pill = null;
+      let raf = 0;
+      const title = () => `${chord.name} · ${chord.rootName}${oct} · voicing ${idx + 1} of ${n} · ${fretText(shapes[idx])}`;
+      const toDiagramAndBoard = (trigger) => {
+        setDiagram(shapes[idx], title(), () => pill);
+        showShape(shapes[idx], title(), trigger, pill);
+      };
+      const render = () => {
+        pill = buildPill(shapes[idx], oct, (lab) => toDiagramAndBoard(lab));
+        pill.setAttribute('aria-label', `${chord.name} in octave ${oct}, voicing ${idx + 1} of ${n}`);
+        const ghost = buildPill(widest, oct, null);
+        ghost.classList.add('gv-ghost');
+        ghost.setAttribute('aria-hidden', 'true');
+        ghost.inert = true;
+        ghost.querySelectorAll('button').forEach((x) => { x.tabIndex = -1; });
+        row.replaceChildren(pill, ghost);
+      };
+      render();
+      block.append(row);
+      if (n > 1) {
+        block.append(slider(n, `${chord.rootName}${oct}`, () => idx, (i, live) => {
+          idx = i;
+          render();
+          if (live) { cancelAnimationFrame(raf); raf = requestAnimationFrame(() => toDiagramAndBoard(null)); } else toDiagramAndBoard(null);
+        }));
+      }
+      rows.append(block);
+      if (shapes.includes(list[start])) setDiagram(list[start], title(), () => pill);
     }
-    select(idx, false);
-    box.append(slot, row);
-    if (slider) box.append(slider);
+    box.append(slot, rows);
     return box;
   }
 
@@ -571,7 +581,8 @@ export async function renderGuitarProgressions(opts = {}) {
     const cols = [...cards.children];
     if (!cols.length) return;
     const tones = Number(cards.dataset.tones) || 3;
-    const minCol = Math.max(200, 125 + 34 * tones);   // diagram width / octave rows (SYNC: .cd--compact sizes)
+    // a six-string voicing row on one line: label + 6 circles + card padding (SYNC: .cd--compact octave sizes)
+    const minCol = Math.max(200, 125 + 34 * tones, 290);
     const perRow = Math.max(1, Math.min(cols.length, Math.floor(cards.clientWidth / minCol)));
     const pct = `${100 / perRow}%`;
     for (const c of cols) { c.style.flex = `0 0 ${pct}`; c.style.maxWidth = pct; }

@@ -18,8 +18,9 @@
   --gv-hit: 44px;                /* touch target */
   --gv-track: rgba(0, 0, 0, 0.15);
   --gv-track-fill: #3d7be8;      /* = --gd-focus */
-  --gv-track-h: 6px;
-  --gv-thumb: 30px;              /* visible thumb; the 44px rail is the touch target */
+  --gv-track-h: 4px;
+  --gv-track-top: 8px;           /* track near the top of the touch strip = close to its row */
+  --gv-thumb: 16px;              /* visible thumb; the 44px strip is the touch target */
 }
 
 /* the diagram is a button: clicking shows the shape on the fretboard */
@@ -60,49 +61,57 @@
 }
 
 /* --- voicing browser: diagram · voicing row (.cd-octaves, as on the piano) · 1 —●— N slider ---------- */
-.gv { margin-top: 4px; }
+.gv { margin-top: 4px; container-type: inline-size; container-name: gv; }   /* narrow panels: see the end of the file */
 .gv-diagram .gd { margin-top: 8px; }
 
-/* voicing row: the pill and its hidden widest copy share one grid cell (constant height) */
-.cd-octaves.gv-voicing { display: grid; justify-items: start; align-items: start; }
+/* one block per octave: the voicing row, and its slider right under it (same width as the row) */
+.cd-octaves.gv-octaves { gap: 10px; }
+.gv-octave { display: flex; flex-direction: column; align-items: stretch; max-width: 100%; }
+
+/* voicing row: the pill and its hidden widest copy share one grid cell (constant size) */
+.gv-voicing { display: grid; justify-items: start; align-items: end; }   /* pill sits on the slider */
 .gv-voicing > .cd-octave-pill { grid-area: 1 / 1; }
 .gv-voicing > .gv-ghost { visibility: hidden; pointer-events: none; }
 
+/* small slider. The visible track sits at the TOP of a 44px touch strip, so it reads as part of the row
+   just above it while the touch target stays 44px tall. */
 .gv-slider {
   display: flex;
-  align-items: center;
-  gap: 4px;
-  margin-top: 10px;
+  align-items: flex-start;
+  height: var(--gv-hit);
+  padding: 0 4px;
 }
-/* the end numbers: tap 1 to step back, N to step forward */
 .gv-end {
   appearance: none;
   -webkit-appearance: none;
   flex: 0 0 auto;
+  display: flex;                 /* text at the top of the 44px target, level with the track */
+  align-items: flex-start;
+  justify-content: center;
   min-width: var(--gv-hit);
-  min-height: var(--gv-hit);
-  padding: 0 6px;
+  height: var(--gv-hit);
+  padding: 3px 0 0;
   border: none;
-  border-radius: calc(var(--gv-hit) / 2);
+  border-radius: 8px;
   background: transparent;
-  color: var(--gv-fg);
+  color: var(--gv-sub);
   font: inherit;
-  font-size: 14px;
+  font-size: 11px;
   font-weight: 700;
+  line-height: 14px;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
-.gv-end:hover { background: rgba(0, 0, 0, 0.06); }
-.gv-end:focus-visible { outline: 3px solid var(--gd-focus); outline-offset: -2px; }
-.gv-end:disabled { color: var(--gv-sub); opacity: 0.45; cursor: default; background: transparent; }
+.gv-end:hover { color: var(--gv-fg); }
+.gv-end:focus-visible { outline: 3px solid var(--gd-focus); outline-offset: -3px; }
+.gv-end:disabled { opacity: 0.35; cursor: default; }
 
-/* the rail is the drag / click target (44px tall); the visible track is thin */
 .gv-rail {
   position: relative;
   flex: 1 1 auto;
   min-width: 0;
   height: var(--gv-hit);
-  margin: 0 14px;                /* room for the thumb at either end */
+  margin: 0 8px;                 /* room for the thumb at either end */
   cursor: pointer;
   touch-action: pan-y;           /* horizontal drags move the slider, vertical ones still scroll the page */
   -webkit-tap-highlight-color: transparent;
@@ -110,38 +119,29 @@
 }
 .gv-track {
   position: absolute;
-  top: 50%;
+  top: var(--gv-track-top);
   left: 0;
   right: 0;
   height: var(--gv-track-h);
-  margin-top: calc(var(--gv-track-h) / -2);
   border-radius: calc(var(--gv-track-h) / 2);
   background: var(--gv-track);
 }
-.gv-fill {
-  height: 100%;
-  border-radius: inherit;
-  background: var(--gv-track-fill);
-}
+.gv-fill { height: 100%; border-radius: inherit; background: var(--gv-track-fill); }
 .gv-thumb {
   position: absolute;
-  top: 50%;
+  top: calc(var(--gv-track-top) + var(--gv-track-h) / 2);
   width: var(--gv-thumb);
   height: var(--gv-thumb);
   transform: translate(-50%, -50%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
   border: 2px solid var(--gv-track-fill);
   border-radius: 50%;
   background: var(--gv-control-bg);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
   box-sizing: border-box;
   pointer-events: none;
 }
-.gv-thumb-n { color: var(--gv-fg); font-size: 11px; font-weight: 700; line-height: 1; }
 .gv-rail.is-dragging { cursor: grabbing; }
-.gv-rail.is-dragging .gv-thumb { transform: translate(-50%, -50%) scale(1.1); }
+.gv-rail.is-dragging .gv-thumb { transform: translate(-50%, -50%) scale(1.15); }
 .gv-rail:focus-visible .gv-thumb { box-shadow: 0 0 0 3px var(--gd-focus); }
 
 /* =============================================================================
@@ -151,3 +151,21 @@
 @media (max-width: 430px) {
   :root { --gd-max: 170px; }
 }
+
+/* narrow chord panels (col-md-3 at tablet widths): no room for 1 · rail · N on one line —
+   the rail takes the full width and 1 / N sit under its two ends */
+@container gv (max-width: 220px) {
+  .gv-octave { align-self: stretch; }
+  .gv-slider {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    grid-template-areas: "rail rail rail" "first . last";
+    height: auto;
+    row-gap: 0;
+  }
+  .gv-rail { grid-area: rail; margin: 0 8px; }
+  .gv-slider .gv-end:first-child { grid-area: first; }
+  .gv-slider .gv-end:last-child { grid-area: last; }
+  .gv-end { position: relative; margin-top: -22px; padding-top: 2px; }   /* tucked under the rail's ends */
+}
+
