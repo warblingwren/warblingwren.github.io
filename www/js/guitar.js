@@ -24,7 +24,7 @@ const NOTE_RE = /^([A-G])(#?)([0-8])$/;
 const DEGREE_SHADES = ['900', '800', '700', '600', '500', '400', '300'];
 const HEX_RE = /^#[0-9a-f]{6}$/i;
 // SYNC: --gf-css-version in www/css/guitar.css. Bump both together when the markup/CSS contract changes.
-const CSS_VERSION = 6;                       // 6: mute button (.gf-mute)
+const CSS_VERSION = 7;                       // 7: playable circles (.gf-press); 6: mute button (.gf-mute)
 const SEMITONE = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
 const NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -121,6 +121,8 @@ function validateTunings(json) {
  *                                    'guitar:overlay'  detail {panel, key, chord, notes:[spelled]}
  *                                    'guitar:rerender' detail {from, to, compact}
  *                                    'guitar:mute'     detail {muted}  (guitar-audio.js listens on document)
+ *                                    'guitar:press'    detail {string, fret, note}  a circle on the board (fretted
+ *                                                      or open string) was clicked — dashboard.js plays note
  *                                    'guitar:badge'    detail {chord}  a header chord badge was clicked
  *                                                      (chord name, or null for All) — guitar-chords.js plays it
  */
@@ -456,7 +458,8 @@ export async function renderGuitarFretboard(opts = {}, legacyOpts = {}) {
           const xr = L.xAtFret(f);
           const cx = (xl + xr) / 2;
           const r = Math.max(7, Math.min(13, L.gapBody * 0.42, (xr - xl) / 2 - 2));
-          layer.append(dotEl(cx, L.yAt(i, cx), r, n, s, f, ov));
+          const cy = L.yAt(i, cx);
+          layer.append(pressable(dotEl(cx, cy, r, n, s, f, ov), s, f, { x: xl, y: cy - L.gapBody / 2, w: xr - xl, h: L.gapBody }));
         }
       });
       svg.append(layer);
@@ -467,7 +470,8 @@ export async function renderGuitarFretboard(opts = {}, legacyOpts = {}) {
       const y = L.yAt(i, L.x0);
       const r = Math.min(13, L.gapBody * 0.42);
       const n = ov?.custom ? ov.custom.get(`${s.string}:0`) : ov?.notes.get(s.midi % 12);
-      if (n) { svg.append(dotEl(L.openCol / 2 - 2, y, r, n, s, 0, ov)); return; }
+      const openHit = { x: 0, y: y - L.gapBody / 2, w: L.openCol, h: L.gapBody };
+      if (n) { svg.append(pressable(dotEl(L.openCol / 2 - 2, y, r, n, s, 0, ov), s, 0, openHit)); return; }
       const g = svgEl('g', {}, 'gf-open');
       const title = svgEl('title');
       title.textContent = `String ${s.string}: ${pretty(s.note)}`;
@@ -475,7 +479,7 @@ export async function renderGuitarFretboard(opts = {}, legacyOpts = {}) {
       const t = svgEl('text', { x: (L.openCol / 2 - 2).toFixed(2), y: y.toFixed(2), 'text-anchor': 'middle', 'dominant-baseline': 'central' }, 'gf-open-text');
       t.textContent = pitchName(s.note);
       g.append(title, c, t);
-      svg.append(g);
+      svg.append(pressable(g, s, 0, openHit));
     });
 
     // fret numbers under the board
@@ -569,6 +573,21 @@ export async function renderGuitarFretboard(opts = {}, legacyOpts = {}) {
     return map;
   })();
   const dotColor = (midi, degree) => octaveShades.get(Math.floor(midi / 12) - 1)?.shade(DEGREE_SHADES[degree - 1]) || '';
+
+  // A circle that plays its note: the whole fret cell (string gap × fret width) is the hit area, the largest
+  // target the board allows without overlapping its neighbours. Clicks are handled once on the stage.
+  function pressable(g, s, fret, hit) {
+    const note = midiToNote(s.midi + fret);
+    g.classList.add('gf-press');
+    g.setAttribute('data-string', String(s.string));   // data-* only (no id/name: DOM clobbering)
+    g.setAttribute('data-fret', String(fret));
+    g.setAttribute('data-note', note);
+    g.setAttribute('role', 'button');
+    g.setAttribute('tabindex', '0');
+    g.setAttribute('aria-label', `Play ${pretty(note)} — ${fret === 0 ? `string ${s.string} open` : `string ${s.string}, fret ${fret}`}`);
+    g.prepend(svgEl('rect', { x: hit.x.toFixed(2), y: hit.y.toFixed(2), width: Math.max(0, hit.w).toFixed(2), height: hit.h.toFixed(2) }, 'gf-hit'));
+    return g;
+  }
 
   function dotEl(cx, cy, r, n, s, fret, ov) {
     const root = n.pc === ov.ringPc;
@@ -694,6 +713,29 @@ export async function renderGuitarFretboard(opts = {}, legacyOpts = {}) {
   });
   const onMedia = () => render();
   mql.addEventListener('change', onMedia);
+
+  // --- playing: a click (or Enter / Space) on any circle emits 'guitar:press' {string, fret, note} ----
+  const pressFrom = (target) => {
+    const g = target instanceof Element ? target.closest('.gf-press') : null;
+    if (!g || !stage.contains(g)) return;
+    const string = Number(g.getAttribute('data-string'));
+    const fret = Number(g.getAttribute('data-fret'));
+    const note = g.getAttribute('data-note');
+    if (!Number.isInteger(string) || !Number.isInteger(fret) || !/^[A-G]#?\d$/.test(note ?? '')) return;
+    g.classList.remove('is-pressed');
+    void g.getBoundingClientRect();                  // restart the press animation on repeated clicks
+    g.classList.add('is-pressed');
+    setTimeout(() => g.classList.remove('is-pressed'), 180);
+    status.textContent = `${pretty(note)} · ${fret === 0 ? `string ${string} open` : `string ${string}, fret ${fret}`}`;
+    emit('guitar:press', { string, fret, note });
+  };
+  stage.addEventListener('click', (e) => pressFrom(e.target));
+  stage.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    if (!(e.target instanceof Element) || !e.target.closest('.gf-press')) return;
+    e.preventDefault();
+    pressFrom(e.target);
+  });
 
   // --- public API -------------------------------------------------------------
   const api = {

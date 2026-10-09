@@ -34,4 +34,5 @@ const chords = renderChordControls({ piano, audio, target: IDS.chordControls, da
 const progressions = await renderCircleProgressions({ piano, audio, target: IDS.rootProgressions, relativeTarget: IDS.minorProgressions, selectorTarget: IDS.progressionSelector, octave: CHORD_OCTAVE });
 const guitar = await renderGuitarFretboard({ target: IDS.guitar, dataUrl: 'DATA/guitar_tuning.json', piano, progressions });
 const guitarAudio = createGuitarAudio({ baseUrl: 'DATA/guitar/', ext: 'mp3' });
+guitar.element.addEventListener('guitar:press', (e) => guitarAudio.play(e.detail.note));
 const guitarChords = await renderGuitarProgressions({ guitar, piano, audio: guitarAudio, progressions, target: IDS.guitarRootProgressions, dataTarget: IDS.guitarRootChordData, relativeTarget: IDS.guitarMinorProgressions, relativeDataTarget: IDS.guitarMinorChordData });

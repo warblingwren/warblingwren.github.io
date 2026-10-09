@@ -61,7 +61,7 @@
   --gf-root-ring: #ffffff;        /* root chord's root note */
 
   /* SYNC: CSS_VERSION in www/js/guitar.js — guitar.js warns in the console if they differ */
-  --gf-css-version: 6;
+  --gf-css-version: 7;
 
   /* geometry read by guitar.js */
   --gf-string-gap: 30px;          /* string spacing (board height = 6 × gap) */
@@ -281,6 +281,22 @@
 .gf-dot-t { fill: var(--gf-dot-fg); font-weight: 700; pointer-events: none; }
 /* root chord's root: thick white ring with a dark outline so it reads on light and dark dots */
 .gf-dot.is-root .gf-dot-c { stroke: var(--gf-root-ring); stroke-width: 3; filter: drop-shadow(0 0 1.5px rgba(0, 0, 0, 0.9)); }
+
+/* --- playable circles (fretted dots and open strings): click / Enter / Space plays the note ---------- */
+.gf-press { cursor: pointer; outline: none; -webkit-tap-highlight-color: transparent; }
+.gf-hit { fill: transparent; pointer-events: all; }   /* the whole fret cell is the touch target */
+.gf-press .gf-dot-c,
+.gf-press .gf-open-dot {
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: transform 90ms ease-out;
+}
+.gf-press:hover .gf-dot-c,
+.gf-press:hover .gf-open-dot { transform: scale(1.1); }
+.gf-press.is-pressed .gf-dot-c,
+.gf-press.is-pressed .gf-open-dot { transform: scale(1.25); }
+.gf-press:focus-visible .gf-dot-c,
+.gf-press:focus-visible .gf-open-dot { stroke: var(--gf-focus); stroke-width: 3; }
 
 /* =============================================================================
    BREAKPOINTS — keep at end of file
