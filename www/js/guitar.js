@@ -449,6 +449,13 @@ export async function renderGuitarFretboard(opts = {}, legacyOpts = {}) {
 
   const ROLE_NAMES = ['root', '3rd', '5th', '7th'];
   const panelState = () => progState?.[overlayPanel] ?? null;
+  // The progression's root chord: the chord built on the key's tonic (I / i), else its first chord
+  const tonicChordName = () => {
+    const st = panelState();
+    const list = uniqueChords(st);
+    const onTonic = list.find((c) => (c.tones ?? []).some((t, i) => (Number.isInteger(t.rank) ? t.rank : i) === 0 && t.pc === st?.key?.tonicPc));
+    return (onTonic ?? list[0])?.name ?? null;
+  };
   const uniqueChords = (st) => {
     const seen = new Map();
     for (const c of st?.chords ?? []) if (c && typeof c.name === 'string' && !seen.has(c.name)) seen.set(c.name, c);
@@ -674,12 +681,12 @@ export async function renderGuitarFretboard(opts = {}, legacyOpts = {}) {
       winStart = clampStart(Math.floor(fromFret) || 0);
       if (mql.matches) render();
     },
-    /** Progression overlay: 'root' | 'relative' (always one of the two). */
+    /** Progression overlay: 'root' | 'relative' (always one of the two). Shows that progression's root chord. */
     setOverlay(panel) {
       if (!PANELS.includes(panel)) { console.warn(`guitar-fretboard: overlay must be 'root' or 'relative', not "${panel}"`); return false; }
       if (progState && !progState[panel]) { console.warn(`guitar-fretboard: no ${panel} progression on the page`); return false; }
       overlayPanel = panel;
-      focusName = null;                              // other panel, other chords: back to All
+      focusName = tonicChordName();                  // other panel: start on its root chord (cleaner than All)
       progSelect.value = panel;
       renderBadges();
       render();

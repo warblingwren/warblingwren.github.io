@@ -284,8 +284,8 @@
 }
 
 .ph-status {
-  flex: 0 1 auto;
-  min-width: 0;
+  flex: 1 1 0;                    /* shares the row instead of claiming its full text width, so the */
+  min-width: 140px;               /* header stays on one row longer; long names truncate with "…" */
   font-size: 14px;
   font-weight: 700;
   color: var(--ph-muted);
@@ -296,7 +296,7 @@
 
 .ph-badges {
   display: flex;
-  flex: 1 1 auto;
+  flex: 0 1 auto;
   flex-wrap: wrap;
   align-items: center;
   gap: 6px;
@@ -352,6 +352,27 @@
   -webkit-appearance: none;
   cursor: pointer;
 }
+/* the piano's activity line, placed here by circle-o-5ths.js: just left of the dropdown.
+   It only takes the space left over and truncates with "…", so a longer text never wraps the row,
+   moves the dropdown or changes the header's height. */
+.ph-selects {
+  flex: 1 1 200px;                /* fills what the badges leave; the dropdown keeps its width */
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: flex-end;
+}
+.ph-selects .pk-status {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 0;
+  margin: 0;
+  line-height: 44px;              /* same box height as the dropdown: text centred on its middle */
+  text-align: right;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ph-selects .ph-select { flex: 0 0 auto; }
 .ph-select:hover { border-color: var(--ph-fg); }
 .ph-select:focus-visible { outline: 3px solid var(--ph-active); outline-offset: 2px; }
 .ph-select option { background: var(--ph-control-bg); color: var(--ph-fg); }
@@ -361,10 +382,11 @@
    ========================================================================== */
 
 @media (max-width: 768px) {
-  .ph-status { flex: 1 1 100%; }      /* = .gf-status at 768px */
+  .ph-status { flex: 1 1 100%; min-width: 0; }      /* = .gf-status at 768px */
   .ph-badges { flex: 1 1 100%; }
   .ph-selects { flex: 1 1 100%; margin-left: 0; }
   .ph-select { flex: 1 1 0; }
+  .ph-selects .ph-select { flex: 1 1 0; }
   .cp { border-radius: 8px; }
   .cp-selector { border-radius: 8px; }
   .cp-selector .cp-select { max-width: 100%; }
@@ -377,6 +399,8 @@
   .ph-status { font-size: 13px; }     /* = .gf-* at 430px */
   .ph-badge { padding: 0 12px; font-size: 15px; }
   .ph-select { width: 100%; font-size: 14px; }
+  .ph-selects { flex-wrap: wrap; }
+  .ph-selects .pk-status { flex: 1 1 100%; line-height: 20px; text-align: left; }   /* own line above the dropdown */
   .cp-seq-badge { padding: 0 12px; font-size: 15px; }
   .cp-key-name,
   .cp-key-signature { font-size: 15px; }

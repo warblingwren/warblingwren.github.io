@@ -356,7 +356,7 @@ export async function renderCircleProgressions(opts = {}) {
     hostEl.append(wrap);
     panels.push(wrap);
     new ResizeObserver(() => layoutCards(cards)).observe(cards);
-    const label = variant === 'relative' ? 'Relative Minor Progression' : 'Root Progression';
+    const label = variant === 'relative' ? 'Relative Minor' : 'Root';   // keyboard text, e.g. "Root IV: F"
     return { wrap, emit, title, keyBox, controls, note, roman, desc, cards, label };
   }
 
@@ -584,8 +584,8 @@ export async function renderCircleProgressions(opts = {}) {
     // minor panel: relative minor key
     if (rel) {
       const minorProg = progIn(relKey);
-      rel.label = `${relWord()} Progression`;          // keyboard indicator for its cards
-      rel.title.textContent = rel.label;
+      rel.label = relWord();                         // keyboard text for its cards, e.g. "Relative Minor iv: Dm"
+      rel.title.textContent = `${relWord()} Progression`;
       renderKeyBox(rel.keyBox, relKey);
       relProgName.textContent = currentProg.name;
       // "Root Chord:" = exactly the chord in #root-chord-data
@@ -601,7 +601,7 @@ export async function renderCircleProgressions(opts = {}) {
     const rootRing = panelRoot ? asBadgeChord(panelRoot, tonicRoman(rootKey)) : { ...circle.tonicChord(rootKey) };
     lastState = {
       root: snapshot('root', root.label, rootKey, rootItems.map((it) => it.chord), rootRing),
-      relative: snapshot('relative', `${relWord()} Progression`, relKey,
+      relative: snapshot('relative', relWord(), relKey,
         relItems ? relItems.map((it) => it.chord) : circle.resolve(relKey, progIn(relKey)), relChord),
     };
     // exactly the chords on the cards (with semitones, for voicing on the keyboard)
@@ -694,7 +694,7 @@ export async function renderCircleProgressions(opts = {}) {
     for (const v of ['root', 'relative']) { const o = el('option'); o.value = v; sel.append(o); }
     sel.addEventListener('change', () => {
       phPanel = sel.value === 'relative' ? 'relative' : 'root';
-      showProgressionOnPiano();                      // switching populates the keyboard with the new progression
+      showChordOnPiano(tonicChordName());            // switching shows (and plays) the new progression's root chord
     });
     const selects = el('div', 'ph-selects');
     selects.append(sel);
@@ -706,6 +706,12 @@ export async function renderCircleProgressions(opts = {}) {
   })();
 
   const phState = () => lastState?.[phPanel] ?? null;
+  // The progression's root chord: the chord built on the key's tonic (I / i), else its first chord
+  const tonicChordName = () => {
+    const k = phPanel === 'relative' ? relKey : rootKey;
+    const list = phChords[phPanel];
+    return (list.find((c) => c.rootPc === k.tonicPc) ?? list[0])?.name ?? null;
+  };
   const uniqueNames = (chords) => [...new Set(chords.map((c) => c.name))];
 
   function refreshPianoHeader() {
@@ -764,7 +770,7 @@ export async function renderCircleProgressions(opts = {}) {
     piano.clearPlayed();
     piano.clearChord();
     piano.markNotes(marks);
-    piano.setStatus(`${st.title} · ${st.key.name} · all tones`);
+    piano.setStatus(`${st.title} · all tones`);
     phActive = 'all';
     renderPianoBadges();
   }
@@ -848,11 +854,11 @@ export async function renderCircleProgressions(opts = {}) {
     setKey,
     state: () => lastState,
     randomProgression: () => { const id = pickRandomProgression(); render(); return id; },
-    /** Piano header actions: 'root' | 'relative', then all tones or one chord (by name). */
+    /** Piano header actions: 'root' | 'relative', then a chord name, 'all', or nothing = the root chord. */
     showOnPiano: (panel = phPanel, chordName = null) => {
       phPanel = panel === 'relative' ? 'relative' : 'root';
       if (ph) ph.sel.value = phPanel;
-      if (chordName) showChordOnPiano(chordName); else showProgressionOnPiano();
+      if (chordName === 'all') showProgressionOnPiano(); else showChordOnPiano(chordName ?? tonicChordName());
     },
     select: (id) => {
       const p = circle.progression(id);
