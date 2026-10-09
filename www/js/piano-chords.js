@@ -378,7 +378,7 @@ export function renderMiniKeyboard(o) {
  * @param {string} opts.dataTarget  id of the root chord element; looked up on every chord click (omit = not shown)
  * @param {string} opts.relativeTarget id of the relative minor/major element (omit = not shown)
  * No default ids: every element id is named by the caller (dashboard.js), matching index.html.
- * @param {number} opts.octave      octave of the played chord root (default 4)
+ * @param {number} opts.octave      octave of the played chord root (default 3)
  * @param {number} opts.strumMs     delay between chord tones, 0 = simultaneous (default 0)
  * @param {number} opts.velocity    chord volume 0–1 (default 0.7)
  * @returns {{select:Function, random:Function, clear:Function, destroy:Function, element:HTMLDivElement}}
@@ -401,7 +401,7 @@ export function renderChordControls(opts = {}) {
     after = null,
     dataTarget = null,
     relativeTarget = null,
-    octave = 4,
+    octave = 3,                                      // C3: a fuller piano tone (SYNC: circle-o-5ths.js default)
     strumMs = 0,
     velocity = 0.7,
   } = opts;
@@ -766,10 +766,17 @@ export function renderChordControls(opts = {}) {
   if (target) host.append(wrap);                     // inside the given column
   else host.insertAdjacentElement('afterend', wrap); // directly below the piano
 
-  // Default #chord-data to C major (matches the progressions' default key).
-  // Display only: the keyboard and the chord buttons stay untouched until a chord is clicked.
+  // Default on page load: C, selected everywhere (button, keyboard, chord panels -> progressions and
+  // guitar follow via 'chord:panels'), without sound — browsers block audio before a user gesture.
   const defaultChord = byName.get('C');
-  if (defaultChord) renderPanel(defaultChord, voice(defaultChord));
+  if (defaultChord) {
+    activeChord = defaultChord;
+    markButtons();
+    const tones = voice(defaultChord);
+    showChordOnKeys(tones);
+    piano.setStatus(`Root Chord ${defaultChord.name}`);
+    renderPanel(defaultChord, tones);
+  }
 
   return {
     element: wrap,

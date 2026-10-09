@@ -216,7 +216,7 @@ const sigText = (s) => (s.count === 0 ? 'none (no sharps or flats)'
  * No default ids: every element id is named by the caller (dashboard.js), matching index.html.
  * @param {string} opts.dataUrl        circle data file (default 'DATA/circle_of_fifths.json')
  * @param {string} opts.progressionsUrl progressions data file (default 'DATA/progressions.json')
- * @param {number} opts.octave         octave of each progression chord's root (default 4)
+ * @param {number} opts.octave         octave of each progression chord's root (default 3)
  * @param {number} opts.velocity       chord volume 0–1 (default 0.7)
  * @param {number} opts.strumMs        delay between chord tones (default 0)
  * @returns {Promise<{circle, setKey, select, randomProgression, showOnPiano, state, element, relativeElement, selectorElement, destroy}|null>}
@@ -235,7 +235,7 @@ export async function renderCircleProgressions(opts = {}) {
     selectorTarget = null,
     dataUrl = 'DATA/circle_of_fifths.json',
     progressionsUrl = 'DATA/progressions.json',
-    octave = 4,
+    octave = 3,                                      // C3 (SYNC: piano-chords.js default)
     velocity = 0.7,
     strumMs = 0,
   } = opts;
@@ -667,7 +667,7 @@ export async function renderCircleProgressions(opts = {}) {
 
   // --- piano header: the same controls as the guitar fretboard header ---------------------
   // [C major · Canon] [All] [C] [G] [Am] … [Root – C major ▾]   (the piano keeps its mute button)
-  // Dropdown / badges populate the keyboard only when clicked; nothing plays (like the guitar).
+  // Dropdown / badges populate the keyboard only when clicked; chord badges also play the chord.
   //   All   -> every key of every progression tone, shaded by scale degree in its octave's colour,
   //            R badge under the root chord's root (same colouring as the guitar's progression dots)
   //   chord -> that chord exactly as its card's badge shows it on the keyboard
@@ -700,6 +700,8 @@ export async function renderCircleProgressions(opts = {}) {
     selects.append(sel);
     wrap.append(status, badges, selects);
     slot.replaceChildren(wrap);
+    // the keyboard's activity line ("Root Progression V: G") sits just left of the dropdown
+    if (typeof piano.placeStatus === 'function') piano.placeStatus(selects, sel);
     return { wrap, status, badges, sel };
   })();
 
@@ -781,6 +783,7 @@ export async function renderCircleProgressions(opts = {}) {
       if (!played.has(n)) marks.push({ note: n, badge: 'R', rank: 0, root: true });
     }
     piano.markNotes(marks);
+    audio.playChord(tones.map((t) => t.note), velocity, strumMs);   // plays unless muted
     piano.setStatus(`${st.title} ${chord.roman}: ${chord.name}`);
     phActive = name;
     renderPianoBadges();

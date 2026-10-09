@@ -134,7 +134,8 @@ function sliceRange(all, from, to) {
  * @param {boolean} opts.muted          start muted (default false)
  * @returns {Promise<object>} API: element, highlight, clear, shiftOctave, isCompact, keys(), octaveColors(),
  *          showChord(pitchClasses), clearChord(), markNotes(list), clearMarks(),
- *          notesWithPitchClass(pc), roleColor(note, rank), keyColors(note), header(), setStatus(text), clearStatus(),
+ *          notesWithPitchClass(pc), roleColor(note, rank), keyColors(note), header(), placeStatus(parent, before),
+ *          setStatus(text), clearStatus(),
  *          lastPlayed(), clearPlayed(), setMuted(bool), isMuted(), destroy
  * Emits on container: 'piano:press' / 'piano:release'  detail {note, index, file}
  *                     'piano:rerender'                 detail {from, to, compact}
@@ -203,7 +204,13 @@ export async function renderPianoKeyboard(opts = {}, legacyOpts = {}) {
   let chordPCs = new Set();     // pitch classes of the displayed chord
   const marks = new Map();      // note -> {label, badge}  (played chord tones)
   let statusText = '';
-  let statusEl = null;
+  // activity line ("Root Chord C", "Note C♯4 · Key 41"): one persistent element. By default it sits
+  // under the top row; placeStatus() lets the header put it beside its own controls instead.
+  const statusEl = document.createElement('div');
+  statusEl.className = 'pk-status';
+  statusEl.setAttribute('role', 'status');
+  statusEl.setAttribute('aria-live', 'polite');
+  let statusPlaced = false;
   function setStatus(text) {
     statusText = text ? String(text) : '';
     if (statusEl) statusEl.textContent = statusText;
@@ -474,10 +481,6 @@ export async function renderPianoKeyboard(opts = {}, legacyOpts = {}) {
     const top = document.createElement('div');
     top.className = 'pk-top';
     top.append(headerEl);
-    statusEl = document.createElement('div');
-    statusEl.className = 'pk-status';
-    statusEl.setAttribute('role', 'status');
-    statusEl.setAttribute('aria-live', 'polite');
     statusEl.textContent = statusText;
     muteEl = null;
     if (muteButton) {
@@ -488,7 +491,8 @@ export async function renderPianoKeyboard(opts = {}, legacyOpts = {}) {
       paintMute();
       top.append(muteEl);
     }
-    container.append(top, statusEl);
+    container.append(top);
+    if (!statusPlaced) container.append(statusEl);
 
     if (compact) container.append(buildControls());
 
@@ -590,6 +594,13 @@ export async function renderPianoKeyboard(opts = {}, legacyOpts = {}) {
     roleColor,
     /** Header slot in the top row (left of the mute button); persists across re-renders. */
     header: () => headerEl,
+    /** Move the activity line into `parent` (e.g. the header), before `before` if given. */
+    placeStatus(parent, before = null) {
+      if (!(parent instanceof HTMLElement)) return false;
+      parent.insertBefore(statusEl, before instanceof Node && before.parentNode === parent ? before : null);
+      statusPlaced = true;
+      return true;
+    },
     /** Colours this keyboard gives a note's key: octave tint, black-key stripe, chord-tone shade. */
     keyColors(note) {
       const oc = octaveColorMap.get(octaveOf(note));
