@@ -261,11 +261,110 @@
 .cd--compact .cd-octave-label { min-width: 38px; padding: 0 4px 0 8px; font-size: 14px; }
 .cd--compact .cd-octave-dot { --cd-dot: 28px; font-size: 12px; }
 
+/* --- piano header (.ph, inside the piano's top row) -----------------------------
+   Same look as the guitar fretboard header — SYNC with guitar.css: .gf-top, .gf-status,
+   .gf-badges, .gf-badge, .gf-selects, .gf-select (values copied; the files stay independent) */
+:root {
+  --ph-fg: #f2f2f2;
+  --ph-muted: #bdbdc2;
+  --ph-control-bg: #3a3a3e;
+  --ph-control-border: #66666d;
+  --ph-badge-bg: #2b2b2e;
+  --ph-badge-border: #66666d;
+  --ph-active: #3d7be8;
+}
+
+.ph {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  text-align: left;
+}
+
+.ph-status {
+  flex: 0 1 auto;
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ph-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ph-badges {
+  display: flex;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.ph-badge {
+  appearance: none;
+  -webkit-appearance: none;
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--ph-badge-border);
+  border-radius: 22px;
+  background: var(--ph-badge-bg);
+  color: var(--ph-fg);
+  font: inherit;
+  font-size: 16px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.ph-badge:hover { border-color: var(--ph-fg); }
+.ph-badge:focus-visible { outline: 3px solid var(--ph-active); outline-offset: 2px; }
+.ph-badge.is-active { box-shadow: 0 0 0 3px var(--ph-active); }
+.ph-badge--all { font-size: 14px; letter-spacing: 0.02em; }
+
+.ph-selects {
+  display: flex;
+  flex: 0 1 auto;
+  gap: 8px;
+  min-width: 0;
+  margin-left: auto;              /* dropdown stays at the right, beside the mute button */
+}
+
+.ph-select {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 100%;
+  min-height: 44px;
+  padding: 0 40px 0 12px;
+  border: 1px solid var(--ph-control-border);
+  border-radius: 8px;
+  background-color: var(--ph-control-bg);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23f2f2f2' stroke-width='2'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  color: var(--ph-fg);
+  font: inherit;
+  font-size: 15px;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+}
+.ph-select:hover { border-color: var(--ph-fg); }
+.ph-select:focus-visible { outline: 3px solid var(--ph-active); outline-offset: 2px; }
+.ph-select option { background: var(--ph-control-bg); color: var(--ph-fg); }
+
 /* =============================================================================
    BREAKPOINTS — keep at end of file
    ========================================================================== */
 
 @media (max-width: 768px) {
+  .ph-status { flex: 1 1 100%; }      /* = .gf-status at 768px */
+  .ph-badges { flex: 1 1 100%; }
+  .ph-selects { flex: 1 1 100%; margin-left: 0; }
+  .ph-select { flex: 1 1 0; }
   .cp { border-radius: 8px; }
   .cp-selector { border-radius: 8px; }
   .cp-selector .cp-select { max-width: 100%; }
@@ -275,6 +374,9 @@
 }
 
 @media (max-width: 430px) {
+  .ph-status { font-size: 13px; }     /* = .gf-* at 430px */
+  .ph-badge { padding: 0 12px; font-size: 15px; }
+  .ph-select { width: 100%; font-size: 14px; }
   .cp-seq-badge { padding: 0 12px; font-size: 15px; }
   .cp-key-name,
   .cp-key-signature { font-size: 15px; }

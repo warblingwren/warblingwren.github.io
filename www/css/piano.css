@@ -255,17 +255,20 @@
   letter-spacing: 0.04em;
 }
 
-/* --- top row: status indicator + mute toggle (upper right) ------------------- */
+/* --- top row: header slot (progression controls) + mute toggle (upper right) --- */
 .pk-top {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: flex-end;
   gap: 10px;
   margin: 0 4px 6px;
 }
+.pk-header { flex: 1 1 auto; min-width: 0; }   /* filled by circle-o-5ths.js (.ph) */
+.pk-header:empty { display: none; }
 
+/* activity line under the header: "Root Chord C", "Note C♯4 · Key 41" */
 .pk-status {
-  flex: 1 1 auto;
+  margin: 0 4px 6px;
   min-width: 0;
   min-height: 20px;
   color: #f2f2f2;

@@ -219,7 +219,7 @@ const sigText = (s) => (s.count === 0 ? 'none (no sharps or flats)'
  * @param {number} opts.octave         octave of each progression chord's root (default 4)
  * @param {number} opts.velocity       chord volume 0–1 (default 0.7)
  * @param {number} opts.strumMs        delay between chord tones (default 0)
- * @returns {Promise<{circle, setKey, select, randomProgression, state, element, relativeElement, selectorElement, destroy}|null>}
+ * @returns {Promise<{circle, setKey, select, randomProgression, showOnPiano, state, element, relativeElement, selectorElement, destroy}|null>}
  *   state(): the chords shown in both panels (same object as 'progression:change' detail.root / .relative)  null if the root container is missing
  * Emits (bubbling): 'progression:change' {key, relativeKey, progression, root, relative}
  *                     root / relative = {panel, title, key:{name, mode, tonic, tonicPc}, progression:{id, name},
@@ -289,10 +289,13 @@ export async function renderCircleProgressions(opts = {}) {
 
   // --- shared piano actions (cards never touch the chord-data panels) ---------
   const panels = [];
-  const clearActive = () => panels.forEach((w) => {
-    w.querySelectorAll('.is-active').forEach((n) => n.classList.remove('is-active'));
-    w.querySelectorAll('.card.border-primary').forEach((n) => n.classList.remove('border-primary'));
-  });
+  const clearActive = () => {
+    panels.forEach((w) => {
+      w.querySelectorAll('.is-active').forEach((n) => n.classList.remove('is-active'));
+      w.querySelectorAll('.card.border-primary').forEach((n) => n.classList.remove('border-primary'));
+    });
+    clearPianoHeaderActive();                        // the keyboard no longer shows the header's choice
+  };
   const emitFrom = (node) => (type, detail) => node.dispatchEvent(new CustomEvent(type, { bubbles: true, detail }));
 
   const voice = (chord) => {
@@ -601,6 +604,12 @@ export async function renderCircleProgressions(opts = {}) {
       relative: snapshot('relative', `${relWord()} Progression`, relKey,
         relItems ? relItems.map((it) => it.chord) : circle.resolve(relKey, progIn(relKey)), relChord),
     };
+    // exactly the chords on the cards (with semitones, for voicing on the keyboard)
+    phChords = {
+      root: rootItems.map((it) => it.chord),
+      relative: relItems ? relItems.map((it) => it.chord) : circle.resolve(relKey, progIn(relKey)),
+    };
+    refreshPianoHeader();
     root.emit('progression:change', { key: rootKey.name, relativeKey: relKey.name, progression: currentProg.id, ...lastState });
   }
 
@@ -655,6 +664,131 @@ export async function renderCircleProgressions(opts = {}) {
   // Chord controls' Random button: switch progression now; the chord selection that follows redraws
   const onRandom = () => pickRandomProgression();
   document.addEventListener('chord:random', onRandom);
+
+  // --- piano header: the same controls as the guitar fretboard header ---------------------
+  // [C major · Canon] [All] [C] [G] [Am] … [Root – C major ▾]   (the piano keeps its mute button)
+  // Dropdown / badges populate the keyboard only when clicked; nothing plays (like the guitar).
+  //   All   -> every key of every progression tone, shaded by scale degree in its octave's colour,
+  //            R badge under the root chord's root (same colouring as the guitar's progression dots)
+  //   chord -> that chord exactly as its card's badge shows it on the keyboard
+  const PH_DEGREE_SHADES = ['900', '800', '700', '600', '500', '400', '300'];   // SYNC: DEGREE_SHADES in guitar.js
+  const PH_LETTERS = 'CDEFGAB';
+  const degreeIn = (spelled, tonic) => ((PH_LETTERS.indexOf(spelled[0]) - PH_LETTERS.indexOf(tonic[0]) + 7) % 7) + 1;
+  let phChords = { root: [], relative: [] };
+  let phPanel = 'root';
+  let phActive = null;                               // null = keyboard shows something else, 'all', or a chord name
+  const ph = (() => {
+    const slot = typeof piano.header === 'function' ? piano.header() : null;
+    if (!(slot instanceof HTMLElement)) {
+      console.warn('circle-o-5ths: the piano has no header() — www/js/piano.js is older than circle-o-5ths.js; piano progression header not shown');
+      return null;
+    }
+    const wrap = el('div', 'ph');
+    const status = el('div', 'ph-status');
+    status.setAttribute('aria-live', 'polite');
+    const badges = el('div', 'ph-badges');
+    badges.setAttribute('role', 'group');
+    badges.setAttribute('aria-label', 'Show the progression or one of its chords on the keyboard');
+    const sel = el('select', 'ph-select');
+    sel.setAttribute('aria-label', 'Show the root or relative progression on the keyboard');
+    for (const v of ['root', 'relative']) { const o = el('option'); o.value = v; sel.append(o); }
+    sel.addEventListener('change', () => {
+      phPanel = sel.value === 'relative' ? 'relative' : 'root';
+      showProgressionOnPiano();                      // switching populates the keyboard with the new progression
+    });
+    const selects = el('div', 'ph-selects');
+    selects.append(sel);
+    wrap.append(status, badges, selects);
+    slot.replaceChildren(wrap);
+    return { wrap, status, badges, sel };
+  })();
+
+  const phState = () => lastState?.[phPanel] ?? null;
+  const uniqueNames = (chords) => [...new Set(chords.map((c) => c.name))];
+
+  function refreshPianoHeader() {
+    if (!ph) return;
+    const keyOf = { root: rootKey, relative: relKey };
+    for (const o of ph.sel.options) o.textContent = `${o.value === 'root' ? 'Root' : 'Relative'} – ${keyOf[o.value].name}`;
+    phActive = null;                                 // panels redrew: the keyboard shows the chord-controls choice
+    renderPianoBadges();
+  }
+
+  // Badges + status text + dropdown value, always for the panel the dropdown shows
+  function renderPianoBadges() {
+    if (!ph) return;
+    ph.sel.value = phPanel;
+    const st = phState();
+    ph.status.textContent = st ? `${st.key.name} · ${currentProg.name}` : '';
+    ph.status.title = st ? `${st.title}: ${st.chords.map((c) => c.name).join(' – ')}` : '';
+    const mk = (text, value, aria) => {
+      const b = el('button', `ph-badge${value === 'all' ? ' ph-badge--all' : ''}${phActive === value ? ' is-active' : ''}`, text);
+      b.type = 'button';
+      b.setAttribute('aria-pressed', String(phActive === value));
+      b.setAttribute('aria-label', aria);
+      b.addEventListener('click', () => {
+        if (value === 'all' || phActive === value) showProgressionOnPiano();   // active chord again -> back to All
+        else showChordOnPiano(value);
+      });
+      return b;
+    };
+    ph.badges.replaceChildren(mk('All', 'all', 'Show every tone of the progression on the keyboard'),
+      ...uniqueNames(phChords[phPanel]).map((n) => mk(n, n, `Show ${n} on the keyboard`)));
+  }
+
+  function clearPianoHeaderActive() {
+    if (!ph || phActive === null) return;
+    phActive = null;
+    renderPianoBadges();
+  }
+
+  function showProgressionOnPiano() {
+    const st = phState();
+    if (!st) return;
+    clearActive();
+    const notes = new Map();                         // pc -> {spelled, degree}
+    for (const c of phChords[phPanel]) {
+      for (const t of c.tones) if (!notes.has(t.pc)) notes.set(t.pc, { spelled: t.spelled, degree: degreeIn(t.spelled, st.key.tonic) });
+    }
+    const ringPc = st.rootChord.rootPc;
+    if (!notes.has(ringPc)) notes.set(ringPc, { spelled: st.rootChord.rootName, degree: degreeIn(st.rootChord.rootName, st.key.tonic) });
+    const marks = [];
+    for (const [pc, n] of notes) {
+      for (const note of piano.notesWithPitchClass(pc)) {
+        marks.push({ note, label: n.spelled, fill: true, shade: PH_DEGREE_SHADES[n.degree - 1], rank: 0,
+          badge: pc === ringPc ? 'R' : '', root: pc === ringPc });
+      }
+    }
+    piano.clearPlayed();
+    piano.clearChord();
+    piano.markNotes(marks);
+    piano.setStatus(`${st.title} · ${st.key.name} · all tones`);
+    phActive = 'all';
+    renderPianoBadges();
+  }
+
+  function showChordOnPiano(name) {
+    const chord = phChords[phPanel].find((c) => c.name === name);
+    const st = phState();
+    if (!chord || !st) return;
+    clearActive();
+    const tones = voice(chord);                      // same voicing and marks as the chord's card badge
+    piano.clearPlayed();
+    piano.showChord(tones.map((t) => t.pc));
+    const played = new Set(tones.map((t) => t.note));
+    const marks = tones.map((t) => ({ note: t.note, label: t.spelled, badge: t.degree, rank: t.rank, root: t.rank === 0 }));
+    for (const n of piano.notesWithPitchClass(chord.rootPc)) {
+      if (!played.has(n)) marks.push({ note: n, badge: 'R', rank: 0, root: true });
+    }
+    piano.markNotes(marks);
+    piano.setStatus(`${st.title} ${chord.roman}: ${chord.name}`);
+    phActive = name;
+    renderPianoBadges();
+  }
+
+  // Anything else that changes the keyboard clears the header's active badge
+  const onOtherPianoChange = () => clearPianoHeaderActive();
+  for (const type of ['chord:tone', 'chord:octave', 'chord:octave-note']) document.addEventListener(type, onOtherPianoChange);
 
   // Follow the chord-data panels: their two chords are used exactly, never recomputed.
   //   #minor-chord-data chord -> "Relative Minor:"/"Relative Major:" badge + the relative progression's key (same root)
@@ -711,6 +845,12 @@ export async function renderCircleProgressions(opts = {}) {
     setKey,
     state: () => lastState,
     randomProgression: () => { const id = pickRandomProgression(); render(); return id; },
+    /** Piano header actions: 'root' | 'relative', then all tones or one chord (by name). */
+    showOnPiano: (panel = phPanel, chordName = null) => {
+      phPanel = panel === 'relative' ? 'relative' : 'root';
+      if (ph) ph.sel.value = phPanel;
+      if (chordName) showChordOnPiano(chordName); else showProgressionOnPiano();
+    },
     select: (id) => {
       const p = circle.progression(id);
       if (p) { currentProg = p; select.value = id; render(); }
@@ -719,6 +859,8 @@ export async function renderCircleProgressions(opts = {}) {
       document.removeEventListener('chord:panels', onPanels);
       document.removeEventListener('piano:press', onKeyPress);
       document.removeEventListener('chord:random', onRandom);
+      for (const type of ['chord:tone', 'chord:octave', 'chord:octave-note']) document.removeEventListener(type, onOtherPianoChange);
+      ph?.wrap.remove();
       panels.forEach((w) => w.remove());
       selector?.remove();
     },

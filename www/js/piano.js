@@ -134,7 +134,7 @@ function sliceRange(all, from, to) {
  * @param {boolean} opts.muted          start muted (default false)
  * @returns {Promise<object>} API: element, highlight, clear, shiftOctave, isCompact, keys(), octaveColors(),
  *          showChord(pitchClasses), clearChord(), markNotes(list), clearMarks(),
- *          notesWithPitchClass(pc), roleColor(note, rank), keyColors(note), setStatus(text), clearStatus(),
+ *          notesWithPitchClass(pc), roleColor(note, rank), keyColors(note), header(), setStatus(text), clearStatus(),
  *          lastPlayed(), clearPlayed(), setMuted(bool), isMuted(), destroy
  * Emits on container: 'piano:press' / 'piano:release'  detail {note, index, file}
  *                     'piano:rerender'                 detail {from, to, compact}
@@ -242,6 +242,10 @@ export async function renderPianoKeyboard(opts = {}, legacyOpts = {}) {
     return muted;
   }
   let rail = null;              // badge row under the keys
+  // header slot (upper left, beside the mute button): filled by other components (circle-o-5ths.js)
+  // and kept across re-renders
+  const headerEl = document.createElement('div');
+  headerEl.className = 'pk-header';
 
   container.classList.add('pk');
 
@@ -360,6 +364,11 @@ export async function renderPianoKeyboard(opts = {}, legacyOpts = {}) {
     return oc?.shade(ROLE_SHADES[Math.min(Math.max(rank, 0), ROLE_SHADES.length - 1)]) || '';
   }
 
+  // Any shade ('900' … '50') of a key's octave family
+  function shadeColor(note, shade) {
+    return octaveColorMap.get(octaveOf(note))?.shade(String(shade)) || '';
+  }
+
   function refreshMarks() {
     for (const btn of keyMap.values()) {
       btn.classList.remove('is-marked', 'is-tone');
@@ -374,7 +383,8 @@ export async function renderPianoKeyboard(opts = {}, legacyOpts = {}) {
     for (const [note, mark] of marks) {
       const btn = keyMap.get(note);
       if (!btn) continue; // outside the visible range
-      const color = roleColor(note, mark.rank);
+      // colour: an explicit shade of the key's octave family, else the chord-role shade
+      const color = mark.shade ? shadeColor(note, mark.shade) : roleColor(note, mark.rank);
       const fg = textOn(color);
 
       if (mark.label) {
@@ -459,14 +469,16 @@ export async function renderPianoKeyboard(opts = {}, legacyOpts = {}) {
 
     // top row: status (what the keyboard is showing, e.g. "Root Chord C", "Note C♯4 · Key 41")
     // and the mute toggle in the upper-right corner
+    // top row: header slot (progression controls) + mute toggle in the upper-right corner;
+    // below it, the activity line ("Root Chord C", "Note C♯4 · Key 41")
     const top = document.createElement('div');
     top.className = 'pk-top';
+    top.append(headerEl);
     statusEl = document.createElement('div');
     statusEl.className = 'pk-status';
     statusEl.setAttribute('role', 'status');
     statusEl.setAttribute('aria-live', 'polite');
     statusEl.textContent = statusText;
-    top.append(statusEl);
     muteEl = null;
     if (muteButton) {
       muteEl = document.createElement('button');
@@ -476,7 +488,7 @@ export async function renderPianoKeyboard(opts = {}, legacyOpts = {}) {
       paintMute();
       top.append(muteEl);
     }
-    container.append(top);
+    container.append(top, statusEl);
 
     if (compact) container.append(buildControls());
 
@@ -556,6 +568,7 @@ export async function renderPianoKeyboard(opts = {}, legacyOpts = {}) {
      *   label: text on the key (black keys: in a role-colored circle)
      *   badge: degree circle below the key     rank: chord role 0=root … 3=7th (sets shade)
      *   root: white-bordered badge             fill: color the key itself with the role shade
+     *   shade: optional octave-family shade ('900'…'50') used instead of the role shade
      */
     markNotes(list) {
       marks.clear();
@@ -567,6 +580,7 @@ export async function renderPianoKeyboard(opts = {}, legacyOpts = {}) {
           root: Boolean(m.root),
           fill: Boolean(m.fill),
           below: Boolean(m.below),
+          shade: m.shade ? String(m.shade) : '',
         });
       }
       refreshMarks();
@@ -574,6 +588,8 @@ export async function renderPianoKeyboard(opts = {}, legacyOpts = {}) {
     // Every layout note (visible or not) with this pitch class, e.g. 0 -> ['C1', … 'C8']
     notesWithPitchClass: (pc) => all.filter((k) => pitchClassOf(k.note_ref) === ((pc % 12) + 12) % 12).map((k) => k.note_ref),
     roleColor,
+    /** Header slot in the top row (left of the mute button); persists across re-renders. */
+    header: () => headerEl,
     /** Colours this keyboard gives a note's key: octave tint, black-key stripe, chord-tone shade. */
     keyColors(note) {
       const oc = octaveColorMap.get(octaveOf(note));
