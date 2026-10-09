@@ -9,7 +9,7 @@ tags: [Warbling Wren]
         <div class="container main">
             <div class="row">
                 <div class="col-md-9 h-100">
-					<div id="piano-chords"></div>
+					<div id="root-chords"></div>
 				</div>
                 <div class="col-md-3 h-100">
 					<div id="progression-selector"></div>
