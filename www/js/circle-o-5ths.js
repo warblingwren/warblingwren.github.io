@@ -18,7 +18,7 @@
 
 import { midiToNote } from './piano-audio.js';
 import { textOn } from './piano.js';
-import { renderOctaveRows, currentPanels } from './piano-chords.js';
+import { renderMiniKeyboard, renderOctaveRows, currentPanels } from './piano-chords.js';
 
 const LETTERS = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
 const LETTER_PC = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
@@ -205,10 +205,10 @@ const sigText = (s) => (s.count === 0 ? 'none (no sharps or flats)'
  * @param {object} opts
  * @param {object} opts.piano          API returned by renderPianoKeyboard
  * @param {object} opts.audio          API returned by createPianoAudio
- * @param {string} opts.target         root progressions container id (default 'root-circle-progressions')
- * @param {string} opts.relativeTarget relative progressions container id (default 'minor-circle-progressions'; skipped if absent)
- * @param {string} opts.selectorTarget progression dropdown container id (default 'progression-selector';
- *                                     if absent the dropdown falls back into the root panel's controls)
+ * @param {string} opts.target         root progressions container id (required)
+ * @param {string} opts.relativeTarget relative progressions container id (omit = not shown)
+ * @param {string} opts.selectorTarget progression dropdown container id (omit = dropdown sits in the root panel)
+ * No default ids: every element id is named by the caller (dashboard.js), matching index.html.
  * @param {string} opts.dataUrl        circle data file (default 'DATA/circle_of_fifths.json')
  * @param {string} opts.progressionsUrl progressions data file (default 'DATA/progressions.json')
  * @param {number} opts.octave         octave of each progression chord's root (default 4)
@@ -225,9 +225,9 @@ export async function renderCircleProgressions(opts = {}) {
   const {
     piano,
     audio,
-    target = 'root-circle-progressions',
-    relativeTarget = 'minor-circle-progressions',
-    selectorTarget = 'progression-selector',
+    target = null,
+    relativeTarget = null,
+    selectorTarget = null,
     dataUrl = 'DATA/circle_of_fifths.json',
     progressionsUrl = 'DATA/progressions.json',
     octave = 4,
@@ -237,21 +237,24 @@ export async function renderCircleProgressions(opts = {}) {
 
   if (!piano || !audio) throw new TypeError('circle-o-5ths: piano and audio are required');
 
-  // Containers: the requested id, falling back to the standard id; waits if not in the DOM yet.
-  const ROOT_ID = 'root-circle-progressions';
-  const MINOR_ID = 'minor-circle-progressions';
-  const SELECTOR_ID = 'progression-selector';
-  const [host, relHost, selHost] = await Promise.all([
-    waitForHost([...new Set([target, ROOT_ID])]),
-    waitForHost([...new Set([relativeTarget, MINOR_ID])]),
-    waitForHost([...new Set([selectorTarget, SELECTOR_ID])]),
-  ]);
-  if (!host) {
-    console.error(`circle-o-5ths: no element with id "${target}"${target !== ROOT_ID ? ` or "${ROOT_ID}"` : ''} — progressions not shown`);
+  // Containers: exactly the ids the caller names (waits if not in the DOM yet). No fallback ids.
+  if (!target) {
+    console.error('circle-o-5ths: opts.target is required (the id of the root progressions element) — progressions not shown');
     return null;
   }
-  if (!relHost) console.warn(`circle-o-5ths: no element with id "${relativeTarget}" — relative progressions not shown`);
-  if (!selHost) console.warn(`circle-o-5ths: no element with id "${selectorTarget}" — progression dropdown placed in the root progressions panel`);
+  if (!relativeTarget) console.warn('circle-o-5ths: opts.relativeTarget not given — relative progressions not shown');
+  if (!selectorTarget) console.warn('circle-o-5ths: opts.selectorTarget not given — progression dropdown placed in the root progressions panel');
+  const [host, relHost, selHost] = await Promise.all([
+    waitForHost([target]),
+    relativeTarget ? waitForHost([relativeTarget]) : null,
+    selectorTarget ? waitForHost([selectorTarget]) : null,
+  ]);
+  if (!host) {
+    console.error(`circle-o-5ths: no element with id "${target}" (opts.target) — progressions not shown`);
+    return null;
+  }
+  if (relativeTarget && !relHost) console.warn(`circle-o-5ths: no element with id "${relativeTarget}" (opts.relativeTarget) — relative progressions not shown`);
+  if (selectorTarget && !selHost) console.warn(`circle-o-5ths: no element with id "${selectorTarget}" (opts.selectorTarget) — progression dropdown placed in the root progressions panel`);
 
   const load = async (url) => {
     const r = await fetch(url, { credentials: 'same-origin' });
@@ -408,7 +411,9 @@ export async function renderCircleProgressions(opts = {}) {
         emit,
       });
 
-      body.append(rn, badge, row, octaves);
+      // one-octave diagram of the chord, under the tone circles (same component as the chord-data panels)
+      const mini = renderMiniKeyboard({ piano, name: chord.name, tones });
+      body.append(rn, badge, row, mini, octaves);
       card.append(body);
       col.append(card);
       cards.append(col);

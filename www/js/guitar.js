@@ -1,6 +1,6 @@
 // =============================================================================
 // guitar.js — realistic guitar fretboard (pure JS + inline SVG)
-// Renders into <div id="guitar-fretboard">. Data: DATA/guitar_tuning.json
+// Renders into the <div> named by opts.target (set in dashboard.js). Data: DATA/guitar_tuning.json
 //
 // Layout: low E (string 6) on top, string 1 at the bottom. Open-string column at the
 // left (headstock side), bone nut, then frets 1…24 (wide screens) or a 12-fret window
@@ -92,7 +92,7 @@ function validateTunings(json) {
 
 /**
  * @param {object}  opts
- * @param {string|HTMLDivElement} opts.target  container id or element (default 'guitar-fretboard')
+ * @param {string|HTMLDivElement} opts.target  container id or element (required — ids live in index.html / dashboard.js)
  * @param {string}  opts.dataUrl      tuning file (default 'DATA/guitar_tuning.json')
  * @param {object}  opts.data         tuning JSON already loaded (skips the fetch)
  * @param {string}  opts.tuning       initial tuning name (default 'Standard', else the first)
@@ -116,10 +116,14 @@ function validateTunings(json) {
  */
 export async function renderGuitarFretboard(opts = {}, legacyOpts = {}) {
   // Called as renderGuitarFretboard({ target, ... }) like the other render functions.
-  // Older form renderGuitarFretboard('guitar-fretboard', { ... }) still works.
+  // Older form renderGuitarFretboard(target, { ... }) still works. No default id: the caller names it.
   const legacy = typeof opts === 'string' || opts instanceof HTMLElement;
-  const target = legacy ? opts : (opts?.target ?? 'guitar-fretboard');
+  const target = legacy ? opts : opts?.target;
   if (legacy) opts = legacyOpts ?? {};
+  if (!target) {
+    console.error('guitar-fretboard: opts.target is required (the id of the fretboard <div>) — fretboard not shown');
+    return null;
+  }
   const {
     dataUrl = 'DATA/guitar_tuning.json',
     data = null,

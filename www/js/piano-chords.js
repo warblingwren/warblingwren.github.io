@@ -14,7 +14,7 @@
 // Color = chord role: root darkest → 3rd → 5th → 7th lightest (piano.js ROLE_SHADES)
 // =============================================================================
 
-import { midiToNote } from './piano-audio.js';
+import { midiToNote, noteToMidi } from './piano-audio.js';
 import { textOn } from './piano.js';
 
 // semis = semitones above root; letters = letter steps above root letter; label = degree text
@@ -254,14 +254,113 @@ const getHost = (id) => {
   return el instanceof HTMLElement && !(el instanceof HTMLFormElement) ? el : null;
 };
 
+// --- one-octave chord diagram ----------------------------------------------------
+// Same colours as the large keyboard (piano.keyColors / piano.roleColor): octave-tinted white keys,
+// chord keys in the octave's chord shade, note name on each chord key (black keys: in a circle
+// shaded by chord role). Display only.
+// Window: chord inside one octave -> C–B of that octave; chord crossing an octave -> the 7 white
+// keys (with the black keys between them) that best centre the chord, or 8 when 7 cannot hold it.
+const WHITE_PCS = new Set([0, 2, 4, 5, 7, 9, 11]);
+const BLACK_LEFT = { 1: 1, 3: 2, 6: 4, 8: 5, 10: 6 };   // black pc -> white keys to its left within C–B
+
+export function miniWindow(midis) {
+  const lo = Math.min(...midis);
+  const hi = Math.max(...midis);
+  if (Math.floor(lo / 12) === Math.floor(hi / 12)) {
+    const c = Math.floor(lo / 12) * 12;
+    return { start: c, end: c + 11 };
+  }
+  const centre = (lo + hi) / 2;
+  // 7 white keys when the chord fits; otherwise 8 (e.g. Bmaj7 B–D♯–F♯–A♯ -> B4–B5), so the window
+  // always starts and ends on a white key and no black key hangs off the edge
+  for (const count of [7, 8]) {
+    let best = null;
+    for (let start = lo - 12; start <= lo; start++) {
+      if (!WHITE_PCS.has(((start % 12) + 12) % 12)) continue;
+      let end = start;
+      for (let whites = 1; whites < count;) { end += 1; if (WHITE_PCS.has(end % 12)) whites += 1; }
+      if (hi > end) continue;
+      const off = Math.abs((start + end) / 2 - centre);
+      if (!best || off < best.off - 1e-9) best = { start, end, off };
+    }
+    if (best) return { start: best.start, end: best.end };
+  }
+  return { start: lo, end: hi };
+}
+
+/**
+ * @param {object} o
+ * @param {object} o.piano   API returned by renderPianoKeyboard (colours)
+ * @param {string} o.name    chord name, for the accessible label
+ * @param {{note:string, spelled:string, rank:number}[]} o.tones  voiced chord tones, e.g. C4 E4 G4
+ * @returns {HTMLDivElement}
+ */
+export function renderMiniKeyboard(o) {
+  const { piano, name, tones } = o;
+  const wrap = document.createElement('div');
+  wrap.className = 'mk';
+  const toneByMidi = new Map();
+  for (const t of tones) {
+    const m = noteToMidi(t.note);
+    if (m !== null) toneByMidi.set(m, t);
+  }
+  // like the large keyboard: every key of a chord pitch class is shaded, voiced tones are labelled
+  const chordPcs = new Set([...toneByMidi.keys()].map((m) => m % 12));
+  if (!toneByMidi.size) return wrap;
+  const { start, end } = miniWindow([...toneByMidi.keys()]);
+  wrap.setAttribute('role', 'img');
+  wrap.setAttribute('aria-label', `${name} on the keyboard: ${tones.map((t) => t.spelled).join(' ')}`);
+
+  const board = document.createElement('div');
+  board.className = 'mk-board';
+  let whiteIdx = 0;
+  for (let m = start; m <= end; m++) {
+    const pc = m % 12;
+    const white = WHITE_PCS.has(pc);
+    if (white) whiteIdx += 1;
+    const note = midiToNote(m);
+    const key = document.createElement('div');
+    key.className = `mk-key mk-${white ? 'white' : 'black'}`;
+    key.dataset.note = note;                          // data-* only (no id/name: DOM clobbering)
+    if (!white) key.style.setProperty('--mk-pos', String(whiteIdx));   // sits on the line after white key #whiteIdx
+    const kc = piano?.keyColors?.(note);
+    if (kc) {
+      key.style.setProperty('--mk-oct', kc.light);
+      key.style.setProperty('--mk-oct-accent', kc.accent);
+    }
+    if (chordPcs.has(pc)) {
+      key.classList.add('is-chord');
+      if (kc?.chord) {
+        key.style.setProperty('--mk-chord', kc.chord);
+        key.style.setProperty('--mk-chord-fg', kc.chordFg);
+      }
+    }
+    const t = toneByMidi.get(m);
+    if (t) {
+      const role = piano?.roleColor?.(note, t.rank);
+      if (role) key.style.setProperty('--mk-mark-bg', role);
+      // label text: same rule as the large keyboard (chord-key text colour wins on black keys too)
+      const lbl = document.createElement('span');
+      lbl.className = 'mk-label';
+      lbl.textContent = t.spelled;
+      key.append(lbl);
+    }
+    board.append(key);
+  }
+  board.style.setProperty('--mk-white-count', String(whiteIdx));
+  wrap.append(board);
+  return wrap;
+}
+
 /**
  * @param {object} opts
  * @param {object} opts.piano       API returned by renderPianoKeyboard
  * @param {object} opts.audio       API returned by createPianoAudio
  * @param {string} opts.target      id of a <div> to render the buttons INTO. Takes precedence over `after`.
- * @param {string} opts.after       id of the piano container; used only when `target` is not given (default 'piano-keyboard')
- * @param {string} opts.dataTarget  id of the root chord element (default 'root-chord-data'); looked up on every chord click
- * @param {string} opts.relativeTarget id of the relative minor/major element (default 'minor-chord-data')
+ * @param {string} opts.after       id of the piano container; used only when `target` is not given
+ * @param {string} opts.dataTarget  id of the root chord element; looked up on every chord click (omit = not shown)
+ * @param {string} opts.relativeTarget id of the relative minor/major element (omit = not shown)
+ * No default ids: every element id is named by the caller (dashboard.js), matching index.html.
  * @param {number} opts.octave      octave of the played chord root (default 4)
  * @param {number} opts.strumMs     delay between chord tones, 0 = simultaneous (default 0)
  * @param {number} opts.velocity    chord volume 0–1 (default 0.7)
@@ -280,9 +379,9 @@ export function renderChordControls(opts = {}) {
     piano,
     audio,
     target = null,
-    after = 'piano-keyboard',
-    dataTarget = 'root-chord-data',
-    relativeTarget = 'minor-chord-data',
+    after = null,
+    dataTarget = null,
+    relativeTarget = null,
     octave = 4,
     strumMs = 0,
     velocity = 0.7,
@@ -291,8 +390,11 @@ export function renderChordControls(opts = {}) {
   if (!piano || !audio) throw new TypeError('piano-chords: piano and audio are required');
 
   const hostId = target ?? after;
+  if (!hostId) throw new TypeError('piano-chords: opts.target (or opts.after) is required — the id of the chord controls <div>');
   const host = getDiv(hostId);
   if (!host) throw new TypeError(`piano-chords: #${hostId} is not a <div>`);
+  if (!dataTarget) console.warn('piano-chords: opts.dataTarget not given — root chord panel not shown');
+  if (!relativeTarget) console.warn('piano-chords: opts.relativeTarget not given — relative chord panel not shown');
   let warnedNoData = false;
   let warnedNoRel = false;
 
@@ -356,19 +458,20 @@ export function renderChordControls(opts = {}) {
   function renderPanel(chord, tones) {
     publishPanels(chord);
     // Resolve #chord-data on every click so it works even if the element is added after render
-    const dataHost = getHost(dataTarget) ?? getHost('root-chord-data');
+    if (!dataTarget) return;                         // not requested (warned once at start)
+    const dataHost = getHost(dataTarget);
     if (!dataHost) {
-      if (!warnedNoData) console.warn(`piano-chords: #${dataTarget} not found — chord detail panel not shown`);
+      if (!warnedNoData) console.warn(`piano-chords: no element with id "${dataTarget}" (opts.dataTarget) — root chord panel not shown`);
       warnedNoData = true;
       return;
     }
     dataHost.classList.add('cd-host');               // host becomes a column the panel fills
     if (panel.parentElement !== dataHost) dataHost.append(panel);
-    const relHost = getHost(relativeTarget) ?? getHost('minor-chord-data');
+    const relHost = relativeTarget ? getHost(relativeTarget) : null;
     relHost?.classList.add('cd-host');
     if (relHost && relPanel.parentElement !== relHost) relHost.append(relPanel);
-    if (!relHost && !warnedNoRel) {
-      console.warn(`piano-chords: #${relativeTarget} not found — relative chord panel not shown`);
+    if (relativeTarget && !relHost && !warnedNoRel) {
+      console.warn(`piano-chords: no element with id "${relativeTarget}" (opts.relativeTarget) — relative chord panel not shown`);
       warnedNoRel = true;
     }
     panel.replaceChildren();
@@ -441,7 +544,9 @@ export function renderChordControls(opts = {}) {
       item.append(deg, btn);
       row.append(item);
     }
-    return [heading, name, row, renderOctaves(chord, label)];
+    // one-octave diagram of the chord, under the tone circles
+    const mini = renderMiniKeyboard({ piano, name: chord.name, tones });
+    return [heading, name, row, mini, renderOctaves(chord, label)];
   }
 
   const clearPanelActive = () =>

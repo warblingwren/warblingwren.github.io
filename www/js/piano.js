@@ -112,7 +112,7 @@ function sliceRange(all, from, to) {
 /**
  * Render a piano keyboard.
  * @param {object}  opts
- * @param {string|HTMLDivElement} opts.target  container id or element (default 'piano-keyboard')
+ * @param {string|HTMLDivElement} opts.target  container id or element (required — ids live in index.html / dashboard.js)
  * @param {string}  opts.dataUrl        layout JSON url
  * @param {object}  opts.layout         pre-loaded layout JSON (skips fetch)
  * @param {string}  opts.from           desktop lowest note (default 'A0')
@@ -132,9 +132,9 @@ function sliceRange(all, from, to) {
  * @param {object}  opts.palette        palette override (default window.material_colors)
  * @param {boolean} opts.muteButton     show the mute toggle at the upper right (default true)
  * @param {boolean} opts.muted          start muted (default false)
- * @returns {Promise<object>} API: highlight, clear, shiftOctave, isCompact, keys(), octaveColors(),
+ * @returns {Promise<object>} API: element, highlight, clear, shiftOctave, isCompact, keys(), octaveColors(),
  *          showChord(pitchClasses), clearChord(), markNotes(list), clearMarks(),
- *          notesWithPitchClass(pc), roleColor(note, rank), setStatus(text), clearStatus(),
+ *          notesWithPitchClass(pc), roleColor(note, rank), keyColors(note), setStatus(text), clearStatus(),
  *          lastPlayed(), clearPlayed(), setMuted(bool), isMuted(), destroy
  * Emits on container: 'piano:press' / 'piano:release'  detail {note, index, file}
  *                     'piano:rerender'                 detail {from, to, compact}
@@ -142,10 +142,11 @@ function sliceRange(all, from, to) {
  */
 export async function renderPianoKeyboard(opts = {}, legacyOpts = {}) {
   // Called as renderPianoKeyboard({ target, ... }) like the other render functions.
-  // Older form renderPianoKeyboard('piano-keyboard', { ... }) still works.
+  // Older form renderPianoKeyboard(target, { ... }) still works. No default id: the caller names it.
   const legacy = typeof opts === 'string' || opts instanceof HTMLElement;
-  const target = legacy ? opts : (opts?.target ?? 'piano-keyboard');
+  const target = legacy ? opts : opts?.target;
   if (legacy) opts = legacyOpts ?? {};
+  if (!target) throw new TypeError('piano-keyboard: opts.target is required (the id of the keyboard <div>)');
   const {
     dataUrl = 'DATA/piano_tuning.json',
     layout = null,
@@ -524,6 +525,7 @@ export async function renderPianoKeyboard(opts = {}, legacyOpts = {}) {
 
   // --- public API -----------------------------------------------------------
   const api = {
+    element: container,
     keys: () => keyMap,
     isCompact: () => mql.matches,
     octaveColors: () => new Map(octaveColorMap), // octave -> {family, light, accent} (for legends)
@@ -563,6 +565,14 @@ export async function renderPianoKeyboard(opts = {}, legacyOpts = {}) {
     // Every layout note (visible or not) with this pitch class, e.g. 0 -> ['C1', … 'C8']
     notesWithPitchClass: (pc) => all.filter((k) => pitchClassOf(k.note_ref) === ((pc % 12) + 12) % 12).map((k) => k.note_ref),
     roleColor,
+    /** Colours this keyboard gives a note's key: octave tint, black-key stripe, chord-tone shade. */
+    keyColors(note) {
+      const oc = octaveColorMap.get(octaveOf(note));
+      if (!oc) return null;
+      const chord = oc.shade(chordShade);
+      // label colour on a chord key: same rule as .pk-key[data-chord-dark] .pk-mark-label in piano.css
+      return { light: oc.light, accent: oc.accent, chord, chordFg: DARK_SHADES.has(chordShade) ? '#ffffff' : 'rgba(0, 0, 0, 0.75)' };
+    },
     clearMarks() {
       marks.clear();
       refreshMarks();

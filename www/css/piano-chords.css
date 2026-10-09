@@ -309,6 +309,94 @@
 }
 .cd-relative .cd-octaves { border-top-color: var(--cd-relative-border); }
 
+/* --- one-octave chord diagram (.mk) under the tone circles ------------------------
+   Mirrors the large keyboard — SYNC with piano.css: .pk frame, .pk-white / .pk-black, .is-chord,
+   .pk-mark-label. Colours come from piano.js (keyColors / roleColor) as inline custom properties. */
+:root {
+  --mk-frame: #2b2b2e;           /* = --pk-frame */
+  --mk-white-bg: #fbfaf7;        /* = --pk-white-bg (no octave colours) */
+  --mk-white-border: #c9c4b8;    /* = --pk-white-border */
+  --mk-black-bg: #1d1d1f;        /* = --pk-black-bg */
+  --mk-black-ratio: 0.6;         /* = --pk-black-ratio */
+  --mk-black-h: 62%;             /* = --pk-black-h */
+}
+
+.mk {
+  width: 100%;
+  margin-top: 14px;
+  padding: 5px 5px 4px;
+  border-radius: 6px;
+  background: var(--mk-frame);
+  box-sizing: border-box;
+  pointer-events: none;          /* display only */
+}
+
+.mk-board {
+  position: relative;
+  display: flex;
+  width: 100%;
+  aspect-ratio: 7 / 2.6;
+  max-height: 130px;
+}
+
+.mk-key { box-sizing: border-box; display: flex; justify-content: center; }
+
+.mk-white {
+  flex: 1 1 0;
+  height: 100%;
+  background: var(--mk-oct, var(--mk-white-bg));
+  border: 1px solid var(--mk-white-border);
+  border-top: none;
+  border-radius: 0 0 3px 3px;
+  align-items: flex-end;
+}
+
+.mk-black {
+  position: absolute;
+  top: 0;
+  left: calc(var(--mk-pos) * (100% / var(--mk-white-count)));
+  width: calc((100% / var(--mk-white-count)) * var(--mk-black-ratio));
+  height: var(--mk-black-h);
+  transform: translateX(-50%);
+  background: var(--mk-black-bg);
+  border: 1px solid #000;
+  border-top: none;
+  border-radius: 0 0 2px 2px;
+  box-shadow: inset 0 -3px 0 var(--mk-oct-accent, rgba(255, 255, 255, 0.08));   /* octave stripe */
+  z-index: 1;
+  align-items: flex-end;
+}
+
+/* chord tones: the octave's chord shade, like .pk-key.is-chord */
+.mk-key.is-chord { background: var(--mk-chord, #5e35b1); }
+.mk-black.is-chord { box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, 0.55); }
+
+/* note name: plain text on white keys, role-coloured circle on black keys (like .pk-mark-label) */
+.mk-label {
+  padding-bottom: 5px;
+  color: var(--mk-chord-fg, #fff);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+}
+.mk-black .mk-label {
+  box-sizing: border-box;
+  min-width: 18px;
+  height: 18px;
+  margin-bottom: 4px;
+  padding: 0 2px;
+  border-radius: 9px;
+  background: var(--mk-mark-bg, #555);
+  color: var(--mk-chord-fg, #fff);   /* = .pk-key[data-chord-dark] .pk-mark-label (wins on black keys) */
+  font-size: 10px;
+  line-height: 18px;
+  text-align: center;
+  white-space: nowrap;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.6);
+}
+
+.cd--compact .mk { margin-top: 12px; }
+
 /* =============================================================================
    BREAKPOINTS — keep at end of file
    ========================================================================== */
