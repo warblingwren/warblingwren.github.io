@@ -720,6 +720,7 @@ export async function renderGuitarFretboard(opts = {}, legacyOpts = {}) {
   };
 
   refreshProgOptions();
+  focusName = progState ? tonicChordName() : null;   // page load: the root progression's root chord (C), badge lit
   renderBadges();
   render();
   lastWidth = Math.floor(stage.clientWidth);

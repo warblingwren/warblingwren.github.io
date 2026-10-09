@@ -775,7 +775,8 @@ export async function renderCircleProgressions(opts = {}) {
     renderPianoBadges();
   }
 
-  function showChordOnPiano(name) {
+  // silent: page-load default — no sound, and the keyboard's activity line is left as it is
+  function showChordOnPiano(name, { silent = false } = {}) {
     const chord = phChords[phPanel].find((c) => c.name === name);
     const st = phState();
     if (!chord || !st) return;
@@ -789,8 +790,10 @@ export async function renderCircleProgressions(opts = {}) {
       if (!played.has(n)) marks.push({ note: n, badge: 'R', rank: 0, root: true });
     }
     piano.markNotes(marks);
-    audio.playChord(tones.map((t) => t.note), velocity, strumMs);   // plays unless muted
-    piano.setStatus(`${st.title} ${chord.roman}: ${chord.name}`);
+    if (!silent) {
+      audio.playChord(tones.map((t) => t.note), velocity, strumMs);   // plays unless muted
+      piano.setStatus(`${st.title} ${chord.roman}: ${chord.name}`);
+    }
     phActive = name;
     renderPianoBadges();
   }
@@ -845,6 +848,8 @@ export async function renderCircleProgressions(opts = {}) {
   renderSelect();
   if (currentPanels()) applyPanels(currentPanels());   // panels rendered before this module loaded
   else render();
+  // Page load: the keyboard shows the root progression's root chord (C) with its header badge lit
+  showChordOnPiano(tonicChordName(), { silent: true });
 
   return {
     element: root.wrap,

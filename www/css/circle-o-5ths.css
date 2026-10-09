@@ -278,14 +278,15 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;    /* badges always follow the label; the dropdown group pushes right itself */
   gap: 10px;
   text-align: left;
 }
 
 .ph-status {
-  flex: 1 1 0;                    /* shares the row instead of claiming its full text width, so the */
-  min-width: 140px;               /* header stays on one row longer; long names truncate with "…" */
+  flex: 0 1 auto;                 /* its own text width, so the badges follow 10px after it (= .gf-status) */
+  min-width: 0;
+  max-width: 40%;                 /* long progression names truncate with "…" instead of wrapping the row */
   font-size: 14px;
   font-weight: 700;
   color: var(--ph-muted);
