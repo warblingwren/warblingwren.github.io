@@ -1,110 +1,502 @@
 {
-	"instrument": "Guitar",
-	"total_strings": 6,
-	"tunings": [
-		{
-			"name": "Standard",
-			"alias": "EADGBE",
-			"description": "The universal default tuning for modern music across almost all genres.",
-			"open_strings": [
-				{"string": 6, "note_ref": "E2"},
-				{"string": 5, "note_ref": "A2"},
-				{"string": 4, "note_ref": "D3"},
-				{"string": 3, "note_ref": "G3"},
-				{"string": 2, "note_ref": "B3"},
-				{"string": 1, "note_ref": "E4"}
-			]
-		},
-		{
-			"name": "Drop D",
-			"alias": "DADGBE",
-			"description": "Standard tuning with the 6th string dropped down one whole step. Allows heavy, one-finger power chords.",
-			"open_strings": [
-				{"string": 6, "note_ref": "D2"},
-				{"string": 5, "note_ref": "A2"},
-				{"string": 4, "note_ref": "D3"},
-				{"string": 3, "note_ref": "G3"},
-				{"string": 2, "note_ref": "B3"},
-				{"string": 1, "note_ref": "E4"}
-			]
-		},
-		{
-			"name": "D Standard",
-			"alias": "DGCFAD",
-			"description": "Every string tuned down exactly one whole step. Creates a heavier, darker tone while keeping chord shapes identical.",
-			"open_strings": [
-				{"string": 6, "note_ref": "D2"},
-				{"string": 5, "note_ref": "G2"},
-				{"string": 4, "note_ref": "C3"},
-				{"string": 3, "note_ref": "F3"},
-				{"string": 2, "note_ref": "A3"},
-				{"string": 1, "note_ref": "D4"}
-			]
-		},
-		{
-			"name": "Drop C",
-			"alias": "CGCFAD",
-			"description": "D Standard tuning with the 6th string dropped down an additional whole step. Heavily used in modern metalcore.",
-			"open_strings": [
-				{"string": 6, "note_ref": "C2"},
-				{"string": 5, "note_ref": "G2"},
-				{"string": 4, "note_ref": "C3"},
-				{"string": 3, "note_ref": "F3"},
-				{"string": 2, "note_ref": "A3"},
-				{"string": 1, "note_ref": "D4"}
-			]
-		},
-		{
-			"name": "Open D",
-			"alias": "DADF#AD",
-			"description": "Strumming all strings open produces a pure D Major chord. Highly popular for slide guitar and ambient folk.",
-			"open_strings": [
-				{"string": 6, "note_ref": "D2"},
-				{"string": 5, "note_ref": "A2"},
-				{"string": 4, "note_ref": "D3"},
-				{"string": 3, "note_ref": "F#3"},
-				{"string": 2, "note_ref": "A3"},
-				{"string": 1, "note_ref": "D4"}
-			]
-		},
-		{
-			"name": "Open G",
-			"alias": "DGDGBD",
-			"description": "Strumming all strings open produces a pure G Major chord. Classic rock staple famously used by Keith Richards.",
-			"open_strings": [
-				{"string": 6, "note_ref": "D2"},
-				{"string": 5, "note_ref": "G2"},
-				{"string": 4, "note_ref": "D3"},
-				{"string": 3, "note_ref": "G3"},
-				{"string": 2, "note_ref": "B3"},
-				{"string": 1, "note_ref": "D4"}
-			]
-		},
-		{
-			"name": "DADGAD",
-			"alias": "DADGAD",
-			"description": "A modal, suspended tuning. Creates an open Dsus4 chord. Huge in Celtic folk, fingerstyle acoustic, and indie rock.",
-			"open_strings": [
-				{"string": 6, "note_ref": "D2"},
-				{"string": 5, "note_ref": "A2"},
-				{"string": 4, "note_ref": "D3"},
-				{"string": 3, "note_ref": "G3"},
-				{"string": 2, "note_ref": "A3"},
-				{"string": 1, "note_ref": "D4"}
-			]
-		},
-		{
-			"name": "FACGCE",
-			"alias": "FACGCE",
-			"description": "The definitive tuning for Midwest Emo and Math Rock. Forms an F Major 9 chord when strummed open, ideal for complex melodic tapping.",
-			"open_strings": [
-				{"string": 6, "note_ref": "F2"},
-				{"string": 5, "note_ref": "A2"},
-				{"string": 4, "note_ref": "C3"},
-				{"string": 3, "note_ref": "G3"},
-				{"string": 2, "note_ref": "C4"},
-				{"string": 1, "note_ref": "E4"}
-			]
-		}
-	]
+  "instrument": "Guitar",
+  "total_strings": 6,
+  "tunings": [
+    {
+      "name": "Standard",
+      "alias": "EADGBE",
+      "description": "The universal default tuning for modern music across almost all genres.",
+      "open_strings": [
+        {
+          "string": 6,
+          "note_ref": "E2"
+        },
+        {
+          "string": 5,
+          "note_ref": "A2"
+        },
+        {
+          "string": 4,
+          "note_ref": "D3"
+        },
+        {
+          "string": 3,
+          "note_ref": "G3"
+        },
+        {
+          "string": 2,
+          "note_ref": "B3"
+        },
+        {
+          "string": 1,
+          "note_ref": "E4"
+        }
+      ]
+    },
+    {
+      "name": "E♭ Standard",
+      "alias": "E♭A♭D♭G♭B♭E♭",
+      "description": "Every string tuned down one half step. Slightly warmer and looser than Standard with identical chord shapes; a staple of classic rock, blues and grunge.",
+      "open_strings": [
+        {
+          "string": 6,
+          "note_ref": "D#2"
+        },
+        {
+          "string": 5,
+          "note_ref": "G#2"
+        },
+        {
+          "string": 4,
+          "note_ref": "C#3"
+        },
+        {
+          "string": 3,
+          "note_ref": "F#3"
+        },
+        {
+          "string": 2,
+          "note_ref": "A#3"
+        },
+        {
+          "string": 1,
+          "note_ref": "D#4"
+        }
+      ]
+    },
+    {
+      "name": "Drop D",
+      "alias": "DADGBE",
+      "description": "Standard tuning with the 6th string dropped down one whole step. Allows heavy, one-finger power chords.",
+      "open_strings": [
+        {
+          "string": 6,
+          "note_ref": "D2"
+        },
+        {
+          "string": 5,
+          "note_ref": "A2"
+        },
+        {
+          "string": 4,
+          "note_ref": "D3"
+        },
+        {
+          "string": 3,
+          "note_ref": "G3"
+        },
+        {
+          "string": 2,
+          "note_ref": "B3"
+        },
+        {
+          "string": 1,
+          "note_ref": "E4"
+        }
+      ]
+    },
+    {
+      "name": "Double Drop D",
+      "alias": "DADGBD",
+      "description": "Drop D with the 1st string also lowered to D. Both outer strings ring as D drones, rich for folk and fingerstyle in D.",
+      "open_strings": [
+        {
+          "string": 6,
+          "note_ref": "D2"
+        },
+        {
+          "string": 5,
+          "note_ref": "A2"
+        },
+        {
+          "string": 4,
+          "note_ref": "D3"
+        },
+        {
+          "string": 3,
+          "note_ref": "G3"
+        },
+        {
+          "string": 2,
+          "note_ref": "B3"
+        },
+        {
+          "string": 1,
+          "note_ref": "D4"
+        }
+      ]
+    },
+    {
+      "name": "D Standard",
+      "alias": "DGCFAD",
+      "description": "Every string tuned down exactly one whole step. Creates a heavier, darker tone while keeping chord shapes identical.",
+      "open_strings": [
+        {
+          "string": 6,
+          "note_ref": "D2"
+        },
+        {
+          "string": 5,
+          "note_ref": "G2"
+        },
+        {
+          "string": 4,
+          "note_ref": "C3"
+        },
+        {
+          "string": 3,
+          "note_ref": "F3"
+        },
+        {
+          "string": 2,
+          "note_ref": "A3"
+        },
+        {
+          "string": 1,
+          "note_ref": "D4"
+        }
+      ]
+    },
+    {
+      "name": "C Standard",
+      "alias": "CFB♭E♭GC",
+      "description": "Every string tuned down two whole steps. Deep and heavy while keeping Standard chord shapes; common in doom, stoner rock and metal.",
+      "open_strings": [
+        {
+          "string": 6,
+          "note_ref": "C2"
+        },
+        {
+          "string": 5,
+          "note_ref": "F2"
+        },
+        {
+          "string": 4,
+          "note_ref": "A#2"
+        },
+        {
+          "string": 3,
+          "note_ref": "D#3"
+        },
+        {
+          "string": 2,
+          "note_ref": "G3"
+        },
+        {
+          "string": 1,
+          "note_ref": "C4"
+        }
+      ]
+    },
+    {
+      "name": "Drop C",
+      "alias": "CGCFAD",
+      "description": "D Standard tuning with the 6th string dropped down an additional whole step. Heavily used in modern metalcore.",
+      "open_strings": [
+        {
+          "string": 6,
+          "note_ref": "C2"
+        },
+        {
+          "string": 5,
+          "note_ref": "G2"
+        },
+        {
+          "string": 4,
+          "note_ref": "C3"
+        },
+        {
+          "string": 3,
+          "note_ref": "F3"
+        },
+        {
+          "string": 2,
+          "note_ref": "A3"
+        },
+        {
+          "string": 1,
+          "note_ref": "D4"
+        }
+      ]
+    },
+    {
+      "name": "Open C",
+      "alias": "CGCGCE",
+      "description": "Strumming all strings open produces a big, resonant C Major chord. Loved by acoustic and slide players for its wide, piano-like spread.",
+      "open_strings": [
+        {
+          "string": 6,
+          "note_ref": "C2"
+        },
+        {
+          "string": 5,
+          "note_ref": "G2"
+        },
+        {
+          "string": 4,
+          "note_ref": "C3"
+        },
+        {
+          "string": 3,
+          "note_ref": "G3"
+        },
+        {
+          "string": 2,
+          "note_ref": "C4"
+        },
+        {
+          "string": 1,
+          "note_ref": "E4"
+        }
+      ]
+    },
+    {
+      "name": "Open D",
+      "alias": "DADF#AD",
+      "description": "Strumming all strings open produces a pure D Major chord. Highly popular for slide guitar and ambient folk.",
+      "open_strings": [
+        {
+          "string": 6,
+          "note_ref": "D2"
+        },
+        {
+          "string": 5,
+          "note_ref": "A2"
+        },
+        {
+          "string": 4,
+          "note_ref": "D3"
+        },
+        {
+          "string": 3,
+          "note_ref": "F#3"
+        },
+        {
+          "string": 2,
+          "note_ref": "A3"
+        },
+        {
+          "string": 1,
+          "note_ref": "D4"
+        }
+      ]
+    },
+    {
+      "name": "Open E",
+      "alias": "EBEG#BE",
+      "description": "Strumming all strings open produces an E Major chord. The Open D shape one whole step higher, brighter and tighter; a slide guitar classic.",
+      "open_strings": [
+        {
+          "string": 6,
+          "note_ref": "E2"
+        },
+        {
+          "string": 5,
+          "note_ref": "B2"
+        },
+        {
+          "string": 4,
+          "note_ref": "E3"
+        },
+        {
+          "string": 3,
+          "note_ref": "G#3"
+        },
+        {
+          "string": 2,
+          "note_ref": "B3"
+        },
+        {
+          "string": 1,
+          "note_ref": "E4"
+        }
+      ]
+    },
+    {
+      "name": "Open F",
+      "alias": "CFCFAC",
+      "description": "Strumming all strings open produces a soft, mellow F Major chord. A gentle, singer-songwriter alternative to Open C and Open E.",
+      "open_strings": [
+        {
+          "string": 6,
+          "note_ref": "C2"
+        },
+        {
+          "string": 5,
+          "note_ref": "F2"
+        },
+        {
+          "string": 4,
+          "note_ref": "C3"
+        },
+        {
+          "string": 3,
+          "note_ref": "F3"
+        },
+        {
+          "string": 2,
+          "note_ref": "A3"
+        },
+        {
+          "string": 1,
+          "note_ref": "C4"
+        }
+      ]
+    },
+    {
+      "name": "Open G",
+      "alias": "DGDGBD",
+      "description": "Strumming all strings open produces a pure G Major chord. Classic rock staple famously used by Keith Richards.",
+      "open_strings": [
+        {
+          "string": 6,
+          "note_ref": "D2"
+        },
+        {
+          "string": 5,
+          "note_ref": "G2"
+        },
+        {
+          "string": 4,
+          "note_ref": "D3"
+        },
+        {
+          "string": 3,
+          "note_ref": "G3"
+        },
+        {
+          "string": 2,
+          "note_ref": "B3"
+        },
+        {
+          "string": 1,
+          "note_ref": "D4"
+        }
+      ]
+    },
+    {
+      "name": "Open A",
+      "alias": "EAEAC#E",
+      "description": "Strumming all strings open produces an A Major chord. The Open G shape one whole step higher; bright and punchy for slide and blues.",
+      "open_strings": [
+        {
+          "string": 6,
+          "note_ref": "E2"
+        },
+        {
+          "string": 5,
+          "note_ref": "A2"
+        },
+        {
+          "string": 4,
+          "note_ref": "E3"
+        },
+        {
+          "string": 3,
+          "note_ref": "A3"
+        },
+        {
+          "string": 2,
+          "note_ref": "C#4"
+        },
+        {
+          "string": 1,
+          "note_ref": "E4"
+        }
+      ]
+    },
+    {
+      "name": "DADGAD",
+      "alias": "DADGAD",
+      "description": "A modal, suspended tuning. Creates an open Dsus4 chord. Huge in Celtic folk, fingerstyle acoustic, and indie rock.",
+      "open_strings": [
+        {
+          "string": 6,
+          "note_ref": "D2"
+        },
+        {
+          "string": 5,
+          "note_ref": "A2"
+        },
+        {
+          "string": 4,
+          "note_ref": "D3"
+        },
+        {
+          "string": 3,
+          "note_ref": "G3"
+        },
+        {
+          "string": 2,
+          "note_ref": "A3"
+        },
+        {
+          "string": 1,
+          "note_ref": "D4"
+        }
+      ]
+    },
+    {
+      "name": "FACGCE",
+      "alias": "FACGCE",
+      "description": "The definitive tuning for Midwest Emo and Math Rock. Forms an F Major 9 chord when strummed open, ideal for complex melodic tapping.",
+      "open_strings": [
+        {
+          "string": 6,
+          "note_ref": "F2"
+        },
+        {
+          "string": 5,
+          "note_ref": "A2"
+        },
+        {
+          "string": 4,
+          "note_ref": "C3"
+        },
+        {
+          "string": 3,
+          "note_ref": "G3"
+        },
+        {
+          "string": 2,
+          "note_ref": "C4"
+        },
+        {
+          "string": 1,
+          "note_ref": "E4"
+        }
+      ]
+    },
+    {
+      "name": "New Standard",
+      "alias": "CGDAEG",
+      "description": "Strings tuned mostly in fifths, like a cello extended upward, with a minor third on top. Wide range and open voicings with a devoted following.",
+      "open_strings": [
+        {
+          "string": 6,
+          "note_ref": "C2"
+        },
+        {
+          "string": 5,
+          "note_ref": "G2"
+        },
+        {
+          "string": 4,
+          "note_ref": "D3"
+        },
+        {
+          "string": 3,
+          "note_ref": "A3"
+        },
+        {
+          "string": 2,
+          "note_ref": "E4"
+        },
+        {
+          "string": 1,
+          "note_ref": "G4"
+        }
+      ]
+    }
+  ]
 }
