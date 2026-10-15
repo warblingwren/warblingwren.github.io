@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Piano Keyboard
+title: Warbling Wren - The Musician's Companion - Learn Piano & Guitar Interactively
 tags: [Warbling Wren]
 ---
 

@@ -8,7 +8,7 @@ defaults:
     values:
       entity: Warbling Wren
       site_author: Warbling Wren
-      site_description: Warbling Wren
+      site_description: "Free musician's companion: see every chord on a color-coded piano keyboard and guitar fretboard, explore rock, blues and jazz progressions, and hear them played."
       title: Warbling Wren
       subtitle: The Musician's Companion
       quip: Your songs are bird seed for your flock
@@ -16,4 +16,6 @@ defaults:
       style_css: /www/css/www.css
       site_js: /www/js/dashboard.js
       branding_ico: /www/img/branding/brand.ico
-      g_analytics_id: G-0011223344
+      og_image: /www/img/branding/og-image.png
+      g_analytics_id: G-SWHXT0HQYV
+      custom_domain: warblingwren.com

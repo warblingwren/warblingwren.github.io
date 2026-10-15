@@ -3,6 +3,38 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta name="description" content="{{ page.site_description }}">
     <meta name="author" content="{{ page.site_author }}">
+
+    <!-- Link previews (Facebook, iMessage, Slack, Discord, LinkedIn) -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="{{ page.entity }}">
+    <meta property="og:title" content="{{ page.title }}">
+    <meta property="og:description" content="{{ page.site_description }}">
+    <meta property="og:url" content="https://{{ page.custom_domain }}/">
+    <meta property="og:image" content="https://{{ page.custom_domain }}{{ page.og_image }}">
+    <meta property="og:image:alt" content="{{ page.site_description }}">
+
+    <!-- X / Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{{ page.title }}">
+    <meta name="twitter:description" content="{{ page.site_description }}">
+    <meta name="twitter:image" content="https://{{ page.custom_domain }}/og-image.png">
+
+    <!-- Structured data for search engines -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "{{ page.entity }}",
+        "url": "https://{{ page.custom_domain }}/",
+        "description": "{{ page.site_description }}",
+        "applicationCategory": "EducationalApplication",
+        "operatingSystem": "Any (web browser)",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+    }
+    </script>
+
+    <link rel="canonical" href="https://{{ page.custom_domain }}/">
+
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id={{ page.g_analytics_id }}"></script>
     <script>
@@ -27,4 +59,5 @@
     <link rel="stylesheet" href="www/css/guitar-chords.css">
 
     <title>{{ page.title }}</title>
+
 </head>
