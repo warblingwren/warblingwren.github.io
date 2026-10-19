@@ -321,6 +321,13 @@ ul.checklist li {
 .footer .bottom-right {}
 
 /* BREAKPOINTS */
+/* Mobile: the header keeps only its 1st column (logo / title); the 2nd and 3rd columns are hidden.
+   SYNC POINT: 768px = the app's mobile breakpoint (mobileQuery in dashboard.js / guitar.css / piano.css) */
+@media (max-width: 768px) {
+    .header .top-center,
+    .header .top-right { display: none; }
+}
+
 @media (max-width: 430px) {
     .brand { font-size: 2rem; }
     .accent { font-size: 1.25rem; }

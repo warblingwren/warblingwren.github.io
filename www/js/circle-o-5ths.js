@@ -18,12 +18,12 @@
 
 import { midiToNote } from './piano-audio.js';
 import { textOn } from './piano.js';
-import { renderMiniKeyboard, renderOctaveRows, currentPanels, highlightVoicing } from './piano-chords.js';
+import { renderMiniKeyboard, renderOctaveRows, currentPanels } from './piano-chords.js';
 import * as chordsModule from './piano-chords.js';
 
 // piano-chords.js this file was built with (Random button, mini keyboards). A namespace import is used
 // so an older piano-chords.js is reported in the console instead of breaking the page.
-const EXPECTED_CHORDS_VERSION = 7;
+const EXPECTED_CHORDS_VERSION = 8;
 
 const LETTERS = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
 const LETTER_PC = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
@@ -419,7 +419,7 @@ export async function renderCircleProgressions(opts = {}) {
         clearActive();
         card.classList.add('is-active', 'border-primary');
         node.classList.add('is-active');
-        highlightVoicing(piano, shown);
+        if (typeof chordsModule.highlightVoicing === 'function') chordsModule.highlightVoicing(piano, shown);   // older piano-chords.js: skip
         audio.playChord(shown.map((t) => t.note), velocity, strumMs);
         piano.setStatus(`${label} · ${shown.map((t) => t.note).join(' ')}`);
         emit('progression:chord', { roman: chord.roman, name: chord.name, notes: shown.map((t) => t.note) });
@@ -440,6 +440,7 @@ export async function renderCircleProgressions(opts = {}) {
         tones: chord.tones,
         onSelect: () => { clearActive(); card.classList.add('is-active', 'border-primary'); },
         onVoicing: setMini,
+        current: octave,                                     // collapsed: the voicing the diagram shows
         statusLabel: label,
         emit,
       });

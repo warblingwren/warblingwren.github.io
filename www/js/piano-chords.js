@@ -20,8 +20,8 @@ import { textOn } from './piano.js';
 // Version handshake. Bump both together when the markup/CSS contract changes.
 //   VERSION      — read by circle-o-5ths.js, which warns if this file is older than it expects
 //   --cc-css-version in www/css/piano-chords.css — checked below
-export const VERSION = 7;                  // 7: renderOctaveRows({onVoicing}), highlightVoicing; 6: renderMiniKeyboard({onPlay})
-const CSS_VERSION = 6;
+export const VERSION = 8;                  // 8: collapsible voicing lists (collapsibleVoicings, renderOctaveRows({current})); 7: onVoicing, highlightVoicing
+const CSS_VERSION = 7;
 
 // Small SVG builder (no innerHTML: works under strict Content-Security-Policy / Trusted Types)
 const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -144,12 +144,57 @@ export function highlightVoicing(piano, tones) {
 }
 
 /**
+ * Collapsible voicing list (piano octave rows, guitar octave blocks): only the current voicing shows, with a
+ * small "▸ N more" toggle under it (no width taken from the row); open, every voicing shows exactly as
+ * before and the toggle reads "▾ fewer". Rows are box's other children.
+ * @param {HTMLElement} box   the list container (.cd-octaves)
+ * @param {object} [o]
+ * @param {string} [o.name]   chord name, for the toggle's accessible label
+ * @returns {{setCurrent(row: HTMLElement), isOpen(): boolean, refresh()}}
+ */
+export function collapsibleVoicings(box, { name = 'chord' } = {}) {
+  box.classList.add('vx');
+  const toggle = document.createElement('button');
+  toggle.type = 'button';
+  toggle.className = 'vx-toggle';
+  const tri = document.createElement('span');
+  tri.className = 'vx-tri';
+  tri.setAttribute('aria-hidden', 'true');
+  const text = document.createElement('span');
+  text.className = 'vx-text';
+  toggle.append(tri, text);
+  let open = false;
+  let current = null;
+  const rows = () => [...box.children].filter((c) => c !== toggle);
+  function apply() {
+    const list = rows();
+    const cur = current && list.includes(current) ? current : list[0];
+    for (const r of list) {
+      r.classList.add('vx-row');
+      r.hidden = !open && r !== cur;
+    }
+    toggle.hidden = list.length < 2;
+    toggle.classList.toggle('is-open', open);
+    toggle.setAttribute('aria-expanded', String(open));
+    text.textContent = open ? 'fewer' : `${list.length - 1} more`;
+    toggle.setAttribute('aria-label', open ? `Show only the current ${name} voicing` : `Show every ${name} voicing (${list.length})`);
+    toggle.title = open ? 'Show only the current voicing' : `Show all ${list.length} voicings`;
+  }
+  toggle.addEventListener('click', () => { open = !open; apply(); });
+  box.append(toggle);
+  apply();
+  return { setCurrent(row) { current = row; apply(); }, isOpen: () => open, refresh: apply };
+}
+
+/**
  * o.onVoicing (optional): (voicedTones, octave) => void — called when an octave label is clicked, so the
  * caller can redraw its one-octave diagram with that voicing.
+ * o.current (optional): octave number shown while the list is collapsed (default: the first row); a click on
+ * a row makes it current.
  */
 export function renderOctaveRows(o) {
   const { piano, audio, name, rootName, rootPc, tones, onSelect = () => {}, emit = () => {},
-    onVoicing = null,
+    onVoicing = null, current = null,
     statusLabel = name,
     velocity = 0.7, strumMs = 0 } = o;
 
@@ -160,6 +205,8 @@ export function renderOctaveRows(o) {
   const octaveColors = piano.octaveColors();
 
   const highlight = (list) => highlightVoicing(piano, list);
+  let vx = null;
+  let currentPill = null;
 
   for (let oct = 1; oct <= 7; oct++) {
     const rootMidi = (oct + 1) * 12 + rootPc;
@@ -182,6 +229,7 @@ export function renderOctaveRows(o) {
     label.addEventListener('click', () => {
       onSelect();
       onVoicing?.(voiced.map((t) => ({ ...t })), oct);   // before marking: the caller may redraw its diagram
+      vx?.setCurrent(pill);
       pill.classList.add('is-active');
       highlight(voiced);
       audio.playChord(voiced.map((t) => t.note), velocity, strumMs);
@@ -208,6 +256,7 @@ export function renderOctaveRows(o) {
       btn.append(dot);
       btn.addEventListener('click', () => {
         onSelect();
+        vx?.setCurrent(pill);
         btn.classList.add('is-active');
         highlight([t]);
         audio.play(t.note);
@@ -216,8 +265,11 @@ export function renderOctaveRows(o) {
       });
       pill.append(btn);
     }
+    if (oct === current) currentPill = pill;
     wrapEl.append(pill);
   }
+  vx = collapsibleVoicings(wrapEl, { name });
+  if (currentPill) vx.setCurrent(currentPill);
   return wrapEl;
 }
 
@@ -667,6 +719,7 @@ export function renderChordControls(opts = {}) {
       })),
       onSelect: clearPanelActive,
       onVoicing,
+      current: octave,                                 // collapsed: the voicing the diagram shows
       emit,
       statusLabel: label,
     });

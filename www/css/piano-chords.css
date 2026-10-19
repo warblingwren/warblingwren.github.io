@@ -31,7 +31,7 @@
   --cd-circle: 52px;
 
   /* SYNC: CSS_VERSION in www/js/piano-chords.js — piano-chords.js warns in the console if they differ */
-  --cc-css-version: 6;
+  --cc-css-version: 7;
 }
 
 /* --- chord controls: type dropdown + one row of 12 buttons ------------------ */
@@ -338,6 +338,46 @@
 .cd-octave-dot.is-root { box-shadow: 0 0 0 2px #fff, 0 0 0 3px rgba(0, 0, 0, 0.5); }
 .cd-octave-note:hover .cd-octave-dot { transform: scale(1.08); }
 .cd-octave-note.is-active .cd-octave-dot { transform: scale(1.12); box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--cc-focus); }
+
+/* --- collapsible voicing lists (.vx, piano-chords.js collapsibleVoicings) -------------------------
+   Collapsed: only the current voicing, with a small "▸ N more" toggle under it. Open: every voicing exactly
+   as before; the toggle reads "▾ fewer". Used by the piano octave rows and the guitar octave blocks. */
+.vx > .vx-row[hidden] { display: none; }
+.vx-toggle {
+  appearance: none;
+  -webkit-appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 44px;
+  min-width: 44px;
+  margin-top: -6px;              /* sits snugly under the voicing it belongs to */
+  padding: 0 12px 0 6px;
+  border: none;
+  border-radius: 22px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.vx-toggle[hidden] { display: none; }
+.vx-toggle:hover { background: rgba(0, 0, 0, 0.06); }
+.vx-toggle:focus-visible { outline: 3px solid var(--cc-focus); outline-offset: -3px; }
+.vx-text { opacity: 0.75; }
+/* small triangle ▸ (CSS border triangle: no font glyph needed); rotates to ▾ when open */
+.vx-tri {
+  width: 0;
+  height: 0;
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+  border-left: 8px solid currentColor;
+  opacity: 0.75;
+  transition: transform 140ms ease-out;
+}
+.vx-toggle.is-open .vx-tri { transform: rotate(90deg); }
 
 /* relative minor panel (#minor-chord-data): white with a cyan border */
 .cd.cd-relative {

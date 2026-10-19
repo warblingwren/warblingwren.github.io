@@ -24,9 +24,10 @@
 
 import { midiToNote, noteToMidi } from './piano-audio.js';
 import { textOn } from './piano.js';
-import { currentPanels } from './piano-chords.js';
+import * as pianoChords from './piano-chords.js';   // currentPanels, collapsibleVoicings (v8; optional)
+const { currentPanels } = pianoChords;
 
-export const VERSION = 5;                 // 5: sound (opts.audio); 4: one voicing row + slider per octave; 3: neck order
+export const VERSION = 6;                 // 6: collapsible voicing list; 5: sound (opts.audio); 4: rows + sliders per octave
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
 // --- playability ------------------------------------------------------------------------------
@@ -574,6 +575,8 @@ export async function renderGuitarProgressions(opts = {}) {
       return wrap;
     }
 
+    let vx = null;
+    let startBlock = null;
     // group by the octave of the lowest note (neck order kept inside each octave)
     const groups = new Map();
     for (const sh of list) { if (!groups.has(sh.octave)) groups.set(sh.octave, []); groups.get(sh.octave).push(sh); }
@@ -588,6 +591,7 @@ export async function renderGuitarProgressions(opts = {}) {
       let pill = null;
       const title = () => `${chord.name} · ${chord.rootName}${oct} · voicing ${idx + 1} of ${n} · ${fretText(shapes[idx])}`;
       const toDiagramAndBoard = (trigger, sound = true) => {
+        vx?.setCurrent(block);                       // collapsed list shows this octave's voicing
         setDiagram(shapes[idx], title(), () => pill);
         showShape(shapes[idx], title(), trigger, pill, sound);
       };
@@ -611,7 +615,12 @@ export async function renderGuitarProgressions(opts = {}) {
         }));
       }
       rows.append(block);
-      if (shapes.includes(list[start])) setDiagram(list[start], title(), () => pill);
+      if (shapes.includes(list[start])) { setDiagram(list[start], title(), () => pill); startBlock = block; }
+    }
+    // collapsed: only the current voicing (the octave block the diagram shows) + a ▸ toggle (piano-chords.js)
+    if (typeof pianoChords.collapsibleVoicings === 'function') {
+      vx = pianoChords.collapsibleVoicings(rows, { name: chord.name });
+      if (startBlock) vx.setCurrent(startBlock);
     }
     box.append(slot, rows);
     return box;

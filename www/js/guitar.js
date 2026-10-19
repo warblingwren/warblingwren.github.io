@@ -106,7 +106,8 @@ function validateTunings(json) {
  * @param {object}  opts.progressions API returned by renderCircleProgressions (optional; its 'progression:change'
  *                                    events are also picked up from document)
  * @param {string}  opts.overlay      initial progression overlay: 'root' | 'relative' (default 'root')
- * @param {boolean} opts.sticky       pin the fretboard to the top of the window while scrolling (default true);
+ * @param {boolean} opts.sticky       pin the fretboard to the top of the window while scrolling (default true;
+ *                                    on narrow screens only the board pins — the header scrolls away);
  *                                    with opts.piano it takes over from the pinned keyboard, pushing it up
  * @param {number}  opts.handoffGap   white space kept between the keyboard and the fretboard while the
  *                                    keyboard is pushed off screen, in px (default 24)
@@ -861,7 +862,10 @@ export async function renderGuitarFretboard(opts = {}, legacyOpts = {}) {
     destroy() {
       window.removeEventListener('scroll', onScroll);
       window.removeEventListener('resize', onScroll);
+      container.removeEventListener('guitar:rerender', onScroll);
+      piano?.element?.removeEventListener('piano:rerender', onScroll);
       stickyEl?.classList.remove('gf-sticky');
+      stickyEl?.style.removeProperty('top');
       document.removeEventListener('progression:change', onProgression);
       ro.disconnect();
       cancelAnimationFrame(raf);
@@ -884,13 +888,23 @@ export async function renderGuitarFretboard(opts = {}, legacyOpts = {}) {
   let stickyEl = null;
   let raf2 = 0;
   const pianoSticky = piano?.stickyElement?.() ?? null;
-  const pianoTop = piano?.stickyTop?.() ?? 0;
+  // Narrow screens pin the fretboard only: the sticky element's top goes negative by the height of
+  // everything above the board (header, fret-window arrows), so those scroll away and the board stays on top.
+  function fitSticky() {
+    if (!stickyEl) return;
+    const off = mql.matches ? Math.max(0, Math.round(stage.getBoundingClientRect().top - stickyEl.getBoundingClientRect().top)) : 0;
+    const top = `${-off}px`;
+    if (stickyEl.style.top !== top) stickyEl.style.top = top;
+  }
   function onScroll() {
     cancelAnimationFrame(raf2);
     raf2 = requestAnimationFrame(() => {
-      if (!stickyEl || !pianoSticky) return;
+      if (!stickyEl) return;
+      fitSticky();
+      if (!pianoSticky) return;
       const gTop = stickyEl.getBoundingClientRect().top;
       const h = pianoSticky.offsetHeight;
+      const pianoTop = typeof piano.stickyTop === 'function' ? piano.stickyTop() : 0;   // live: keys-only pin on narrow screens
       // keyboard bottom stays handoffGap above the fretboard: a strip of page shows between them
       piano.setStickyTop(Math.min(pianoTop, gTop - h - Math.max(0, Number(handoffGap) || 0)));
     });
@@ -903,6 +917,8 @@ export async function renderGuitarFretboard(opts = {}, legacyOpts = {}) {
       stickyEl.classList.add('gf-sticky');
       window.addEventListener('scroll', onScroll, { passive: true });
       window.addEventListener('resize', onScroll, { passive: true });
+      container.addEventListener('guitar:rerender', onScroll);          // header height can change
+      piano?.element?.addEventListener('piano:rerender', onScroll);     // the piano reset its own top
       onScroll();
     }
   }

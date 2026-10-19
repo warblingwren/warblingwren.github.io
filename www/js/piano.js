@@ -137,7 +137,8 @@ function sliceRange(all, from, to) {
  * @param {string}  opts.scrollTo       desktop: note to center; responsive: starting octave (default 'C4')
  * @param {number}  opts.mobileOctaves  octaves shown in responsive mode (default 2)
  * @param {string}  opts.mobileQuery    responsive media query (default '(max-width: 768px)')
- * @param {boolean} opts.sticky         keep the keyboard pinned to the top of the window while scrolling (default true)
+ * @param {boolean} opts.sticky         keep the keyboard pinned to the top of the window while scrolling (default true);
+ *                                      on narrow screens (opts.mobileQuery) only the keys pin — the header scrolls away
  * @param {number}  opts.stickyTop      px offset from the top when pinned, e.g. a fixed navbar height (default 0)
  * @param {boolean} opts.octaveColors   tint keys by octave (default true)
  * @param {string[]} opts.octaveFamilies material_colors family per octave 0–8
@@ -234,6 +235,7 @@ export async function renderPianoKeyboard(opts = {}, legacyOpts = {}) {
   const prettyNote = (n) => n.replace('#', '♯');
   let muted = Boolean(startMuted);  // persists across re-renders
   let muteEl = null;
+  let stickyEl = null;              // the pinned element (set up after the first render)
   // Mute icons, built as DOM nodes (no innerHTML: works under strict Content-Security-Policy / Trusted Types)
   const SVG_NS = 'http://www.w3.org/2000/svg';
   const speakerIcon = (extra) => {
@@ -557,8 +559,20 @@ export async function renderPianoKeyboard(opts = {}, legacyOpts = {}) {
       }
     }
 
+    fitSticky();
     emit('piano:rerender', { from: rFrom, to: rTo, compact });
   }
+
+  // Narrow screens pin the keys only: the sticky element's top goes negative by the height of everything
+  // above the keys (header, activity line, octave arrows), so those scroll away and the keys stay at the top.
+  function stickyOffset() {
+    if (!stickyEl || !scroller || !mql.matches) return 0;
+    return Math.max(0, Math.round(scroller.getBoundingClientRect().top - stickyEl.getBoundingClientRect().top));
+  }
+  function effectiveStickyTop() { return (Number(stickyTop) || 0) - stickyOffset(); }
+  function fitSticky() { stickyEl?.style.setProperty('--pk-sticky-top', `${effectiveStickyTop()}px`); }
+  let fitRaf = 0;
+  const onResizeSticky = () => { cancelAnimationFrame(fitRaf); fitRaf = requestAnimationFrame(fitSticky); };
 
   const onMediaChange = () => render();
   mql.addEventListener('change', onMediaChange);
@@ -614,7 +628,8 @@ export async function renderPianoKeyboard(opts = {}, legacyOpts = {}) {
     setStickyTop(px) {
       stickyEl?.style.setProperty('--pk-sticky-top', `${Math.round(Number(px) || 0)}px`);
     },
-    stickyTop: () => Number(stickyTop) || 0,
+    /** Current pinned top in px: opts.stickyTop, minus the header height on narrow screens (keys-only pin). */
+    stickyTop: () => effectiveStickyTop(),
     /** Header slot in the top row (left of the mute button); persists across re-renders. */
     header: () => headerEl,
     /** Move the activity line into `parent` (e.g. the header), before `before` if given. */
@@ -678,6 +693,7 @@ export async function renderPianoKeyboard(opts = {}, legacyOpts = {}) {
 
   const baseDestroy = api.destroy;
   api.destroy = () => {
+    window.removeEventListener('resize', onResizeSticky);
     stickyEl?.classList.remove('pk-sticky');
     stickyEl?.style.removeProperty('--pk-sticky-top');
     baseDestroy();
@@ -689,11 +705,11 @@ export async function renderPianoKeyboard(opts = {}, legacyOpts = {}) {
   // position:sticky only sticks within its parent, so climb out of single-child wrappers and
   // horizontal rows (e.g. .row > .col > #piano-keyboard) to the element whose parent holds
   // the rest of the page content.
-  let stickyEl = null;
   if (sticky) {
     stickyEl = stickyTargetFor(container);
     stickyEl.classList.add('pk-sticky');
-    stickyEl.style.setProperty('--pk-sticky-top', `${Number(stickyTop) || 0}px`);
+    fitSticky();
+    window.addEventListener('resize', onResizeSticky, { passive: true });
     for (let a = stickyEl.parentElement; a && a !== document.body && a !== document.documentElement; a = a.parentElement) {
       const o = getComputedStyle(a);
       if (/(auto|scroll|hidden|clip)/.test(o.overflow + o.overflowX + o.overflowY)) {
