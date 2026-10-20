@@ -592,13 +592,25 @@ export async function renderPianoKeyboard(opts = {}, legacyOpts = {}) {
 
   // Narrow screens pin the keys only: the sticky element's top goes negative by the height of everything
   // above the keys (header, activity line, octave arrows), so those scroll away and the keys stay at the top.
-  function stickyOffset() {
-    if (!stickyEl || !scroller || !mql.matches) return 0;
-    return Math.max(0, Math.round(scroller.getBoundingClientRect().top - stickyEl.getBoundingClientRect().top));
+  // Measured only on render / resize (never while scrolling), and the pinned top is written only when it
+  // changes: restyling a sticky element during a touch scroll makes phone browsers drop it out of place
+  // until the scroll reverses or stops.
+  let stickyOffsetPx = 0;
+  let appliedTop = null;                            // last --pk-sticky-top written (px), null = never
+  function measureStickyOffset() {
+    stickyOffsetPx = (!stickyEl || !scroller || !mql.matches) ? 0
+      : Math.max(0, Math.round(scroller.getBoundingClientRect().top - stickyEl.getBoundingClientRect().top));
   }
-  function effectiveStickyTop() { return (Number(stickyTop) || 0) - stickyOffset(); }
-  function fitSticky() { stickyEl?.style.setProperty('--pk-sticky-top', `${effectiveStickyTop()}px`); }
+  function effectiveStickyTop() { return (Number(stickyTop) || 0) - stickyOffsetPx; }
+  function writeStickyTop(px) {
+    const v = Math.round(Number(px) || 0);
+    if (!stickyEl || v === appliedTop) return;      // unchanged: no style write
+    appliedTop = v;
+    stickyEl.style.setProperty('--pk-sticky-top', `${v}px`);
+  }
+  function fitSticky() { measureStickyOffset(); writeStickyTop(effectiveStickyTop()); }
   let fitRaf = 0;
+  let stickyRo = null;
   const onResizeSticky = () => { cancelAnimationFrame(fitRaf); fitRaf = requestAnimationFrame(fitSticky); };
 
   const onMediaChange = () => render();
@@ -652,9 +664,7 @@ export async function renderPianoKeyboard(opts = {}, legacyOpts = {}) {
     /** The pinned element (null when sticky is off) and its top offset in px — guitar.js lowers it
      *  (negative values) to push the keyboard up as the fretboard arrives. */
     stickyElement: () => stickyEl,
-    setStickyTop(px) {
-      stickyEl?.style.setProperty('--pk-sticky-top', `${Math.round(Number(px) || 0)}px`);
-    },
+    setStickyTop(px) { writeStickyTop(px); },      // no-op when unchanged (no style write while scrolling)
     /** Current pinned top in px: opts.stickyTop, minus the header height on narrow screens (keys-only pin). */
     stickyTop: () => effectiveStickyTop(),
     /** Header slot in the top row (left of the mute button); persists across re-renders. */
@@ -721,8 +731,10 @@ export async function renderPianoKeyboard(opts = {}, legacyOpts = {}) {
   const baseDestroy = api.destroy;
   api.destroy = () => {
     window.removeEventListener('resize', onResizeSticky);
+    stickyRo?.disconnect();
     stickyEl?.classList.remove('pk-sticky');
     stickyEl?.style.removeProperty('--pk-sticky-top');
+    appliedTop = null;
     baseDestroy();
   };
 
@@ -737,6 +749,9 @@ export async function renderPianoKeyboard(opts = {}, legacyOpts = {}) {
     stickyEl.classList.add('pk-sticky');
     fitSticky();
     window.addEventListener('resize', onResizeSticky, { passive: true });
+    // header grows / shrinks (badges, status line): re-measure — size changes only, never on scroll
+    stickyRo = new ResizeObserver(onResizeSticky);
+    stickyRo.observe(container);
     const why = stickyBlocker(stickyEl);
     if (why) console.warn(`piano-keyboard: ${why} — the keyboard cannot stay pinned while scrolling (on phones it scrolls away until the scroll reverses)`, why.el ?? '');
   }

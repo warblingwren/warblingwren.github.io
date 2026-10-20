@@ -862,9 +862,10 @@ export async function renderGuitarFretboard(opts = {}, legacyOpts = {}) {
     isCompact: () => mql.matches,
     destroy() {
       window.removeEventListener('scroll', onScroll);
-      window.removeEventListener('resize', onScroll);
-      container.removeEventListener('guitar:rerender', onScroll);
-      piano?.element?.removeEventListener('piano:rerender', onScroll);
+      window.removeEventListener('resize', onLayout);
+      container.removeEventListener('guitar:rerender', onLayout);
+      piano?.element?.removeEventListener('piano:rerender', onLayout);
+      stickyRo?.disconnect();
       stickyEl?.classList.remove('gf-sticky');
       stickyEl?.style.removeProperty('top');
       document.removeEventListener('progression:change', onProgression);
@@ -891,24 +892,32 @@ export async function renderGuitarFretboard(opts = {}, legacyOpts = {}) {
   const pianoSticky = piano?.stickyElement?.() ?? null;
   // Narrow screens pin the fretboard only: the sticky element's top goes negative by the height of
   // everything above the board (header, fret-window arrows), so those scroll away and the board stays on top.
+  // Layout is measured on render / resize only; while scrolling, nothing is written unless the keyboard
+  // handoff actually moves (restyling sticky elements during a touch scroll makes phone browsers drop them
+  // out of place until the scroll reverses or stops).
+  let pianoHeight = 0;
+  let stickyRo = null;
   function fitSticky() {
     if (!stickyEl) return;
     const off = mql.matches ? Math.max(0, Math.round(stage.getBoundingClientRect().top - stickyEl.getBoundingClientRect().top)) : 0;
     const top = `${-off}px`;
     if (stickyEl.style.top !== top) stickyEl.style.top = top;
+    pianoHeight = pianoSticky ? pianoSticky.offsetHeight : 0;
+  }
+  function handoff() {
+    if (!stickyEl || !pianoSticky) return;
+    const gTop = stickyEl.getBoundingClientRect().top;   // read only
+    const pianoTop = typeof piano.stickyTop === 'function' ? piano.stickyTop() : 0;   // cached in piano.js
+    // keyboard bottom stays handoffGap above the fretboard: a strip of page shows between them
+    piano.setStickyTop(Math.min(pianoTop, gTop - pianoHeight - Math.max(0, Number(handoffGap) || 0)));   // writes only on change
   }
   function onScroll() {
     cancelAnimationFrame(raf2);
-    raf2 = requestAnimationFrame(() => {
-      if (!stickyEl) return;
-      fitSticky();
-      if (!pianoSticky) return;
-      const gTop = stickyEl.getBoundingClientRect().top;
-      const h = pianoSticky.offsetHeight;
-      const pianoTop = typeof piano.stickyTop === 'function' ? piano.stickyTop() : 0;   // live: keys-only pin on narrow screens
-      // keyboard bottom stays handoffGap above the fretboard: a strip of page shows between them
-      piano.setStickyTop(Math.min(pianoTop, gTop - h - Math.max(0, Number(handoffGap) || 0)));
-    });
+    raf2 = requestAnimationFrame(handoff);
+  }
+  function onLayout() {                               // resize / re-render: measure, then place
+    cancelAnimationFrame(raf2);
+    raf2 = requestAnimationFrame(() => { fitSticky(); handoff(); });
   }
   if (sticky) {
     stickyEl = stickyTargetFor(container);
@@ -919,10 +928,14 @@ export async function renderGuitarFretboard(opts = {}, legacyOpts = {}) {
       const why = pianoModule.stickyBlocker?.(stickyEl);   // piano.js v-current; older piano.js: no check
       if (why) console.warn(`guitar-fretboard: ${why} — the fretboard cannot stay pinned while scrolling (on phones it scrolls away until the scroll reverses)`, why.el ?? '');
       window.addEventListener('scroll', onScroll, { passive: true });
-      window.addEventListener('resize', onScroll, { passive: true });
-      container.addEventListener('guitar:rerender', onScroll);          // header height can change
-      piano?.element?.addEventListener('piano:rerender', onScroll);     // the piano reset its own top
-      onScroll();
+      window.addEventListener('resize', onLayout, { passive: true });
+      container.addEventListener('guitar:rerender', onLayout);          // header height can change
+      piano?.element?.addEventListener('piano:rerender', onLayout);     // the piano re-measured its own top
+      // header / keyboard height changes (badges, status, tuning): re-measure — size changes only, never on scroll
+      stickyRo = new ResizeObserver(onLayout);
+      stickyRo.observe(container);
+      if (pianoSticky) stickyRo.observe(pianoSticky);
+      onLayout();
     }
   }
   return api;
