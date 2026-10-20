@@ -44,7 +44,10 @@ body {
 /*    padding:  30px;*/
     padding:  2%;
 
-    filter: drop-shadow(0 0.2rem 0.25rem rgba(0, 0, 0, 0.2));
+    /* box-shadow, not filter: drop-shadow — a filter on an ancestor stops mobile browsers from moving
+       position:sticky elements (the pinned keyboard / fretboard) during a touch scroll; they scroll away and
+       only snap back when the scroll reverses or stops. Same look on this rectangular box. */
+    box-shadow: 0 0.2rem 0.25rem rgba(0, 0, 0, 0.2);
 
     max-width: 90%;
 

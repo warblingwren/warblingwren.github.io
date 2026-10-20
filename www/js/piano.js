@@ -75,6 +75,33 @@ function buildOctaveColors(palette, families, lightShade, accentShade) {
   return map;
 }
 
+/**
+ * Why position:sticky can't work reliably on `el` (or null): an ancestor that is a scroll container
+ * (overflow) — it never pins to the window — or one with filter / backdrop-filter / transform / perspective /
+ * contain / will-change — mobile browsers then can't move the sticky element during a touch scroll, so it
+ * scrolls away and only snaps back when the scroll reverses or stops. Returns a String with .el = the ancestor.
+ */
+export function stickyBlocker(el) {
+  for (let a = el?.parentElement; a && a !== document.documentElement; a = a.parentElement) {
+    const o = getComputedStyle(a);
+    let why = '';
+    if (a !== document.body && /(auto|scroll|hidden|clip)/.test(o.overflow + o.overflowX + o.overflowY)) why = `an ancestor has overflow: ${o.overflow}`;
+    else if (o.filter && o.filter !== 'none') why = `an ancestor has filter: ${o.filter}`;
+    else if (o.backdropFilter && o.backdropFilter !== 'none') why = `an ancestor has backdrop-filter: ${o.backdropFilter}`;
+    else if (o.transform && o.transform !== 'none') why = `an ancestor has transform: ${o.transform}`;
+    else if (o.perspective && o.perspective !== 'none') why = `an ancestor has perspective: ${o.perspective}`;
+    else if (o.contain && o.contain !== 'none') why = `an ancestor has contain: ${o.contain}`;
+    else if (/transform|filter|perspective/.test(o.willChange || '')) why = `an ancestor has will-change: ${o.willChange}`;
+    if (why) {
+      const desc = `${a.tagName.toLowerCase()}${a.id ? `#${a.id}` : ''}${typeof a.className === 'string' && a.className ? `.${a.className.trim().split(/\s+/).join('.')}` : ''}`;
+      const out = new String(`${why} (${desc})`);   // eslint-disable-line no-new-wrappers
+      out.el = a;
+      return out;
+    }
+  }
+  return null;
+}
+
 // Element to pin for a sticky component: position:sticky only sticks within its parent, so climb out
 // of single-child wrappers and horizontal rows (e.g. .row > .col > #target) to the element whose
 // parent holds the rest of the page content. Shared with guitar.js (same rule for both instruments).
@@ -710,13 +737,8 @@ export async function renderPianoKeyboard(opts = {}, legacyOpts = {}) {
     stickyEl.classList.add('pk-sticky');
     fitSticky();
     window.addEventListener('resize', onResizeSticky, { passive: true });
-    for (let a = stickyEl.parentElement; a && a !== document.body && a !== document.documentElement; a = a.parentElement) {
-      const o = getComputedStyle(a);
-      if (/(auto|scroll|hidden|clip)/.test(o.overflow + o.overflowX + o.overflowY)) {
-        console.warn('piano-keyboard: an ancestor has overflow set — sticky keyboard will not pin to the window', a);
-        break;
-      }
-    }
+    const why = stickyBlocker(stickyEl);
+    if (why) console.warn(`piano-keyboard: ${why} — the keyboard cannot stay pinned while scrolling (on phones it scrolls away until the scroll reverses)`, why.el ?? '');
   }
 
   return api;

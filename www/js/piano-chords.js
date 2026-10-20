@@ -162,7 +162,10 @@ export function collapsibleVoicings(box, { name = 'chord' } = {}) {
   tri.setAttribute('aria-hidden', 'true');
   const text = document.createElement('span');
   text.className = 'vx-text';
-  toggle.append(tri, text);
+  const pill = document.createElement('span');       // the visible grey pill; the button is the 44px target
+  pill.className = 'vx-pill';
+  pill.append(tri, text);
+  toggle.append(pill);
   let open = false;
   let current = null;
   const rows = () => [...box.children].filter((c) => c !== toggle);

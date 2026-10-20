@@ -15,6 +15,9 @@
   --cc-select-bg: #2b2b2e;
   --cc-select-fg: #f2f2f2;
   --cc-focus: #3d7be8;
+  --vx-bg: #ECEDF0;              /* "▸ N more" voicing toggle: light grey pill */
+  --vx-bg-hover: #DFE1E6;
+  --vx-fg: #35383D;
 
   /* chord detail panel */
   --cd-bg: #ffffff;
@@ -348,15 +351,13 @@
   -webkit-appearance: none;
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  min-height: 44px;
+  min-height: 44px;              /* touch target; the grey pill inside is the visible part */
   min-width: 44px;
-  margin-top: -6px;              /* sits snugly under the voicing it belongs to */
-  padding: 0 12px 0 6px;
+  margin-top: -4px;              /* sits snugly under the voicing it belongs to */
+  padding: 0;
   border: none;
-  border-radius: 22px;
   background: transparent;
-  color: inherit;
+  color: var(--vx-fg);
   font: inherit;
   font-size: 13px;
   font-weight: 600;
@@ -364,9 +365,20 @@
   -webkit-tap-highlight-color: transparent;
 }
 .vx-toggle[hidden] { display: none; }
-.vx-toggle:hover { background: rgba(0, 0, 0, 0.06); }
-.vx-toggle:focus-visible { outline: 3px solid var(--cc-focus); outline-offset: -3px; }
-.vx-text { opacity: 0.75; }
+.vx-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 30px;
+  padding: 0 13px 0 11px;
+  border-radius: 15px;
+  background: var(--vx-bg);
+  transition: background-color 100ms linear;
+}
+.vx-toggle:hover .vx-pill { background: var(--vx-bg-hover); }
+.vx-toggle:focus-visible { outline: none; }
+.vx-toggle:focus-visible .vx-pill { box-shadow: 0 0 0 3px var(--cc-focus); }
+.vx-text { line-height: 1; }
 /* small triangle ▸ (CSS border triangle: no font glyph needed); rotates to ▾ when open */
 .vx-tri {
   width: 0;
@@ -374,7 +386,6 @@
   border-top: 5px solid transparent;
   border-bottom: 5px solid transparent;
   border-left: 8px solid currentColor;
-  opacity: 0.75;
   transition: transform 140ms ease-out;
 }
 .vx-toggle.is-open .vx-tri { transform: rotate(90deg); }

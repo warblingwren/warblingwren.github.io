@@ -15,7 +15,8 @@
 //   www/css/guitar.css (same breakpoint as piano.js / piano.css)
 // =============================================================================
 
-import { OCTAVE_FAMILIES, textOn, stickyTargetFor } from './piano.js';
+import * as pianoModule from './piano.js';
+const { OCTAVE_FAMILIES, textOn, stickyTargetFor } = pianoModule;
 
 const NOTE_RE = /^([A-G])(#?)([0-8])$/;
 // Progression dots use the piano's colours: hue = octave family of the dot's actual pitch,
@@ -915,6 +916,8 @@ export async function renderGuitarFretboard(opts = {}, legacyOpts = {}) {
       console.warn('guitar-fretboard: the fretboard and the piano share one sticky element — put them in separate rows to hand off');
     } else {
       stickyEl.classList.add('gf-sticky');
+      const why = pianoModule.stickyBlocker?.(stickyEl);   // piano.js v-current; older piano.js: no check
+      if (why) console.warn(`guitar-fretboard: ${why} — the fretboard cannot stay pinned while scrolling (on phones it scrolls away until the scroll reverses)`, why.el ?? '');
       window.addEventListener('scroll', onScroll, { passive: true });
       window.addEventListener('resize', onScroll, { passive: true });
       container.addEventListener('guitar:rerender', onScroll);          // header height can change
