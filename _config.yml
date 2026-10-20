@@ -19,3 +19,4 @@ defaults:
       og_image: /www/img/branding/og-image.png
       g_analytics_id: G-SWHXT0HQYV
       custom_domain: warblingwren.com
+      qr_img: /www/img/branding/qr.png
