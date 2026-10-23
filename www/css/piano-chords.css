@@ -40,6 +40,8 @@
 /* --- chord controls: type dropdown + one row of 12 buttons ------------------ */
 /* fill the parent container whatever its display type (block, flex row, grid) */
 .cc {
+  touch-action: manipulation;   /* no double-tap zoom on fast taps (pinch zoom still works): a zoomed page
+                                  pushes the pinned keyboard / fretboard out of view while scrolling down */
   margin-top: 12px;
   margin-bottom: 15px;
   width: 100%;
@@ -150,6 +152,8 @@
 
 /* --- chord detail panel (#chord-data) ---------------------------------------- */
 .cd {
+  touch-action: manipulation;   /* no double-tap zoom on fast taps (pinch zoom still works): a zoomed page
+                                  pushes the pinned keyboard / fretboard out of view while scrolling down */
   width: 100%;
   min-width: 0;
   flex: 1 1 100%;
@@ -169,6 +173,8 @@
 /* #root-chord-data / #minor-chord-data (class added by piano-chords.js):
    the panel fills the full height of its container, no margin */
 .cd-host {
+  touch-action: manipulation;   /* no double-tap zoom on fast taps (pinch zoom still works): a zoomed page
+                                  pushes the pinned keyboard / fretboard out of view while scrolling down */
   display: flex;
   flex-direction: column;
   min-height: 100%;   /* fills a wrapping column; when the host is the column itself, flex stretch fills it */
@@ -524,4 +530,11 @@
   .cc-random span { display: none; }                /* icon only on phones (44px square) */
   :root { --cd-circle: 48px; }
   .cd-tones { gap: 12px; }
+}
+
+/* Touch screens: dropdown text at least 16px — phones zoom the page in when a smaller dropdown is tapped,
+   and a zoomed page pushes the pinned keyboard / fretboard out of view while scrolling down.
+   Kept last so it wins over the width breakpoints above. */
+@media (hover: none) and (pointer: coarse) {
+  .cc-type { font-size: 16px; }
 }

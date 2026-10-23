@@ -17,6 +17,9 @@
 
 import * as pianoModule from './piano.js';
 const { OCTAVE_FAMILIES, textOn, stickyTargetFor } = pianoModule;
+// piano.js v-current; older piano.js: same calculation inline
+const visualTop = pianoModule.visualViewportTop
+  ?? (() => Math.max(0, Math.round(window.visualViewport?.offsetTop || 0)));
 
 const NOTE_RE = /^([A-G])(#?)([0-8])$/;
 // Progression dots use the piano's colours: hue = octave family of the dot's actual pitch,
@@ -863,6 +866,8 @@ export async function renderGuitarFretboard(opts = {}, legacyOpts = {}) {
     destroy() {
       window.removeEventListener('scroll', onScroll);
       window.removeEventListener('resize', onLayout);
+      window.visualViewport?.removeEventListener('scroll', onZoomMove);
+      window.visualViewport?.removeEventListener('resize', onZoomMove);
       container.removeEventListener('guitar:rerender', onLayout);
       piano?.element?.removeEventListener('piano:rerender', onLayout);
       stickyRo?.disconnect();
@@ -900,7 +905,8 @@ export async function renderGuitarFretboard(opts = {}, legacyOpts = {}) {
   function fitSticky() {
     if (!stickyEl) return;
     const off = mql.matches ? Math.max(0, Math.round(stage.getBoundingClientRect().top - stickyEl.getBoundingClientRect().top)) : 0;
-    const top = `${-off}px`;
+    // + visible-area offset when the page is zoomed in (0 at normal zoom) — same rule as piano.js
+    const top = `${-off + visualTop()}px`;
     if (stickyEl.style.top !== top) stickyEl.style.top = top;
     pianoHeight = pianoSticky ? pianoSticky.offsetHeight : 0;
   }
@@ -914,6 +920,11 @@ export async function renderGuitarFretboard(opts = {}, legacyOpts = {}) {
   function onScroll() {
     cancelAnimationFrame(raf2);
     raf2 = requestAnimationFrame(handoff);
+  }
+  function onZoomMove() {                             // zoomed page: applied in the event (no frame lag)
+    cancelAnimationFrame(raf2);
+    fitSticky();
+    handoff();
   }
   function onLayout() {                               // resize / re-render: measure, then place
     cancelAnimationFrame(raf2);
@@ -929,6 +940,9 @@ export async function renderGuitarFretboard(opts = {}, legacyOpts = {}) {
       if (why) console.warn(`guitar-fretboard: ${why} — the fretboard cannot stay pinned while scrolling (on phones it scrolls away until the scroll reverses)`, why.el ?? '');
       window.addEventListener('scroll', onScroll, { passive: true });
       window.addEventListener('resize', onLayout, { passive: true });
+      // zoomed page: the visible area moved inside the layout area (never fires at normal zoom)
+      window.visualViewport?.addEventListener('scroll', onZoomMove, { passive: true });
+      window.visualViewport?.addEventListener('resize', onZoomMove, { passive: true });
       container.addEventListener('guitar:rerender', onLayout);          // header height can change
       piano?.element?.addEventListener('piano:rerender', onLayout);     // the piano re-measured its own top
       // header / keyboard height changes (badges, status, tuning): re-measure — size changes only, never on scroll

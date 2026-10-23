@@ -69,6 +69,8 @@
 }
 
 .gf {
+  touch-action: manipulation;   /* no double-tap zoom on fast taps (pinch zoom still works): a zoomed page
+                                  pushes the pinned keyboard / fretboard out of view while scrolling down */
   width: 100%;
   max-width: 100%;
   min-width: 0;
@@ -322,4 +324,12 @@
   .gf-selects { flex-direction: column; }            /* stack: both dropdowns full width */
   .gf-select,
   .gf-tuning { width: 100%; font-size: 14px; }
+}
+
+/* Touch screens: dropdown text at least 16px — phones zoom the page in when a smaller dropdown is tapped,
+   and a zoomed page pushes the pinned keyboard / fretboard out of view while scrolling down.
+   Kept last so it wins over the width breakpoints above. */
+@media (hover: none) and (pointer: coarse) {
+  .gf-select,
+  .gf-tuning { font-size: 16px; }
 }

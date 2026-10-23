@@ -28,6 +28,8 @@
 }
 
 .pk {
+  touch-action: manipulation;   /* no double-tap zoom on fast taps (pinch zoom still works): a zoomed page
+                                  pushes the pinned keyboard / fretboard out of view while scrolling down */
   width: 100%;
   max-width: 100%;
   background: var(--pk-frame);

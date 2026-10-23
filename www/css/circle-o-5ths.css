@@ -26,6 +26,8 @@
 }
 
 .cp {
+  touch-action: manipulation;   /* no double-tap zoom on fast taps (pinch zoom still works): a zoomed page
+                                  pushes the pinned keyboard / fretboard out of view while scrolling down */
   width: 100%;
   min-width: 0;
   margin-top: 15px;
@@ -83,6 +85,8 @@
 
 /* --- progression selector (#progression-selector): self-contained block ------- */
 .cp-selector {
+  touch-action: manipulation;   /* no double-tap zoom on fast taps (pinch zoom still works): a zoomed page
+                                  pushes the pinned keyboard / fretboard out of view while scrolling down */
   width: 100%;
   min-width: 0;
   margin-top: 15px;
@@ -169,6 +173,7 @@
   appearance: none;
   -webkit-appearance: none;
   min-height: 44px;
+  min-width: 44px;               /* one-letter chords (C, F) stay a full touch target */
   padding: 0 16px;
   border: 1px solid var(--cc-btn-border, #66666d);
   border-radius: 22px;
@@ -277,6 +282,8 @@
 }
 
 .ph {
+  touch-action: manipulation;   /* no double-tap zoom on fast taps (pinch zoom still works): a zoomed page
+                                  pushes the pinned keyboard / fretboard out of view while scrolling down */
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -408,4 +415,12 @@
   .cp-key-name,
   .cp-key-signature { font-size: 15px; }
   .cp-kv-label { min-width: 92px; }
+}
+
+/* Touch screens: dropdown text at least 16px — phones zoom the page in when a smaller dropdown is tapped,
+   and a zoomed page pushes the pinned keyboard / fretboard out of view while scrolling down.
+   Kept last so it wins over the width breakpoints above. */
+@media (hover: none) and (pointer: coarse) {
+  .cp-select,
+  .ph-select { font-size: 16px; }
 }

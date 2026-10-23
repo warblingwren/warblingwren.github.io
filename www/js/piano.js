@@ -102,6 +102,19 @@ export function stickyBlocker(el) {
   return null;
 }
 
+/**
+ * How far the visible area sits below the top of the page's layout area (px, 0 when not zoomed).
+ * position:sticky pins to the layout area; once a phone page is zoomed in (pinch), scrolling down parks the
+ * visible area at the bottom of the layout area, so an element pinned at top:0 sits above what is visible —
+ * it scrolls out of view on the way down and reappears on the way up. Adding this offset to the pinned top
+ * keeps the element at the top of what is visible. Shared with guitar.js.
+ * Changelog: added in piano.js (sticky zoom fix, 2026-10-21).
+ */
+export function visualViewportTop() {
+  const vv = window.visualViewport;
+  return vv ? Math.max(0, Math.round(vv.offsetTop)) : 0;
+}
+
 // Element to pin for a sticky component: position:sticky only sticks within its parent, so climb out
 // of single-child wrappers and horizontal rows (e.g. .row > .col > #target) to the element whose
 // parent holds the rest of the page content. Shared with guitar.js (same rule for both instruments).
@@ -601,7 +614,8 @@ export async function renderPianoKeyboard(opts = {}, legacyOpts = {}) {
     stickyOffsetPx = (!stickyEl || !scroller || !mql.matches) ? 0
       : Math.max(0, Math.round(scroller.getBoundingClientRect().top - stickyEl.getBoundingClientRect().top));
   }
-  function effectiveStickyTop() { return (Number(stickyTop) || 0) - stickyOffsetPx; }
+  // + visualViewportTop(): when the page is zoomed in, pin to the top of what is visible (0 at normal zoom)
+  function effectiveStickyTop() { return (Number(stickyTop) || 0) - stickyOffsetPx + visualViewportTop(); }
   function writeStickyTop(px) {
     const v = Math.round(Number(px) || 0);
     if (!stickyEl || v === appliedTop) return;      // unchanged: no style write
@@ -612,6 +626,10 @@ export async function renderPianoKeyboard(opts = {}, legacyOpts = {}) {
   let fitRaf = 0;
   let stickyRo = null;
   const onResizeSticky = () => { cancelAnimationFrame(fitRaf); fitRaf = requestAnimationFrame(fitSticky); };
+  // zoomed page: the visible area moved inside the layout area — re-place only (no layout reads);
+  // never fires at normal zoom
+  // applied in the event itself (it fires once per frame, before paint) so the pin never lags a frame
+  const onZoomMove = () => writeStickyTop(effectiveStickyTop());
 
   const onMediaChange = () => render();
   mql.addEventListener('change', onMediaChange);
@@ -731,6 +749,8 @@ export async function renderPianoKeyboard(opts = {}, legacyOpts = {}) {
   const baseDestroy = api.destroy;
   api.destroy = () => {
     window.removeEventListener('resize', onResizeSticky);
+    window.visualViewport?.removeEventListener('scroll', onZoomMove);
+    window.visualViewport?.removeEventListener('resize', onZoomMove);
     stickyRo?.disconnect();
     stickyEl?.classList.remove('pk-sticky');
     stickyEl?.style.removeProperty('--pk-sticky-top');
@@ -749,6 +769,8 @@ export async function renderPianoKeyboard(opts = {}, legacyOpts = {}) {
     stickyEl.classList.add('pk-sticky');
     fitSticky();
     window.addEventListener('resize', onResizeSticky, { passive: true });
+    window.visualViewport?.addEventListener('scroll', onZoomMove, { passive: true });
+    window.visualViewport?.addEventListener('resize', onZoomMove, { passive: true });
     // header grows / shrinks (badges, status line): re-measure — size changes only, never on scroll
     stickyRo = new ResizeObserver(onResizeSticky);
     stickyRo.observe(container);
