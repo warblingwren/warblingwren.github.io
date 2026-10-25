@@ -314,8 +314,11 @@ ul.checklist li {
 .footer img.powered_by {
     display: inline-flex;
     margin-top: 125px;
-    margin-right: 225px;
+    /* was a fixed 225px right margin + 275px width = 500px minimum, wider than its column and than phones:
+       the cause of the page's left/right scroll. Same look where it fits; margin, then width, give way. */
+    margin-right: clamp(0px, calc(100% - 275px), 225px);
     width: 275px;
+    max-width: 100%;
     height: auto;
 }
 
@@ -323,15 +326,53 @@ ul.checklist li {
 .footer .bottom-center {}
 .footer .bottom-right {}
 
+/*
+ * **************************************************************** IMAGES / QR CODE
+*/
+
+/* page images never grow wider than their column (header / footer images keep their own rules above) */
+.wrapper img { max-width: 100%; height: auto; }
+
+/* QR code page: the 400px square PNG at full size where it fits, scaled down (still square) on phones */
+.qr-code {
+    display: block;
+    width: 400px;
+    max-width: 100%;
+    height: auto;
+    aspect-ratio: 1 / 1;
+    margin: 0 auto;
+    image-rendering: pixelated;   /* crisp module edges when the phone scales the PNG; easier to scan */
+}
+
 /* BREAKPOINTS */
 /* Mobile: the header keeps only its 1st column (logo / title); the 2nd and 3rd columns are hidden.
    SYNC POINT: 768px = the app's mobile breakpoint (mobileQuery in dashboard.js / guitar.css / piano.css) */
 @media (max-width: 768px) {
     .header .top-center,
     .header .top-right { display: none; }
+    /* the logo / title column is the only one left: give it the full width instead of a third */
+    .header .top-left { flex: 0 0 100%; max-width: 100%; }
+}
+
+/* Laptop / desktop: header columns sized to their content instead of three equal thirds, so the
+   wordmark and the quip stay on one line. The logo / title column takes what it needs, the quip takes
+   the remaining space (wraps only if there is genuinely no room), the right column fits its content.
+   SYNC POINT: 769px = one above the 768px mobile breakpoint above. */
+@media (min-width: 769px) {
+    .header,
+    .header > .row { flex-wrap: nowrap; }   /* .header is the row, or holds it */
+    .header .top-left   { flex: 0 0 auto; width: auto; max-width: none; }
+    .header .top-center { flex: 1 1 auto; width: auto; max-width: none; min-width: 0; }
+    .header .top-right  { flex: 0 1 auto; width: auto; max-width: none; min-width: 0; display: block; }
+    .header .top-left .brand,
+    .header .top-left .title,
+    .header .top-left .subtitle { white-space: nowrap; }
 }
 
 @media (max-width: 430px) {
     .brand { font-size: 2rem; }
     .accent { font-size: 1.25rem; }
+    /* phones: a smaller logo leaves the wordmark room for one line */
+    .header .feature-img { height: 64px; max-height: 64px; }
+    .header { margin-left: 0; margin-right: 0; }
 }
