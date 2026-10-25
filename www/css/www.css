@@ -331,11 +331,19 @@ ul.checklist li {
  * **************************************************************** IMAGES / QR CODE
 */
 
+/* Page images (the QR code PNG included) never grow wider than their column or the screen, and keep their
+   proportions — no class needed. Header images (the logo) are left to their own fixed-size rules above. */
+img:not(.header img) {
+    max-width: min(100%, calc(100vw - 32px));
+    height: auto !important;   /* !important: also wins over a fixed height in the tag's style attribute,
+                                  which would otherwise stretch the image when its width is capped */
+}
+
 /* QR code page: the 400px square PNG at full size where it fits, scaled down (still square) on phones */
 .qr-code {
     display: block;
     width: 400px;
-    max-width: 100%;
+    max-width: min(100%, calc(100vw - 32px));
     height: auto;
     aspect-ratio: 1 / 1;
     margin: 0 auto;
