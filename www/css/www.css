@@ -82,6 +82,7 @@ body {
 .header .feature-img {
     max-height: 90px;
     height: 90px;
+    flex-shrink: 0;         /* never squeezed narrower than its height by the wordmark beside it */
 }
 
 .header .feature {
@@ -330,9 +331,6 @@ ul.checklist li {
  * **************************************************************** IMAGES / QR CODE
 */
 
-/* page images never grow wider than their column (header / footer images keep their own rules above) */
-.wrapper img { max-width: 100%; height: auto; }
-
 /* QR code page: the 400px square PNG at full size where it fits, scaled down (still square) on phones */
 .qr-code {
     display: block;
@@ -372,7 +370,8 @@ ul.checklist li {
 @media (max-width: 430px) {
     .brand { font-size: 2rem; }
     .accent { font-size: 1.25rem; }
-    /* phones: a smaller logo leaves the wordmark room for one line */
-    .header .feature-img { height: 64px; max-height: 64px; }
+    /* phones: a smaller logo leaves the wordmark room for one line. Width and height change together
+       so the logo stays round (height alone left it 90 x 64, an oval). */
+    .header .feature-img { width: 64px; height: 64px; max-height: 64px; }
     .header { margin-left: 0; margin-right: 0; }
 }
