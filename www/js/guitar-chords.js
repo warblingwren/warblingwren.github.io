@@ -27,11 +27,15 @@ import { textOn } from './piano.js';
 import * as pianoChords from './piano-chords.js';   // currentPanels, collapsibleVoicings (v8; optional)
 const { currentPanels } = pianoChords;
 
-export const VERSION = 6;                 // 6: collapsible voicing list; 5: sound (opts.audio); 4: rows + sliders per octave
+export const VERSION = 7;                 // 7: voicings() / setVoicings() for shared links (fret patterns); 6: collapsible voicing list; 5: sound (opts.audio); 4: rows + sliders per octave
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
 // --- playability ------------------------------------------------------------------------------
 // strings: open-string MIDI numbers, lowest string first. frets: per string, -1 = muted, 0 = open.
+// Fret pattern of a shape, low string first: 'x' = not played, 0–9, then a–o for frets 10–24 ('x32010', '8aa98x')
+// SYNC: share.js validates patterns as /^[x0-9a-o]{1,12}$/
+export const fretPattern = (frets) => frets.map((f) => (f < 0 ? 'x' : f.toString(36))).join('');
+
 export function fingersFor(frets) {
   const fretted = frets.map((f, i) => ({ f, i })).filter((x) => x.f > 0);
   if (!fretted.length) return { fingers: 0, barre: null };
@@ -409,7 +413,10 @@ export async function renderGuitarProgressions(opts = {}) {
   // right under it when that octave has more than one voicing (drag, click the rail, tap 1 / N to step).
   // Voicings in an octave run from the nut up the neck (playableShapes order). A row label or a slider
   // move shows that voicing on the fretboard and in the diagram.
-  function voicings(chord, label, card) {
+  // onReady (optional): (ctrl) => void — ctrl.shape(): fret pattern of the voicing in the diagram ('x32010');
+  // ctrl.defaultShape: the first-position pattern; ctrl.setShape(pattern): show that voicing silently
+  // (diagram + collapsed row; no sound, fretboard untouched) — false if the chord has no such shape
+  function voicings(chord, label, card, onReady = null) {
     const { list, start } = shapesOf(chord);
     const box = el('div', 'gv');
     if (!list.length) {
@@ -571,12 +578,14 @@ export async function renderGuitarProgressions(opts = {}) {
         else return;
         e.preventDefault();
       });
+      rail.addEventListener('gv:sync', snap);         // voicing restored from a shared link: move the thumb
       snap();
       return wrap;
     }
 
     let vx = null;
     let startBlock = null;
+    const byPattern = new Map();                         // fret pattern -> silent chooser for that voicing
     // group by the octave of the lowest note (neck order kept inside each octave)
     const groups = new Map();
     for (const sh of list) { if (!groups.has(sh.octave)) groups.set(sh.octave, []); groups.get(sh.octave).push(sh); }
@@ -606,6 +615,13 @@ export async function renderGuitarProgressions(opts = {}) {
         row.replaceChildren(pill, ghost);
       };
       render();
+      shapes.forEach((sh, i) => byPattern.set(fretPattern(sh.frets), () => {
+        idx = i;
+        render();
+        vx?.setCurrent(block);
+        setDiagram(shapes[idx], title(), () => pill);
+        block.querySelector('.gv-rail')?.dispatchEvent(new CustomEvent('gv:sync'));   // slider thumb to idx
+      }));
       block.append(row);
       if (n > 1) {
         block.append(slider(n, `${chord.rootName}${oct}`, () => idx, (i, live) => {
@@ -623,18 +639,28 @@ export async function renderGuitarProgressions(opts = {}) {
       if (startBlock) vx.setCurrent(startBlock);
     }
     box.append(slot, rows);
+    onReady?.({
+      shape: () => (diagShape ? fretPattern(diagShape.frets) : null),
+      defaultShape: list[start] ? fretPattern(list[start].frets) : null,
+      setShape(pattern) {
+        const choose = byPattern.get(String(pattern));
+        if (!choose) return false;
+        choose();
+        return true;
+      },
+    });
     return box;
   }
 
   // badge + tones + voicing browser (cards and chord panels share it)
-  function chordBody(chord, label, card, prog) {
+  function chordBody(chord, label, card, prog, onReady = null) {
     const { list, start } = shapesOf(chord);
     const showAll = (trigger) => showEverywhere(chord, prog, [trigger, card], card);
     const badge = el('button', 'cd-name', chord.name);
     badge.type = 'button';
     badge.setAttribute('aria-label', `Show every ${chord.name} tone on the fretboard`);
     badge.addEventListener('click', () => showAll(badge));
-    return { badge, showAll, parts: [toneCircles(chord, list[start] ?? null, label, card), voicings(chord, label, card)] };
+    return { badge, showAll, parts: [toneCircles(chord, list[start] ?? null, label, card), voicings(chord, label, card, onReady)] };
   }
 
   // --- progression panels (same markup as circle-o-5ths.js) -----------------------------------------
@@ -695,13 +721,15 @@ export async function renderGuitarProgressions(opts = {}) {
     panel.cards.replaceChildren();
     panel.cards.dataset.tones = String(Math.max(...st.chords.map((c) => c.tones.length)));
     const shows = [];
-    st.chords.forEach((chord) => {
+    const ctls = [];
+    voicingCtl[panel.variant] = ctls;
+    st.chords.forEach((chord, ci) => {
       const col = el('div', 'col-12 mb-3 cp-col');
       const card = el('div', 'card h-100 cp-card');
       const body = el('div', 'card-body cd cd--compact');
       const rn = el('span', 'cp-card-roman', chord.roman);
       const label = `${st.title} ${chord.roman}: ${chord.name}`;
-      const { badge, showAll, parts } = chordBody(chord, label, card, panel.variant);
+      const { badge, showAll, parts } = chordBody(chord, label, card, panel.variant, (c) => { ctls[ci] = c; });
       body.append(rn, badge, ...parts);
       card.append(body);
       col.append(card);
@@ -739,11 +767,17 @@ export async function renderGuitarProgressions(opts = {}) {
     if (!info) return;
     const chord = { name: info.name, rootName: info.rootName, rootPc: info.root,
       tones: info.tones.map((t) => ({ pc: t.pc, spelled: t.spelled, rank: t.rank, interval: t.degree, semitones: t.semitones })) };
-    const { badge, parts } = chordBody(chord, /Chord$/.test(title) ? `${title} ${chord.name}` : `${title} Chord ${chord.name}`, null, prog);
+    const slot = prog === 'relative' ? 'relativeChord' : 'rootChord';
+    voicingCtl[slot] = null;
+    const { badge, parts } = chordBody(chord, /Chord$/.test(title) ? `${title} ${chord.name}` : `${title} Chord ${chord.name}`, null, prog,
+      (c) => { voicingCtl[slot] = c; });
     panel.append(el('div', 'cd-title', title), badge, ...parts);
   }
 
   // --- wiring ----------------------------------------------------------------------------------------
+  // voicing controllers (voicings() onReady), for sharing / restoring: progression cards in card order,
+  // and the two chord panels
+  const voicingCtl = { root: [], relative: [], rootChord: null, relativeChord: null };
   const rootPanel = buildPanel(host, 'root');
   const relPanel = relHost ? buildPanel(relHost, 'relative') : null;
   const dataPanel = chordPanel(dataHost, false);
@@ -769,8 +803,25 @@ export async function renderGuitarProgressions(opts = {}) {
   guitar.element.addEventListener('guitar:tuning', onTuning);
   refresh();
 
+  const changed = (c) => { const p = c?.shape(); return p && p !== c.defaultShape ? p : null; };
   return {
     refresh,
+    /** Voicings that differ from the first-position shape, as fret patterns ('x32010'; frets over 9 as a–o):
+     *  {root: [pattern|null…], relative: […], rootChord: pattern|null, relativeChord: pattern|null}. */
+    voicings: () => ({
+      root: voicingCtl.root.map(changed),
+      relative: voicingCtl.relative.map(changed),
+      rootChord: changed(voicingCtl.rootChord),
+      relativeChord: changed(voicingCtl.relativeChord),
+    }),
+    /** Restore voicings silently (same shape as voicings()); patterns the chord can't play are skipped. */
+    setVoicings: ({ root = [], relative = [], rootChord = null, relativeChord = null } = {}) => {
+      const apply = (list, ctls) => (Array.isArray(list) ? list : []).forEach((p, i) => { if (p) ctls[i]?.setShape(p); });
+      apply(root, voicingCtl.root);
+      apply(relative, voicingCtl.relative);
+      if (rootChord) voicingCtl.rootChord?.setShape(rootChord);
+      if (relativeChord) voicingCtl.relativeChord?.setShape(relativeChord);
+    },
     destroy() {
       document.removeEventListener('progression:change', onProgression);
       document.removeEventListener('chord:panels', onPanels);

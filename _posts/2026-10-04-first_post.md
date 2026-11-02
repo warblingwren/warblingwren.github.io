@@ -57,6 +57,8 @@ tags: [Warbling Wren]
 					<div id="guitar-minor-chord-data"></div>
                 </div>
 			</div>
+			<div id="share-modal" class="row"></div>
+			<!--
 	        <div class="row">
 	            <div class="col-md-12">
 	                <div class="share-qr">
@@ -66,6 +68,7 @@ tags: [Warbling Wren]
 	                </div>
 	            </div>
 	        </div>
+	        -->
 		</div>
 	</div>
 </div>

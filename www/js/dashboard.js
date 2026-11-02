@@ -6,6 +6,7 @@ import { renderChordControls } from './piano-chords.js';
 import { renderCircleProgressions } from './circle-o-5ths.js';
 import { renderGuitarFretboard } from './guitar.js';
 import { renderGuitarProgressions } from './guitar-chords.js';
+import { createShareState, registerAppState, renderShareButton } from './share.js';
 
 // Element ids — the ONLY place the JavaScript names them. SYNC: must match index.html.
 const IDS = {
@@ -21,6 +22,7 @@ const IDS = {
   guitarRootChordData: 'guitar-root-chord-data',
   guitarMinorProgressions: 'guitar-minor-circle-progressions',
   guitarMinorChordData: 'guitar-minor-chord-data',
+  share: 'share-modal',                 // share button + share modal (bottom of the page)
 };
 
 // Octave chords are played and drawn in (C3 = a fuller tone); the keyboard opens on the same octave
@@ -36,3 +38,15 @@ const guitar = await renderGuitarFretboard({ target: IDS.guitar, dataUrl: 'DATA/
 const guitarAudio = createGuitarAudio({ baseUrl: 'DATA/guitar/', ext: 'mp3' });
 guitar.element.addEventListener('guitar:press', (e) => guitarAudio.play(e.detail.note));
 const guitarChords = await renderGuitarProgressions({ guitar, piano, audio: guitarAudio, progressions, target: IDS.guitarRootProgressions, dataTarget: IDS.guitarRootChordData, relativeTarget: IDS.guitarMinorProgressions, relativeDataTarget: IDS.guitarMinorChordData });
+
+// Permalinks: a shared link (?v=1&chord=…&prog=…) restores the chord, progression and voicings; from then on
+// the address bar follows every change, so the URL is always the link to share (www/js/share.js)
+const share = createShareState();
+registerAppState(share, { chords, progressions, guitar, guitarChords });
+share.restore();
+share.start();
+renderShareButton({
+  target: IDS.share,
+  getUrl: share.url,
+  getSummary: () => [chords.active(), progressions?.state()?.root?.progression?.name].filter(Boolean).join(' · '),
+});

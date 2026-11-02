@@ -20,7 +20,7 @@ import { textOn } from './piano.js';
 // Version handshake. Bump both together when the markup/CSS contract changes.
 //   VERSION      — read by circle-o-5ths.js, which warns if this file is older than it expects
 //   --cc-css-version in www/css/piano-chords.css — checked below
-export const VERSION = 8;                  // 8: collapsible voicing lists (collapsibleVoicings, renderOctaveRows({current})); 7: onVoicing, highlightVoicing
+export const VERSION = 9;                  // 9: silent restore for sharing (select(name, {silent}), names(), voicings(), setVoicings(), renderOctaveRows({onReady})); 8: collapsible voicing lists (collapsibleVoicings, renderOctaveRows({current})); 7: onVoicing, highlightVoicing
 const CSS_VERSION = 7;
 
 // Small SVG builder (no innerHTML: works under strict Content-Security-Policy / Trusted Types)
@@ -194,10 +194,16 @@ export function collapsibleVoicings(box, { name = 'chord' } = {}) {
  * caller can redraw its one-octave diagram with that voicing.
  * o.current (optional): octave number shown while the list is collapsed (default: the first row); a click on
  * a row makes it current.
+ * o.onReady (optional): (ctrl) => void — called once with a controller for sharing / restoring the voicing:
+ *   ctrl.octaves()      octave numbers listed, low to high
+ *   ctrl.octave()       octave last chosen with a label click (the one the caller's diagram shows)
+ *   ctrl.setOctave(n)   make octave n the current voicing silently (no sound, keyboard untouched): calls
+ *                       o.onVoicing and shows that row while collapsed; false if n is not listed
+ * Changelog: onReady added in VERSION 9 (2026-10-31).
  */
 export function renderOctaveRows(o) {
   const { piano, audio, name, rootName, rootPc, tones, onSelect = () => {}, emit = () => {},
-    onVoicing = null, current = null,
+    onVoicing = null, current = null, onReady = null,
     statusLabel = name,
     velocity = 0.7, strumMs = 0 } = o;
 
@@ -210,6 +216,8 @@ export function renderOctaveRows(o) {
   const highlight = (list) => highlightVoicing(piano, list);
   let vx = null;
   let currentPill = null;
+  const byOct = new Map();                           // octave -> {pill, voiced}
+  let voicedOct = null;                              // octave last chosen with a label click
 
   for (let oct = 1; oct <= 7; oct++) {
     const rootMidi = (oct + 1) * 12 + rootPc;
@@ -231,6 +239,7 @@ export function renderOctaveRows(o) {
     label.setAttribute('aria-label', `Play ${name} in octave ${oct}: ${voiced.map((t) => t.note).join(', ')}`);
     label.addEventListener('click', () => {
       onSelect();
+      voicedOct = oct;
       onVoicing?.(voiced.map((t) => ({ ...t })), oct);   // before marking: the caller may redraw its diagram
       vx?.setCurrent(pill);
       pill.classList.add('is-active');
@@ -269,10 +278,24 @@ export function renderOctaveRows(o) {
       pill.append(btn);
     }
     if (oct === current) currentPill = pill;
+    byOct.set(oct, { pill, voiced });
     wrapEl.append(pill);
   }
   vx = collapsibleVoicings(wrapEl, { name });
   if (currentPill) vx.setCurrent(currentPill);
+  voicedOct = byOct.has(current) ? current : (byOct.keys().next().value ?? null);
+  onReady?.({
+    octaves: () => [...byOct.keys()],
+    octave: () => voicedOct,
+    setOctave(n) {
+      const row = byOct.get(Number(n));
+      if (!row) return false;
+      voicedOct = Number(n);
+      onVoicing?.(row.voiced.map((t) => ({ ...t })), voicedOct);
+      vx.setCurrent(row.pill);
+      return true;
+    },
+  });
   return wrapEl;
 }
 
@@ -477,8 +500,11 @@ export function renderMiniKeyboard(o) {
  * @param {number} opts.octave      octave of the played chord root (default 3)
  * @param {number} opts.strumMs     delay between chord tones, 0 = simultaneous (default 0)
  * @param {number} opts.velocity    chord volume 0–1 (default 0.7)
- * @returns {{select:Function, random:Function, clear:Function, destroy:Function, element:HTMLDivElement}}
- *          select('C'), select('Cdim7'), select('Bm7♭5') …   random(): the Random button's action
+ * @returns {{select:Function, random:Function, clear:Function, destroy:Function, element:HTMLDivElement,
+ *            names:Function, voicings:Function, setVoicings:Function, active:Function}}
+ *          select('C'), select('Cdim7'), select('Bm7♭5') …  select(name, {silent: true}) = no sound (shared links)
+ *          random(): the Random button's action
+ *          names(): every chord name; voicings() / setVoicings({root, relative}): chord-panel octaves (sharing)
  *          showType('maj7') switches the button row (dropdown values = group ids)
  * Emits on the controls element: 'chord:select' detail {name, quality, group, rootName, root, notes, spelled}
  *                                'chord:type'   detail {type, title}
@@ -600,11 +626,12 @@ export function renderChordControls(opts = {}) {
 
     const { rootChord, minorChord, relTitle } = panelChords(chord);
 
-    panel.append(...chordSection(rootChord, tones, 'Root Chord'));
+    voicingCtl = { root: null, relative: null };
+    panel.append(...chordSection(rootChord, tones, 'Root Chord', 'root'));
 
     relPanel.replaceChildren();
     relPanel.hidden = !minorChord;
-    if (minorChord) relPanel.append(...chordSection(minorChord, voice(minorChord), relTitle));
+    if (minorChord) relPanel.append(...chordSection(minorChord, voice(minorChord), relTitle, 'relative'));
   }
 
   // The two chords shown in #root-chord-data and #minor-chord-data are the single source of truth
@@ -617,7 +644,7 @@ export function renderChordControls(opts = {}) {
   }
 
   // Title + chord badge + tone circles + octave rows (same layout for root and relative chord)
-  function chordSection(chord, tones, title) {
+  function chordSection(chord, tones, title, slot = null) {
     // keyboard indicator text for anything clicked in this section
     // 'Root Chord Fm' / 'Relative Major Chord A♭' (the title 'Root Chord' already ends in 'Chord')
     const label = /Chord$/.test(title) ? `${title} ${chord.name}` : `${title} Chord ${chord.name}`;
@@ -681,7 +708,7 @@ export function renderChordControls(opts = {}) {
       mini.replaceWith(next);
       mini = next;
     };
-    return [heading, name, row, mini, renderOctaves(chord, label, setMini)];
+    return [heading, name, row, mini, renderOctaves(chord, label, setMini, slot ? (ctl) => { voicingCtl[slot] = ctl; } : null)];
   }
 
   const clearPanelActive = () =>
@@ -708,7 +735,7 @@ export function renderChordControls(opts = {}) {
     emit('chord:tone', { chord: chord.name, note: t.note, spelled: t.spelled, degree: t.degree });
   }
 
-  function renderOctaves(chord, label, onVoicing = null) {
+  function renderOctaves(chord, label, onVoicing = null, onReady = null) {
     return renderOctaveRows({
       piano, audio, velocity, strumMs,
       name: chord.name,
@@ -722,11 +749,14 @@ export function renderChordControls(opts = {}) {
       })),
       onSelect: clearPanelActive,
       onVoicing,
+      onReady,
       current: octave,                                 // collapsed: the voicing the diagram shows
       emit,
       statusLabel: label,
     });
   }
+  // voicing controllers of the two chord panels (renderOctaveRows onReady), for sharing / restoring
+  let voicingCtl = { root: null, relative: null };
 
   // --- chord data (all types, built once) -----------------------------------------
   const groups = CHORD_SECTIONS.flatMap((sec) => sec.groups);
@@ -774,7 +804,8 @@ export function renderChordControls(opts = {}) {
   document.addEventListener('piano:press', () => clearPanelActive());
 
   // Clicking the same chord again re-strikes it from the beginning
-  const select = (chord) => {
+  // silent: restoring a shared link — same display, no sound (as on page load)
+  const select = (chord, { silent = false } = {}) => {
     if (chord.group !== typeSelect.value) showType(chord.group);
     activeChord = chord;
     markButtons();
@@ -783,7 +814,7 @@ export function renderChordControls(opts = {}) {
     showChordOnKeys(tones);
     piano.setStatus(`Root Chord ${chord.name}`);
     renderPanel(chord, tones);
-    audio.playChord(tones.map((t) => t.note), velocity, strumMs);
+    if (!silent) audio.playChord(tones.map((t) => t.note), velocity, strumMs);
 
     emit('chord:select', {
       name: chord.name,
@@ -893,10 +924,23 @@ export function renderChordControls(opts = {}) {
 
   return {
     element: wrap,
-    select: (name) => {
+    select: (name, { silent = false } = {}) => {
       const chord = byName.get(name);
-      if (chord) select(chord);
+      if (chord) select(chord, { silent });
+      return Boolean(chord);
     },
+    /** Every chord name the controls offer, e.g. 'C', 'B♭m7♭5' (validation for shared links). */
+    names: () => [...byName.keys()],
+    /** Chord-panel voicings that differ from the default octave: {root: octave|null, relative: octave|null}. */
+    voicings: () => {
+      const v = (c) => { const o = c?.octave(); return o != null && o !== octave ? o : null; };
+      return { root: v(voicingCtl.root), relative: v(voicingCtl.relative) };
+    },
+    /** Restore chord-panel voicings silently; unknown octaves are ignored. Returns what was applied. */
+    setVoicings: ({ root = null, relative = null } = {}) => ({
+      root: root != null && voicingCtl.root ? voicingCtl.root.setOctave(root) : false,
+      relative: relative != null && voicingCtl.relative ? voicingCtl.relative.setOctave(relative) : false,
+    }),
     random,
     showType,
     active: () => activeChord?.name ?? null,

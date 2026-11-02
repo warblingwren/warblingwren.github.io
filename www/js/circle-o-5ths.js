@@ -23,7 +23,7 @@ import * as chordsModule from './piano-chords.js';
 
 // piano-chords.js this file was built with (Random button, mini keyboards). A namespace import is used
 // so an older piano-chords.js is reported in the console instead of breaking the page.
-const EXPECTED_CHORDS_VERSION = 8;
+const EXPECTED_CHORDS_VERSION = 9;   // 9: renderOctaveRows onReady (card voicings for shared links)
 
 const LETTERS = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
 const LETTER_PC = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
@@ -219,7 +219,8 @@ const sigText = (s) => (s.count === 0 ? 'none (no sharps or flats)'
  * @param {number} opts.octave         octave of each progression chord's root (default 3)
  * @param {number} opts.velocity       chord volume 0–1 (default 0.7)
  * @param {number} opts.strumMs        delay between chord tones (default 0)
- * @returns {Promise<{circle, setKey, select, randomProgression, showOnPiano, state, element, relativeElement, selectorElement, destroy}|null>}
+ * @returns {Promise<{circle, setKey, select, randomProgression, showOnPiano, state, element, relativeElement, selectorElement, destroy,
+ *   progressionIds, voicings, setVoicings}|null>}   voicings() / setVoicings(): card octaves for shared links (2026-10-31)
  *   state(): the chords shown in both panels (same object as 'progression:change' detail.root / .relative)  null if the root container is missing
  * Emits (bubbling): 'progression:change' {key, relativeKey, progression, root, relative}
  *                     root / relative = {panel, title, key:{name, mode, tonic, tonicPc}, signature, description, note,
@@ -383,6 +384,7 @@ export async function renderCircleProgressions(opts = {}) {
     const items = [];                                        // one per step: {chord, card, label}
     for (const chord of chords) {
       const tones = voice(chord);
+      let ctl = null;
       const col = el('div', 'col-12 mb-3 cp-col');           // width set by layoutCards()
       const card = el('div', 'card h-100 cp-card');           // Bootstrap card
       const body = el('div', 'card-body cd cd--compact');     // #chord-data layout, compact
@@ -440,6 +442,7 @@ export async function renderCircleProgressions(opts = {}) {
         tones: chord.tones,
         onSelect: () => { clearActive(); card.classList.add('is-active', 'border-primary'); },
         onVoicing: setMini,
+        onReady: (c) => { ctl = c; },                        // card voicing, read / restored for shared links
         current: octave,                                     // collapsed: the voicing the diagram shows
         statusLabel: label,
         emit,
@@ -448,7 +451,7 @@ export async function renderCircleProgressions(opts = {}) {
       card.append(body);
       col.append(card);
       cards.append(col);
-      items.push({ chord, card, label });
+      items.push({ chord, card, label, ctl });
     }
     layoutCards(cards);
     return items;
@@ -494,6 +497,8 @@ export async function renderCircleProgressions(opts = {}) {
 
   // --- root panel: key box | "Relative Minor:" badge ----------------------------
   const root = buildPanel(host, 'root');
+  // card voicing controllers in card order (renderOctaveRows onReady), for sharing / restoring
+  const cardCtl = { root: [], relative: [] };
 
   // --- progression selector: self-contained, rendered into #progression-selector -----
   // One dropdown drives both progression panels.
@@ -592,6 +597,7 @@ export async function renderCircleProgressions(opts = {}) {
     if (rootProgName) rootProgName.textContent = currentProg.name;
     root.desc.textContent = descIn(rootKey);
     const rootItems = renderCards(root, rootKey, rootProg);
+    cardCtl.root = rootItems.map((i) => i.ctl);
     renderSequence(root, rootProg, rootItems);
 
     // "Relative Minor:" / "Relative Major:" = exactly the chord in #minor-chord-data
@@ -613,6 +619,7 @@ export async function renderCircleProgressions(opts = {}) {
       rootBadge.setAttribute('aria-label', `Play the root chord ${rootChordRef.name} and highlight it on the keyboard`);
       rel.desc.textContent = descIn(relKey);
       relItems = renderCards(rel, relKey, minorProg);
+      cardCtl.relative = relItems.map((i) => i.ctl);
       renderSequence(rel, minorProg, relItems);
     }
 
@@ -897,6 +904,20 @@ export async function renderCircleProgressions(opts = {}) {
     select: (id) => {
       const p = circle.progression(id);
       if (p) { currentProg = p; select.value = id; render(); }
+      return Boolean(p);
+    },
+    /** Progression ids in the dropdown (validation for shared links). */
+    progressionIds: () => [...circle.progressions('major'), ...circle.progressions('minor')].map((p) => p.id),
+    /** Card voicings that differ from the default octave, per card in order: {root: [octave|null…], relative: […]}. */
+    voicings: () => {
+      const v = (list) => list.map((c) => { const o = c?.octave(); return o != null && o !== octave ? o : null; });
+      return { root: v(cardCtl.root), relative: v(cardCtl.relative) };
+    },
+    /** Restore card voicings silently (no sound, keyboard untouched); null / unknown octaves are skipped. */
+    setVoicings: ({ root = [], relative = [] } = {}) => {
+      const apply = (list, ctls) => (Array.isArray(list) ? list : []).forEach((o, i) => { if (o != null) ctls[i]?.setOctave(o); });
+      apply(root, cardCtl.root);
+      apply(relative, cardCtl.relative);
     },
     destroy() {
       document.removeEventListener('chord:panels', onPanels);

@@ -2,6 +2,24 @@
 :root { 
     --brand-font: 'Cedarville Cursive', cursive; 
     --accent-font: 'Indie Flower', cursive;
+
+  /* share button + modal (www/js/share.js). SYNC: CSS_VERSION in share.js — bump together */
+  --ws-css-version: 1;
+
+  --ws-ink: #303030;              /* text, primary button, QR default foreground (share.js QR_DEFAULTS) */
+  --ws-ink-soft: #6b6f76;
+  --ws-paper: #ffffff;
+  --ws-line: #e6e9ee;
+  --ws-field: #f5f6f8;
+  --ws-accent: #a8dade;           /* www.css border colour */
+  --ws-ok: #2e7d32;
+  --ws-ok-bg: #e8f5e9;
+  --ws-focus: rgba(48, 48, 48, 0.35);
+  --ws-veil: rgba(24, 26, 30, 0.55);
+  --ws-radius: 18px;
+  --ws-shadow: 0 24px 64px rgba(16, 18, 22, 0.28), 0 2px 8px rgba(16, 18, 22, 0.12);
+  --ws-hit: 44px;                 /* minimum touch target */
+  --ws-qr-max: 260px;
 }
 
 body {
@@ -350,6 +368,187 @@ img:not(.header img) {
     image-rendering: pixelated;   /* crisp module edges when the phone scales the PNG; easier to scan */
 }
 
+/*
+ * **************************************************************** SHARE (button + modal, www/js/share.js)
+ * Builds on Bootstrap 4.6 .modal / .modal-backdrop / .modal-dialog (CSS only; no Bootstrap JS needed).
+*/
+
+/* --- share button (bottom of the page) ------------------------------------------ */
+.ws-bar {
+  display: flex;
+  justify-content: center;
+  padding-top: 24px;
+  padding-bottom: 24px;
+}
+.ws-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: var(--ws-hit);
+  padding: 0 26px;
+  border: 1.5px solid var(--ws-ink);
+  border-radius: 999px;
+  background: var(--ws-paper);
+  color: var(--ws-ink);
+  font: inherit;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color 120ms ease, color 120ms ease, box-shadow 120ms ease;
+}
+.ws-button:hover { background: var(--ws-ink); color: var(--ws-paper); }
+.ws-button:focus-visible { outline: none; box-shadow: 0 0 0 4px var(--ws-focus); }
+
+.ws-icon {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* --- modal ------------------------------------------------------------------------ */
+.ws-backdrop { background: var(--ws-veil); }
+.ws-backdrop.show { opacity: 1; }
+.ws-modal { touch-action: manipulation; }
+.ws-dialog { max-width: 400px; }
+.ws-content {
+  border: 0;
+  border-radius: var(--ws-radius);
+  background: var(--ws-paper);
+  box-shadow: var(--ws-shadow);
+  overflow: hidden;
+  text-align: left;
+}
+.ws-modal.fade .ws-dialog { transform: translateY(16px) scale(0.97); transition: transform 0.2s ease-out; }
+.ws-modal.show .ws-dialog { transform: none; }
+
+.ws-header {
+  align-items: flex-start;
+  padding: 20px 16px 4px 24px;
+  border-bottom: 0;
+}
+.ws-heads { min-width: 0; padding-top: 6px; }
+.ws-title {
+  margin: 0;
+  font-family: var(--brand-font, inherit);   /* www.css wordmark font */
+  font-size: 2rem;
+  font-weight: 400;
+  line-height: 1.1;
+  color: var(--ws-ink);
+}
+.ws-summary {
+  margin: 6px 0 0;
+  font-size: 15px;
+  font-weight: 400;
+  color: var(--ws-ink-soft);
+  overflow-wrap: anywhere;
+}
+.ws-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--ws-hit);
+  height: var(--ws-hit);
+  flex: 0 0 auto;
+  margin-left: auto;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ws-ink-soft);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.ws-close:hover { background: var(--ws-field); color: var(--ws-ink); }
+.ws-close:focus-visible { outline: none; box-shadow: 0 0 0 4px var(--ws-focus); }
+.ws-close .ws-icon { width: 20px; height: 20px; }
+
+.ws-body { padding: 12px 24px 24px; }
+
+.ws-qr {
+  margin: 0 auto 20px;
+  text-align: center;
+}
+.ws-qr .qr-svg {
+  display: block;
+  width: 100%;
+  max-width: var(--ws-qr-max);
+  height: auto;
+  margin: 0 auto;
+  border-radius: 14px;
+  box-shadow: 0 0 0 1px var(--ws-line);
+}
+.ws-qr-caption {
+  margin-top: 10px;
+  font-size: 14px;
+  color: var(--ws-ink-soft);
+}
+
+/* link + copy: one rounded field with the button inside its right end */
+.ws-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px;
+  border: 1px solid var(--ws-line);
+  border-radius: 14px;
+  background: var(--ws-field);
+}
+.ws-input.form-control {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: var(--ws-hit);
+  padding: 0 10px;
+  border: 0;
+  background: transparent;
+  color: var(--ws-ink);
+  font-size: 15px;
+  text-overflow: ellipsis;
+  box-shadow: none;
+}
+.ws-input.form-control:focus { background: transparent; box-shadow: none; }
+.ws-link:focus-within { border-color: var(--ws-ink-soft); }
+.ws-copy {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex: 0 0 auto;
+  min-width: 120px;
+  height: var(--ws-hit);
+  padding: 0 16px;
+  border: 0;
+  border-radius: 11px;
+  background: var(--ws-ink);
+  color: var(--ws-paper);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color 120ms ease, color 120ms ease;
+}
+.ws-copy:hover { background: #000; }
+.ws-copy:focus-visible { outline: none; box-shadow: 0 0 0 4px var(--ws-focus); }
+.ws-copy.is-copied { background: var(--ws-ok-bg); color: var(--ws-ok); }
+
+.ws-status {
+  min-height: 20px;
+  margin-top: 8px;
+  font-size: 13px;
+  color: var(--ws-ink-soft);
+  text-align: center;
+}
+
 /* BREAKPOINTS */
 /* Mobile: the header keeps only its 1st column (logo / title); the 2nd and 3rd columns are hidden.
    SYNC POINT: 768px = the app's mobile breakpoint (mobileQuery in dashboard.js / guitar.css / piano.css) */
@@ -358,6 +557,7 @@ img:not(.header img) {
     .header .top-right { display: none; }
     /* the logo / title column is the only one left: give it the full width instead of a third */
     .header .top-left { flex: 0 0 100%; max-width: 100%; }
+    .ws-dialog { margin-left: auto; margin-right: auto; }
 }
 
 /* Laptop / desktop: header columns sized to their content instead of three equal thirds, so the
@@ -382,4 +582,17 @@ img:not(.header img) {
        so the logo stays round (height alone left it 90 x 64, an oval). */
     .header .feature-img { width: 64px; height: 64px; max-height: 64px; }
     .header { margin-left: 0; margin-right: 0; }
+    :root { --ws-qr-max: 100%; }
+    .ws-dialog { max-width: none; margin: 12px; }
+    .ws-header { padding: 16px 8px 0 20px; }
+    .ws-title { font-size: 1.75rem; }
+    .ws-body { padding: 8px 20px 20px; }
+    .ws-link { flex-wrap: wrap; }
+    .ws-input.form-control { flex: 1 1 100%; }
+    .ws-copy { flex: 1 1 100%; }
+}
+
+/* touch screens: 16px text in the share link field (phones zoom in on smaller text fields) */
+@media (hover: none) and (pointer: coarse) {
+    .ws-input.form-control { font-size: 16px; }
 }
