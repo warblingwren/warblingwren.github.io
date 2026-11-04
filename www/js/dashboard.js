@@ -3,7 +3,7 @@ import { renderPianoKeyboard } from './piano.js';
 import { createPianoAudio } from './piano-audio.js';
 import { createGuitarAudio } from './guitar-audio.js';
 import { renderChordControls } from './piano-chords.js';
-import { renderCircleProgressions } from './circle-o-5ths.js';
+import { renderCircleProgressions, renderCircleOfFifths } from './circle-o-5ths.js';
 import { renderGuitarFretboard } from './guitar.js';
 import { renderGuitarProgressions } from './guitar-chords.js';
 import { createShareState, registerAppState, renderShareButton } from './share.js';
@@ -22,6 +22,10 @@ const IDS = {
   guitarRootChordData: 'guitar-root-chord-data',
   guitarMinorProgressions: 'guitar-minor-circle-progressions',
   guitarMinorChordData: 'guitar-minor-chord-data',
+  pianoRootCircle: 'piano-root-circle',       // circle of fifths above the root / relative chord panels
+  pianoMinorCircle: 'piano-minor-circle',
+  guitarRootCircle: 'guitar-root-circle',
+  guitarMinorCircle: 'guitar-minor-circle',
   share: 'share-modal',                 // share button + share modal (bottom of the page)
 };
 
@@ -38,6 +42,13 @@ const guitar = await renderGuitarFretboard({ target: IDS.guitar, dataUrl: 'DATA/
 const guitarAudio = createGuitarAudio({ baseUrl: 'DATA/guitar/', ext: 'mp3' });
 guitar.element.addEventListener('guitar:press', (e) => guitarAudio.play(e.detail.note));
 const guitarChords = await renderGuitarProgressions({ guitar, piano, audio: guitarAudio, progressions, target: IDS.guitarRootProgressions, dataTarget: IDS.guitarRootChordData, relativeTarget: IDS.guitarMinorProgressions, relativeDataTarget: IDS.guitarMinorChordData });
+
+// Circles of fifths (read-only): root circles draw the root progression larger and outline the relative one;
+// relative circles the reverse. Piano and guitar circles are identical (same progression state).
+const circles = [
+  [IDS.pianoRootCircle, 'root'], [IDS.pianoMinorCircle, 'relative'],
+  [IDS.guitarRootCircle, 'root'], [IDS.guitarMinorCircle, 'relative'],
+].map(([target, panel]) => (progressions ? renderCircleOfFifths({ target, progressions, panel }) : null));
 
 // Permalinks: a shared link (?v=1&chord=…&prog=…) restores the chord, progression and voicings; from then on
 // the address bar follows every change, so the URL is always the link to share (www/js/share.js)

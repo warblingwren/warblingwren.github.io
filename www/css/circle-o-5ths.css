@@ -23,6 +23,18 @@
   /* compact chord-data card */
   --cp-circle: 44px;
   --cp-name-size: 17px;
+
+  /* circle of fifths (renderCircleOfFifths) — Material Blue Grey + Deep Orange: families no other part of
+     the page uses (octave colours, panel greys, cyan relative panel, share modal), used only here */
+  --cf-root: #37474f;            /* Blue Grey 800 — this panel's progression chords (larger, filled) */
+  --cf-root-fg: #ffffff;         /* 10.4:1 on Blue Grey 800 */
+  --cf-relative: #ff5722;        /* Deep Orange 500 — the other panel's chords (highlighted border) */
+  --cf-dot: #eceff1;             /* Blue Grey 50 — every other chord */
+  --cf-dot-fg: #546e7a;          /* Blue Grey 600 — 4.9:1 on Blue Grey 50 */
+  --cf-track: #cfd8dc;           /* Blue Grey 100 — ring tracks */
+  --cf-spoke: #eceff1;
+  --cf-current: #ffab91;         /* Deep Orange 200 — the chord being played (setCurrent) */
+  --cf-max: 300px;               /* the circle never grows wider than this */
 }
 
 .cp {
@@ -387,6 +399,100 @@
 .ph-select:focus-visible { outline: 3px solid var(--ph-active); outline-offset: 2px; }
 .ph-select option { background: var(--ph-control-bg); color: var(--ph-fg); }
 
+/* --- circle of fifths (renderCircleOfFifths: #piano-root-circle, #piano-minor-circle, #guitar-…) --- */
+.cf {
+  margin-top: 15px;
+  margin-bottom: 15px;
+  border: 1px solid var(--cf-track);
+  border-radius: 12px;
+  background: #ffffff;
+  text-align: left;
+}
+.cf-body { padding: 12px 8px 10px; }
+.cf-title, .cf-key { padding: 0 4px; }
+.cf-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--cf-dot-fg);
+}
+.cf-key {
+  margin-top: 2px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--cf-root);
+}
+.cf-svg {
+  display: block;
+  width: 100%;
+  max-width: var(--cf-max);
+  height: auto;
+  margin: 6px auto 4px;
+  overflow: visible;
+}
+.cf-rot { transform-origin: 150px 150px; transition: transform 0.45s ease; }
+.cf-rot.no-anim { transition: none; }
+.cf-face { transform-box: view-box; transition: transform 0.45s ease; }
+.cf-rot.no-anim .cf-face { transition: none; }
+.cf-track { fill: none; stroke: var(--cf-track); stroke-width: 1; }
+.cf-spoke { stroke: var(--cf-spoke); stroke-width: 1; }
+
+.cf-dot { fill: var(--cf-dot); stroke: #ffffff; stroke-width: 1.5; }   /* white edge separates touching neighbours */
+.cf-ring { fill: none; stroke: var(--cf-relative); stroke-width: 3.5; }
+.cf-label {
+  fill: var(--cf-dot-fg);
+  font-weight: 600;
+  text-anchor: middle;
+  dominant-baseline: central;
+  pointer-events: none;
+}
+.cf-node--major .cf-label { font-size: 16px; }
+.cf-node--minor .cf-label { font-size: 13.5px; }
+.cf-node--dim .cf-label { font-size: 11px; }
+
+/* this panel's progression: larger (radius set in JS), filled, roman numeral under the chord */
+.cf-node.is-root .cf-dot,
+.cf-node.is-both .cf-dot { fill: var(--cf-root); }
+.cf-node.is-root .cf-label,
+.cf-node.is-both .cf-label { fill: var(--cf-root-fg); font-weight: 700; }
+.cf-node--major.is-root .cf-label, .cf-node--major.is-both .cf-label { font-size: 16px; }
+.cf-node--minor.is-root .cf-label, .cf-node--minor.is-both .cf-label { font-size: 14px; }
+.cf-node--dim.is-root .cf-label, .cf-node--dim.is-both .cf-label { font-size: 11px; }
+.cf-roman {
+  fill: var(--cf-root-fg);
+  font-size: 10px;
+  font-weight: 600;
+  text-anchor: middle;
+  dominant-baseline: central;
+  opacity: 0.85;
+  pointer-events: none;
+}
+.cf-node--dim .cf-roman { font-size: 8.5px; }
+/* the other panel's chords: normal size, highlighted border, darker label */
+.cf-node.is-relative .cf-label { fill: var(--cf-root); font-weight: 700; }
+
+.cf-center { fill: var(--cf-root); font-size: 19px; font-weight: 700; text-anchor: middle; dominant-baseline: central; transform-box: fill-box; transform-origin: center; }
+.cf-center-mode { fill: var(--cf-dot-fg); font-size: 10px; font-weight: 600; text-anchor: middle; dominant-baseline: central; transform-box: fill-box; transform-origin: center; }
+
+/* future phases (setInteractive / setCurrent) */
+.cf.is-interactive .cf-node { cursor: pointer; }
+.cf.is-interactive .cf-node:hover .cf-dot { filter: brightness(0.94); }
+.cf.is-interactive .cf-node:focus { outline: none; }
+.cf.is-interactive .cf-node:focus-visible .cf-dot { stroke: var(--cp-active); stroke-width: 3; }
+.cf-node.is-current .cf-dot { stroke: var(--cf-current); stroke-width: 4; }
+
+.cf-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  justify-content: center;
+  font-size: 13px;
+  color: var(--cf-dot-fg);
+}
+.cf-legend-item { display: inline-flex; align-items: center; gap: 6px; }
+.cf-swatch { display: inline-block; border-radius: 50%; }
+.cf-legend--root .cf-swatch { width: 14px; height: 14px; background: var(--cf-root); }
+.cf-legend--relative .cf-swatch { width: 12px; height: 12px; background: var(--cf-dot); box-shadow: 0 0 0 2.5px var(--cf-relative); }
+
 /* =============================================================================
    BREAKPOINTS — keep at end of file
    ========================================================================== */
@@ -423,4 +529,9 @@
 @media (hover: none) and (pointer: coarse) {
   .cp-select,
   .ph-select { font-size: 16px; }
+}
+
+/* circle of fifths: phones — the column is full width; the circle stays capped and centred */
+@media (max-width: 768px) {
+  :root { --cf-max: 280px; }
 }

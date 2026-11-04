@@ -930,3 +930,278 @@ export async function renderCircleProgressions(opts = {}) {
     },
   };
 }
+
+// =============================================================================
+// Circle of fifths diagram (read-only today; every interaction hook is built in)
+//
+// renderCircleOfFifths({ target, progressions, panel })
+//   target        id of the container (e.g. 'piano-root-circle'); a Bootstrap card is rendered into it
+//   progressions  the object returned by renderCircleProgressions (state(), circle)
+//   panel         'root' | 'relative' — whose progression is drawn in root position
+//
+// Three rings, 12 positions clockwise from C at the top (perfect fifths), drawn as SVG (viewBox 300 × 300):
+//   outer = major chords · middle = their relative minors · inner = diminished (vii° of the outer major)
+// This panel's progression chords are drawn LARGER (filled) with their roman numeral;
+// the other panel's chords keep the normal size and get a highlighted BORDER. A chord in both: larger + border.
+// Labels are plain triads (Dm7 lights Dm, G7 lights G, Bm7♭5 lights B°), spelled as the panel's key spells them
+// (its diatonic chords and the progression's own chord names; other positions use the key's ♯ / ♭ side).
+//   TEST: confirm with readers that triad labels next to 7th-chord numerals (Dm + ii7) are not confusing.
+//
+// Interaction hooks (all off while opts.interactive is false — read-only, no tab stops):
+//   every chord node is <g class="cf-node" data-chord data-ring data-position data-root-pc data-family data-roman
+//   data-state="root|relative|both|none">.
+//   setInteractive(true): nodes become buttons (focusable; Enter / Space / click) and emit, bubbling from the card:
+//     'circle:chord'   {panel, chord, family, rootPc, ring, position, roman, state}   — click / Enter / Space
+//     'circle:preview' {…same}  on hover / focus;   'circle:preview-end' {panel} on leave / blur
+//   setCurrent(chordName|null): mark the chord being played (.is-current)
+//   setOrientation('c-top' | 'key-top'): rotate so the key's tonic is at the top (labels stay upright)
+//   redraw(state?): redraw from a progression state (default: progressions.state())
+// Changelog: added 2026-11-02 (circle-o-5ths.js; styles .cf-* in circle-o-5ths.css).
+// =============================================================================
+
+const CF_SHARP = ['C', 'C♯', 'D', 'D♯', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B'];
+const CF_FLAT = ['C', 'D♭', 'D', 'E♭', 'E', 'F', 'G♭', 'G', 'A♭', 'A', 'B♭', 'B'];
+// geometry in viewBox units (300 × 300, centre 150); r = ring radius, node / big = node radii. Nodes nearly fill
+// each ring (bigger type for narrow columns); larger nodes are drawn last so they sit on top of neighbours.
+const CF_C = 150;
+const CF_RINGS = [
+  { ring: 'major', r: 125, node: 20, big: 24, suffix: '' },
+  { ring: 'minor', r: 85, node: 17, big: 20.5, suffix: 'm' },
+  { ring: 'dim', r: 47, node: 12.5, big: 16.5, suffix: '°' },
+];
+const mod12 = (n) => ((n % 12) + 12) % 12;
+// position (0 = C at the top, clockwise in fifths) of a chord root on each ring
+const CF_POSITION = {
+  major: (pc) => mod12(pc * 7),
+  minor: (pc) => mod12((pc + 3) * 7),          // relative minor of the major at that position
+  dim: (pc) => mod12((pc + 1) * 7),            // leading tone (vii°) of the major at that position
+};
+// pitch class of the chord at a position on a ring
+const CF_PC = {
+  major: (p) => mod12(p * 7),
+  minor: (p) => mod12(p * 7 + 9),
+  dim: (p) => mod12(p * 7 + 11),
+};
+// ring of a chord from its tones: minor 3rd + diminished 5th = dim (dim, dim7, m7♭5); minor 3rd = minor; else major
+function cfFamily(chord) {
+  const s = new Set((chord.tones ?? []).map((t) => mod12(t.semitones ?? (t.pc - chord.rootPc))));
+  if (s.has(3) && s.has(6)) return 'dim';
+  if (s.has(3)) return 'minor';
+  return 'major';
+}
+
+export function renderCircleOfFifths(opts = {}) {
+  const { target = null, progressions = null, panel = 'root', interactive = false, orientation = 'c-top' } = opts;
+  if (!['root', 'relative'].includes(panel)) throw new TypeError(`circle-o-5ths: panel must be 'root' or 'relative', not "${panel}"`);
+  const host = target ? getHost(target) : null;
+  if (!host) { console.warn(`circle-o-5ths: no element with id "${target}" — circle of fifths (${panel}) not shown`); return null; }
+  if (!progressions?.circle || typeof progressions.state !== 'function') {
+    console.warn('circle-o-5ths: renderCircleOfFifths needs the object returned by renderCircleProgressions');
+    return null;
+  }
+  const circle = progressions.circle;
+  const other = panel === 'root' ? 'relative' : 'root';
+  const NS = 'http://www.w3.org/2000/svg';
+  const svgEl = (tag, attrs = {}, text = null) => {
+    const n = document.createElementNS(NS, tag);
+    for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, String(v));
+    if (text != null) n.textContent = text;
+    return n;
+  };
+  const div = (cls, text) => { const n = document.createElement('div'); n.className = cls; if (text != null) n.textContent = text; return n; };
+
+  // --- card -------------------------------------------------------------------------
+  const card = div(`card cf${panel === 'relative' ? ' cf--relative' : ''}`);
+  const body = div('card-body cf-body');
+  const title = div('cf-title', 'Circle of Fifths');
+  const keyLine = div('cf-key');
+  const svg = svgEl('svg', { viewBox: '0 0 300 300', class: 'cf-svg', role: 'img' });
+  const rot = svgEl('g', { class: 'cf-rot' });        // rotated by setOrientation (around the centre)
+  svg.append(rot);
+  const legend = div('cf-legend');
+  body.append(title, keyLine, svg, legend);
+  card.append(body);
+  host.append(card);
+
+  const emit = (type, detail) => card.dispatchEvent(new CustomEvent(type, { bubbles: true, detail }));
+  let isInteractive = false;
+  let angle = 0;                                       // current rotation (degrees)
+  let keyTopPosition = 0;
+  let mode = orientation;
+  const nodes = [];                                    // {g, info}
+
+  // spelling: this panel's key — diatonic chords as the key spells them, everything else on its ♯ / ♭ side
+  function spellerFor(st) {
+    const k = st?.key ? circle.key(st.key.mode, st.key.tonicPc, st.key.tonic) : circle.key('major', 0, 'C');
+    const names = new Map();                           // `${ring}:${pc}` -> root name
+    for (const d of k.diatonic ?? []) {
+      const fam = cfFamily({ rootPc: d.root_pc, tones: (d.triad?.tones ?? []).map((t) => ({ semitones: mod12(t.pc - d.root_pc) })) });
+      names.set(`${fam}:${d.root_pc}`, d.root);
+    }
+    const side = k.signature?.type === 'flats' ? CF_FLAT : k.signature?.type === 'sharps' ? CF_SHARP : null;
+    return {
+      key: k,
+      set: (ring, pc, name) => names.set(`${ring}:${pc}`, name),
+      name(ring, pc, position) {
+        const n = names.get(`${ring}:${pc}`);
+        if (n) return n;
+        if (side) return side[pc];
+        return (position <= 6 ? CF_SHARP : CF_FLAT)[pc];   // no key accidentals: the conventional circle
+      },
+    };
+  }
+
+  function placesOf(st) {                              // `${ring}:${position}` -> {romans[], chordNames[]}
+    const out = new Map();
+    for (const c of st?.chords ?? []) {
+      const ring = cfFamily(c);
+      const k = `${ring}:${CF_POSITION[ring](c.rootPc)}`;
+      if (!out.has(k)) out.set(k, { romans: [], names: [], rootName: c.rootName });
+      const e = out.get(k);
+      if (!e.romans.includes(c.roman)) e.romans.push(c.roman);
+      e.names.push(c.name);
+    }
+    return out;
+  }
+
+  function redraw(state = progressions.state()) {
+    const mine = state?.[panel] ?? null;
+    const theirs = state?.[other] ?? null;
+    const speller = spellerFor(mine);
+    const minePlaces = placesOf(mine);
+    const theirPlaces = placesOf(theirs);
+    for (const [k, e] of minePlaces) { const [ring, pos] = k.split(':'); speller.set(ring, CF_PC[ring](Number(pos)), e.rootName); }
+    keyTopPosition = speller.key.position ?? 0;
+
+    const keyName = mine?.key?.name ?? speller.key.name;
+    // this key's own numerals (the relative panel's are not the progression's name: C major I–V–vi–IV = A minor III–VII–i–VI)
+    const order = Array.isArray(mine?.sequence?.order) && !mine.sequence.bars ? mine.sequence.order : (mine?.chords ?? []).map((_, i) => i);
+    const numerals = order.map((i) => mine?.chords?.[i]?.roman).filter(Boolean).join('–');
+    keyLine.textContent = numerals ? `${keyName} · ${numerals}` : keyName;
+    const otherKey = theirs?.key?.name ?? '';
+    svg.setAttribute('aria-label', `Circle of fifths for ${keyName}. Larger: the ${keyName} progression`
+      + `${otherKey ? `; outlined: the ${otherKey} progression` : ''}.`);
+
+    rot.replaceChildren();
+    nodes.length = 0;
+    // ring tracks + 12 faint spokes
+    for (const R of CF_RINGS) rot.append(svgEl('circle', { cx: CF_C, cy: CF_C, r: R.r, class: 'cf-track' }));
+    for (let p = 0; p < 12; p++) {
+      const a = ((p * 30 + 15) * Math.PI) / 180;
+      rot.append(svgEl('line', { x1: CF_C + 30 * Math.sin(a), y1: CF_C - 30 * Math.cos(a), x2: CF_C + 146 * Math.sin(a), y2: CF_C - 146 * Math.cos(a), class: 'cf-spoke' }));
+    }
+    const big = [];                                    // drawn last, so larger nodes sit on top of neighbours
+    for (const R of CF_RINGS) {
+      for (let p = 0; p < 12; p++) {
+        const pc = CF_PC[R.ring](p);
+        const key = `${R.ring}:${p}`;
+        const inMine = minePlaces.get(key);
+        const inTheirs = theirPlaces.get(key);
+        const state = inMine && inTheirs ? 'both' : inMine ? 'root' : inTheirs ? 'relative' : 'none';
+        const label = `${speller.name(R.ring, pc, p)}${R.suffix}`;
+        const roman = inMine ? inMine.romans.join(' / ') : '';
+        const a = (p * 30 * Math.PI) / 180;
+        const x = CF_C + R.r * Math.sin(a);
+        const y = CF_C - R.r * Math.cos(a);
+        const r = inMine ? R.big : R.node;
+        const g = svgEl('g', { class: `cf-node cf-node--${R.ring} is-${state}`, transform: `translate(${x.toFixed(2)} ${y.toFixed(2)})` });
+        Object.assign(g.dataset, { chord: label, ring: R.ring, position: String(p), rootPc: String(pc), family: R.ring, roman, state });
+        const face = svgEl('g', { class: 'cf-face' });   // counter-rotated so text stays upright
+        face.append(svgEl('circle', { r, class: 'cf-dot' }));
+        if (inTheirs) face.append(svgEl('circle', { r: r + 3, class: 'cf-ring' }));
+        if (inMine) {
+          face.append(svgEl('text', { class: 'cf-label', y: R.ring === 'dim' ? -3 : -4 }, label));
+          face.append(svgEl('text', { class: 'cf-roman', y: R.ring === 'dim' ? 7.5 : 10 }, roman));
+        } else {
+          face.append(svgEl('text', { class: 'cf-label', y: 0.5 }, label));
+        }
+        g.append(face);
+        const info = { panel, chord: label, family: R.ring, rootPc: pc, ring: R.ring, position: p, roman, state,
+          progressionChords: inMine ? [...inMine.names] : [], otherChords: inTheirs ? [...inTheirs.names] : [] };
+        nodes.push({ g, info });
+        if (inMine) big.push(g); else rot.append(g);
+      }
+    }
+    big.forEach((g) => rot.append(g));
+    rot.append(svgEl('text', { x: CF_C, y: CF_C - 5, class: 'cf-center' }, speller.key.tonic ?? ''));
+    rot.append(svgEl('text', { x: CF_C, y: CF_C + 11, class: 'cf-center-mode' }, speller.key.mode === 'minor' ? 'minor' : 'major'));
+
+    // legend: filled = this progression (larger); outlined = the other one
+    legend.replaceChildren();
+    const item = (cls, text) => { const s = document.createElement('span'); s.className = `cf-legend-item ${cls}`; const sw = document.createElement('span'); sw.className = 'cf-swatch'; sw.setAttribute('aria-hidden', 'true'); s.append(sw, document.createTextNode(text)); return s; };
+    legend.append(item('cf-legend--root', `${keyName} progression`));
+    if (otherKey) legend.append(item('cf-legend--relative', `${otherKey} progression`));
+
+    applyInteractive();
+    applyOrientation(false);
+  }
+
+  // --- interaction hooks --------------------------------------------------------------
+  function applyInteractive() {
+    for (const { g, info } of nodes) {
+      if (isInteractive) {
+        g.setAttribute('role', 'button');
+        g.setAttribute('tabindex', '0');
+        g.setAttribute('aria-label', `${info.chord}${info.roman ? ` (${info.roman})` : ''}`);
+      } else {
+        g.removeAttribute('role');
+        g.removeAttribute('tabindex');
+        g.removeAttribute('aria-label');
+      }
+    }
+    card.classList.toggle('is-interactive', isInteractive);
+  }
+  const nodeOf = (ev) => {
+    const g = ev.target instanceof Element ? ev.target.closest('.cf-node') : null;
+    return g ? nodes.find((n) => n.g === g) ?? null : null;
+  };
+  svg.addEventListener('click', (e) => { const n = isInteractive && nodeOf(e); if (n) emit('circle:chord', { ...n.info }); });
+  svg.addEventListener('keydown', (e) => {
+    if (!isInteractive || (e.key !== 'Enter' && e.key !== ' ')) return;
+    const n = nodeOf(e);
+    if (n) { e.preventDefault(); emit('circle:chord', { ...n.info }); }
+  });
+  const preview = (e) => { const n = isInteractive && nodeOf(e); if (n) emit('circle:preview', { ...n.info }); };
+  const previewEnd = (e) => { if (isInteractive && nodeOf(e)) emit('circle:preview-end', { panel }); };
+  svg.addEventListener('pointerover', preview);
+  svg.addEventListener('pointerout', previewEnd);
+  svg.addEventListener('focusin', preview);
+  svg.addEventListener('focusout', previewEnd);
+
+  function applyOrientation(animate = true) {
+    angle = mode === 'key-top' ? -keyTopPosition * 30 : 0;
+    rot.classList.toggle('no-anim', !animate);
+    rot.style.transform = `rotate(${angle}deg)`;
+    for (const { g } of nodes) g.querySelector('.cf-face').style.transform = `rotate(${-angle}deg)`;
+    rot.querySelectorAll('.cf-center, .cf-center-mode').forEach((t) => { t.style.transform = `rotate(${-angle}deg)`; });
+  }
+
+  const onProgression = (e) => { if (e.detail && 'root' in e.detail) redraw({ root: e.detail.root, relative: e.detail.relative }); };
+  document.addEventListener('progression:change', onProgression);
+  isInteractive = Boolean(interactive);
+  redraw();
+
+  return {
+    element: card,
+    panel,
+    redraw,
+    setInteractive(on) { isInteractive = Boolean(on); applyInteractive(); },
+    isInteractive: () => isInteractive,
+    setCurrent(chordName) {
+      for (const { g, info } of nodes) {
+        const hit = chordName != null && (info.chord === chordName || info.progressionChords.includes(chordName) || info.otherChords.includes(chordName));
+        g.classList.toggle('is-current', hit);
+      }
+    },
+    setOrientation(next) {
+      if (!['c-top', 'key-top'].includes(next)) { console.warn(`circle-o-5ths: orientation must be 'c-top' or 'key-top', not "${next}"`); return; }
+      mode = next;
+      applyOrientation(true);
+    },
+    nodes: () => nodes.map((n) => ({ ...n.info })),
+    destroy() {
+      document.removeEventListener('progression:change', onProgression);
+      card.remove();
+    },
+  };
+}
