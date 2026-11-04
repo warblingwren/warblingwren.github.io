@@ -25,6 +25,7 @@ tags: [Warbling Wren]
 					<div id="piano-root-circle-progressions"></div>
 				</div>
                 <div class="col-md-3 h-100">
+					<div id="piano-root-circle"></div>
 					<div id="piano-root-chord-data"></div>
                 </div>
 			</div>
@@ -33,6 +34,7 @@ tags: [Warbling Wren]
 					<div id="piano-minor-circle-progressions"></div>
 				</div>
                 <div class="col-md-3 h-100">
+					<div id="piano-minor-circle"></div>
 					<div id="piano-minor-chord-data"></div>
                 </div>
 			</div>
@@ -46,6 +48,7 @@ tags: [Warbling Wren]
 					<div id="guitar-root-circle-progressions"></div>
 				</div>
                 <div class="col-md-3 h-100">
+					<div id="guitar-root-circle"></div>
 					<div id="guitar-root-chord-data"></div>
                 </div>
 			</div>
@@ -54,6 +57,7 @@ tags: [Warbling Wren]
 					<div id="guitar-minor-circle-progressions"></div>
 				</div>
                 <div class="col-md-3 h-100">
+					<div id="guitar-minor-circle"></div>
 					<div id="guitar-minor-chord-data"></div>
                 </div>
 			</div>
