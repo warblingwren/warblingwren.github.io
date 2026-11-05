@@ -27,7 +27,13 @@ const IDS = {
   guitarRootCircle: 'guitar-root-circle',
   guitarMinorCircle: 'guitar-minor-circle',
   share: 'share-modal',                 // share button + share modal (bottom of the page)
+  static: 'static',                     // plain-HTML C major page for search engines + the no-script message
 };
+
+// With JavaScript running, the interactive page replaces the plain-HTML version: empty #static first, before
+// anything renders, so the two never show together. DOM-clobbering guard: only a real <div> is emptied.
+const staticEl = document.getElementById(IDS.static);
+if (staticEl instanceof HTMLDivElement) staticEl.replaceChildren();
 
 // Octave chords are played and drawn in (C3 = a fuller tone); the keyboard opens on the same octave
 const CHORD_OCTAVE = 3;
