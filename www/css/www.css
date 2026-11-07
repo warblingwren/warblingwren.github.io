@@ -20,6 +20,11 @@
   --ws-shadow: 0 24px 64px rgba(16, 18, 22, 0.28), 0 2px 8px rgba(16, 18, 22, 0.12);
   --ws-hit: 44px;                 /* minimum touch target */
   --ws-qr-max: 260px;
+
+  /* footer home link (.footer .homelink) */
+  --ww-home-ink: var(--ws-ink);
+  --ww-home-hover-bg: var(--ws-field);
+  --ww-home-focus: var(--ws-focus);
 }
 
 body {
@@ -342,6 +347,31 @@ ul.checklist li {
 }
 
 .footer .bottom-left {}
+
+/* home link, bottom-left: <div class="homelink"><a ...>Home</a></div> */
+.footer .homelink {
+    text-align: left;
+    margin-top: 24px;
+}
+.footer .homelink a {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--ws-hit);
+    min-width: var(--ws-hit);
+    padding: 0 12px;
+    border-radius: 22px;
+    color: var(--ww-home-ink);
+    font-weight: 600;
+    text-decoration: none;
+}
+.footer .homelink a:hover {
+    background: var(--ww-home-hover-bg);
+    text-decoration: underline;
+}
+/* the global *:focus rule removes outlines: keyboard focus needs its own ring */
+.footer .homelink a:focus-visible {
+    box-shadow: 0 0 0 4px var(--ww-home-focus);
+}
 .footer .bottom-center {}
 .footer .bottom-right {}
 

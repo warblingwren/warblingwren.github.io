@@ -35,7 +35,8 @@
   --ref-cf-track: #cfd8dc;         /* Blue Grey 100 */
   --ref-cf-max: 300px;
   /* home page menu */
-  --ref-title-space: 96px;         /* room for the pinned <h1> (up to two lines) when a contents link jumps to a section */
+  --ref-title-h: 60px;             /* pinned <h1>: one line, fixed height, so the <h2> can pin right below it */
+  --ref-title-space: var(--ref-title-h);   /* contents links land with the section's <h2> just below the <h1> */
   --ref-menu-gap: 64px;            /* space above the menu */
   --ref-menu-sticky-top: 0px;      /* where the genre headers stick; set to the pinned fretboard's height if it overlaps */
   --ref-badge-fg-default: #ffffff;
@@ -68,15 +69,19 @@
   position: -webkit-sticky;
   position: sticky;
   top: 0;
-  z-index: 30;                     /* above the tables, drawings and circle */
+  z-index: 30;                     /* above the pinned <h2>, tables, drawings and circle */
+  box-sizing: border-box;
+  height: var(--ref-title-h);
   margin: 16px 0 8px;
-  padding: 10px 0;
+  padding: 0;
   background: var(--ref-surface);  /* opaque, so the page scrolls behind it */
-  box-shadow: 0 6px 6px -6px rgba(0, 0, 0, 0.15);
   color: var(--ref-heading);
   font-size: 2rem;
   font-weight: 700;
-  line-height: 1.2;
+  line-height: var(--ref-title-h);
+  white-space: nowrap;             /* one line: the genre leads, a long progression name ends in … */
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* table of contents <div> */
@@ -209,16 +214,57 @@
 .ref-section {
   padding: 20px 0;
   border-top: 1px solid var(--ref-rule);
-  scroll-margin-top: var(--ref-title-space);   /* contents links land below the pinned title */
+  scroll-margin-top: calc(var(--ref-title-space) - 20px);   /* contents links land with the <h2> right below the pinned title (20px = padding-top) */
 }
 
 /* chord section <h2> */
 .ref-section-title {
+  position: -webkit-sticky;
+  position: sticky;
+  top: var(--ref-title-h);         /* right below the pinned <h1>; scrolls away with its section */
+  z-index: 25;
+  margin: 0 0 12px;
+  padding: 8px 0;
+  background: var(--ref-surface);
+  box-shadow: 0 6px 6px -6px rgba(0, 0, 0, 0.15);
   color: var(--ref-heading);
   font-size: 1.5rem;
   font-weight: 700;
   line-height: 1.25;
-  margin: 0 0 12px;
+}
+
+/* progression in order <div class="row"> / <div class="col-12">: round chord badges with | or – between */
+.ref-sequence-row {
+  margin-bottom: 16px;
+}
+
+.ref-sequence {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+/* chord badge in the sequence: the chord badge, sized to its name
+   (scoped under .ref-sequence so it wins over the .ref-chord-badge rule further down) */
+.ref-sequence-badge {
+}
+.ref-sequence .ref-sequence-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  max-width: none;
+  margin: 0;
+  padding: 8px 14px;
+}
+
+/* separator <span> */
+.ref-sequence-sep {
+  color: var(--ref-muted);
+  font-size: 15px;
+  font-weight: 700;
+  user-select: none;
 }
 
 /* two-column layout under the <h2> <div>: tables 70% | circle of fifths 30% (stacked on phones) */
@@ -418,6 +464,11 @@
 
 /* Root / Relative <h3> */
 .ref-table-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0 12px;
   color: var(--ref-muted);
   font-size: 0.875rem;
   font-weight: 700;
@@ -425,6 +476,21 @@
   text-transform: uppercase;
   margin: 0 0 8px;
 }
+
+/* Customize Voicing: permalink to the interactive page, at the right of the Root / Relative heading */
+.ref-table-link {
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--ref-link);
+  text-decoration: underline;
+}
+.ref-table-link:hover { color: var(--ref-ink); }
+.ref-table-link:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--ref-focus); border-radius: 4px; }
 
 /* progression <table>: white card inside its panel */
 .ref-table {
@@ -1205,7 +1271,7 @@
   :root { --ref-cf-max: 280px; }      /* = circle-o-5ths.css --cf-max at 768px */
   .ref-section-body { grid-template-columns: minmax(0, 1fr); }
   .ref-title { font-size: 1.625rem; }
-  :root { --ref-title-space: 88px; }
+  :root { --ref-title-h: 52px; }
   .ref-section-title { font-size: 1.25rem; }
 }
 
@@ -1255,8 +1321,10 @@
 }
 
 @media (max-width: 430px) {
-  .ref-title { font-size: 1.25rem; padding: 8px 0; }
-  :root { --ref-title-space: 100px; }
+  .ref-title { font-size: 1.25rem; }
+  :root { --ref-title-h: 44px; }
+  .ref-sequence { gap: 4px; }
+  .ref-sequence .ref-sequence-badge { padding: 7px 10px; }
   .ref-toc { padding: 4px 12px; }
   .ref-toc-list { column-count: 1; }
   .ref-prog-table, .ref-steps-table { flex-basis: 100%; }

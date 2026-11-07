@@ -1,0 +1,13 @@
+# robots.txt for https://warblingwren.com
+# Place at the root of the Jekyll repo (served as https://warblingwren.com/robots.txt). No front matter.
+
+# Every crawler, including search engines and AI assistants, may read the whole site.
+# CSS and JavaScript stay crawlable: Google needs them to render and judge the pages.
+User-agent: *
+Allow: /
+
+# Build-script helper files, if they are published with the site: not pages for readers.
+Disallow: /reference-shell.html
+Disallow: /reference-menu.html
+
+Sitemap: https://warblingwren.com/sitemap.xml
