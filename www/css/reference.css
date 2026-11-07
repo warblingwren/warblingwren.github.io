@@ -25,6 +25,14 @@
   --ref-gd-nut: #1d1d1f;           /* = --gd-nut */
   --ref-gd-label: #6b6b70;         /* = --gd-label */
   --ref-gd-barre: rgba(29, 29, 31, 0.18);   /* = --gd-barre */
+  /* circle of fifths: same values as the home page (circle-o-5ths.css --cf-*) */
+  --ref-cf-root: #37474f;          /* Blue Grey 800: root progression chords (larger, filled) */
+  --ref-cf-root-fg: #ffffff;
+  --ref-cf-relative: #ff5722;      /* Deep Orange 500: relative progression chords (outline) */
+  --ref-cf-dot: #eceff1;           /* Blue Grey 50: every other chord */
+  --ref-cf-dot-fg: #546e7a;        /* Blue Grey 600 */
+  --ref-cf-track: #cfd8dc;         /* Blue Grey 100 */
+  --ref-cf-max: 300px;
   --ref-badge-fg-default: #ffffff;
   --ref-badge-bg-default: #303030;
   --ref-radius: 10px;
@@ -204,6 +212,165 @@
   margin: 0 0 12px;
 }
 
+/* circle of fifths <div>: above the Root and Relative tables, across the section */
+.ref-circle {
+  grid-column: 1 / -1;
+  justify-self: center;
+  width: 100%;
+  max-width: calc(var(--ref-cf-max) + 40px);
+  margin: 0 0 12px;
+  padding: 12px 8px 10px;
+  border: 1px solid var(--ref-cf-track);
+  border-radius: 12px;
+  background: var(--ref-surface);
+}
+
+/* "Circle of Fifths" <div> */
+.ref-cf-title {
+  padding: 0 4px;
+  color: var(--ref-cf-dot-fg);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+/* key and numerals <div> */
+.ref-cf-key {
+  margin-top: 2px;
+  padding: 0 4px;
+  color: var(--ref-cf-root);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+/* circle <svg> */
+.ref-cf {
+  display: block;
+  width: 100%;
+  max-width: var(--ref-cf-max);
+  height: auto;
+  margin: 6px auto 4px;
+  overflow: visible;
+}
+
+/* ring track <circle> */
+.ref-cf-track {
+  fill: none;
+  stroke: var(--ref-cf-track);
+  stroke-width: 1;
+}
+
+/* chord node <g> and its ring */
+.ref-cf-node {
+}
+
+.ref-cf-major {
+}
+
+.ref-cf-minor {
+}
+
+.ref-cf-dim {
+}
+
+/* chord of the root progression, of the relative progression, of both */
+.ref-cf-root {
+}
+
+.ref-cf-relative {
+}
+
+.ref-cf-both {
+}
+
+/* node <circle> */
+.ref-cf-dot {
+  fill: var(--ref-cf-dot);
+  stroke: #ffffff;
+  stroke-width: 1.5;
+}
+.ref-cf-root .ref-cf-dot,
+.ref-cf-both .ref-cf-dot { fill: var(--ref-cf-root); }
+
+/* relative outline <circle> */
+.ref-cf-ring {
+  fill: none;
+  stroke: var(--ref-cf-relative);
+  stroke-width: 3.5;
+}
+
+/* chord name <text> */
+.ref-cf-label {
+  fill: var(--ref-cf-dot-fg);
+  font-weight: 600;
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+.ref-cf-major .ref-cf-label { font-size: 16px; }
+.ref-cf-minor .ref-cf-label { font-size: 13.5px; }
+.ref-cf-dim .ref-cf-label { font-size: 11px; }
+.ref-cf-root .ref-cf-label,
+.ref-cf-both .ref-cf-label { fill: var(--ref-cf-root-fg); font-weight: 700; }
+.ref-cf-minor.ref-cf-root .ref-cf-label,
+.ref-cf-minor.ref-cf-both .ref-cf-label { font-size: 14px; }
+.ref-cf-relative .ref-cf-label { fill: var(--ref-cf-root); font-weight: 700; }
+
+/* numeral <text> */
+.ref-cf-roman {
+  fill: var(--ref-cf-root-fg);
+  font-size: 10px;
+  font-weight: 600;
+  text-anchor: middle;
+  dominant-baseline: central;
+  opacity: 0.85;
+}
+.ref-cf-dim .ref-cf-roman { font-size: 8.5px; }
+
+/* key tonic <text> and mode <text> in the centre */
+.ref-cf-center {
+  fill: var(--ref-cf-root);
+  font-size: 19px;
+  font-weight: 700;
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+
+.ref-cf-center-mode {
+  fill: var(--ref-cf-dot-fg);
+  font-size: 10px;
+  font-weight: 600;
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+
+/* legend <div>, entries <span>, swatches <span> */
+.ref-cf-legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px 14px;
+  color: var(--ref-cf-dot-fg);
+  font-size: 13px;
+}
+
+.ref-cf-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ref-cf-legend-root {
+}
+
+.ref-cf-legend-relative {
+}
+
+.ref-cf-swatch {
+  display: inline-block;
+  border-radius: 50%;
+}
+.ref-cf-legend-root .ref-cf-swatch { width: 14px; height: 14px; background: var(--ref-cf-root); }
+.ref-cf-legend-relative .ref-cf-swatch { width: 12px; height: 12px; background: var(--ref-cf-dot); box-shadow: 0 0 0 2.5px var(--ref-cf-relative); }
+
 /* Root / Relative <div> */
 .ref-table-group {
   min-width: 0;
@@ -323,7 +490,7 @@
 /* note name on a white key <text> */
 .ref-piano-label {
   fill: var(--ref-key-chord-fg);
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
   text-anchor: middle;
   dominant-baseline: central;
@@ -339,7 +506,7 @@
 /* note name on a black key <text> */
 .ref-piano-mark-label {
   fill: var(--ref-key-chord-fg);
-  font-size: 6.5px;
+  font-size: 7px;
   font-weight: 700;
   text-anchor: middle;
   dominant-baseline: central;
@@ -408,12 +575,12 @@
 /* note name <text> */
 .ref-guitar-dot-label {
   fill: var(--ref-dot-fg, #ffffff);
-  font-size: 8px;
+  font-size: 9.5px;
   font-weight: 700;
   text-anchor: middle;
   dominant-baseline: central;
 }
-.ref-guitar-open .ref-guitar-dot-label { font-size: 6.5px; }
+.ref-guitar-open .ref-guitar-dot-label { font-size: 7.5px; }
 
 /* no playable shape <span> */
 .ref-guitar-none {
@@ -442,6 +609,69 @@
 .ref-role-1 { --ref-dot: var(--ref-r1); --ref-dot-fg: var(--ref-r1-fg); }
 .ref-role-2 { --ref-dot: var(--ref-r2); --ref-dot-fg: var(--ref-r2-fg); }
 .ref-role-3 { --ref-dot: var(--ref-r3); --ref-dot-fg: var(--ref-r3-fg); }
+
+/*
+ * **************************************************************** HOME PAGE MENU (reference-menu.html)
+ * Bootstrap .row of six genre columns (col-12 col-sm-6 col-md-4 col-xl-2), full width of its parent.
+*/
+
+/* home page menu <div> */
+.ref-menu {
+  text-align: left;
+  color: var(--ref-ink);
+}
+
+/* genre column <div> */
+.ref-menu-col {
+  margin-bottom: 24px;
+}
+
+/* genre <h2> */
+.ref-menu-genre {
+  margin: 0 0 8px;
+  padding-bottom: 6px;
+  border-bottom: 2px solid var(--ref-cf-root);
+  color: var(--ref-heading);
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+/* progression <h3> */
+.ref-menu-progression {
+  margin: 14px 0 4px;
+  color: var(--ref-muted);
+  font-size: 0.9375rem;
+  font-weight: 700;
+  /* no uppercase: the case of a numeral is its meaning (ii = minor, II = major) */
+}
+
+/* links <ul> */
+.ref-menu-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* link <li> */
+.ref-menu-item {
+  margin: 0;
+}
+
+/* link <a> */
+.ref-menu-link {
+  display: flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 2px 0;
+  color: var(--ref-link);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.3;
+  text-decoration: none;
+  border-radius: 4px;
+}
+.ref-menu-link:hover { color: var(--ref-link); text-decoration: underline; }
+.ref-menu-link:focus-visible { box-shadow: 0 0 0 3px var(--ref-focus); }
 
 /* chord badges: one class per chord, coloured by root note */
 
@@ -873,19 +1103,61 @@
   --ref-badge-bg: var(--ref-root-7);
 }
 
-/* BREAKPOINTS */
+/* BREAKPOINTS (Bootstrap 4.6 widths: 576 / 768 / 992 / 1200) */
+
+/* below 1200px a Root / Relative panel is too narrow for five chords side by side: stack them */
+@media (max-width: 1199.98px) {
+  .ref-section { grid-template-columns: 1fr; gap: 12px 0; }
+  .ref-section-title { margin-bottom: 0; }
+}
 
 @media (max-width: 991.98px) {
   .ref-toc-list { column-count: 2; }
 }
 
 @media (max-width: 767.98px) {
+  :root { --ref-cf-max: 280px; }      /* = circle-o-5ths.css --cf-max at 768px */
   .ref-title { font-size: 1.625rem; }
-  .ref-table-group { overflow-x: auto; }
-  .ref-table { table-layout: auto; min-width: 100%; width: auto; }
-  .ref-chord, .ref-piano-cell, .ref-guitar-cell { min-width: 84px; }
-  .ref-section { grid-template-columns: 1fr; gap: 12px 0; }
-  .ref-section-title { font-size: 1.25rem; margin-bottom: 0; }
+  .ref-section-title { font-size: 1.25rem; }
+}
+
+/* phones: each chord is a column (numeral, badge, keyboard, guitar), three chords per band, so a
+   4- or 5-chord progression wraps onto a second band instead of shrinking the drawings or scrolling.
+   The table is laid out as a grid; its rows only group cells (display: contents). */
+@media (max-width: 575.98px) {
+  .ref-table {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0 8px;
+    width: 100%;
+  }
+  .ref-table > tbody,
+  .ref-table tr { display: contents; }
+  .ref-position { padding-top: 10px; }
+  .ref-row-positions > :nth-child(1) { grid-area: 1 / 1; }
+  .ref-row-chords > :nth-child(1) { grid-area: 2 / 1; }
+  .ref-row-piano > :nth-child(1) { grid-area: 3 / 1; }
+  .ref-row-guitar > :nth-child(1) { grid-area: 4 / 1; }
+  .ref-row-positions > :nth-child(2) { grid-area: 1 / 2; }
+  .ref-row-chords > :nth-child(2) { grid-area: 2 / 2; }
+  .ref-row-piano > :nth-child(2) { grid-area: 3 / 2; }
+  .ref-row-guitar > :nth-child(2) { grid-area: 4 / 2; }
+  .ref-row-positions > :nth-child(3) { grid-area: 1 / 3; }
+  .ref-row-chords > :nth-child(3) { grid-area: 2 / 3; }
+  .ref-row-piano > :nth-child(3) { grid-area: 3 / 3; }
+  .ref-row-guitar > :nth-child(3) { grid-area: 4 / 3; }
+  .ref-row-positions > :nth-child(4) { grid-area: 5 / 1; }
+  .ref-row-chords > :nth-child(4) { grid-area: 6 / 1; }
+  .ref-row-piano > :nth-child(4) { grid-area: 7 / 1; }
+  .ref-row-guitar > :nth-child(4) { grid-area: 8 / 1; }
+  .ref-row-positions > :nth-child(5) { grid-area: 5 / 2; }
+  .ref-row-chords > :nth-child(5) { grid-area: 6 / 2; }
+  .ref-row-piano > :nth-child(5) { grid-area: 7 / 2; }
+  .ref-row-guitar > :nth-child(5) { grid-area: 8 / 2; }
+  .ref-row-positions > :nth-child(6) { grid-area: 5 / 3; }
+  .ref-row-chords > :nth-child(6) { grid-area: 6 / 3; }
+  .ref-row-piano > :nth-child(6) { grid-area: 7 / 3; }
+  .ref-row-guitar > :nth-child(6) { grid-area: 8 / 3; }
 }
 
 @media (max-width: 430px) {
@@ -898,6 +1170,11 @@
   .ref-prog-label { padding: 8px 10px; }
   .description { font-size: 1rem; }
   .ref-table-group { padding: 10px 8px; }
-  .ref-table { border-spacing: 4px 0; }
+  .ref-table { gap: 0 6px; }
   .ref-chord-badge { font-size: 0.875rem; padding: 7px 2px; }
+}
+
+/* touch screens: menu links at least 44px tall */
+@media (hover: none) and (pointer: coarse) {
+  .ref-menu-link { min-height: 44px; }
 }
