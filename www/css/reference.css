@@ -15,6 +15,16 @@
   --ref-heading: #303030;
   --ref-link: #1565c0;             /* Material Blue 800: 5.6:1 on --ref-surface-alt */
   --ref-focus: rgba(21, 101, 192, 0.35);
+  /* drawings: same colours as the keyboard and chord diagrams on the rest of the site */
+  --ref-key-white: #fbfaf7;        /* = --pk-white-bg */
+  --ref-key-white-line: #c9c4b8;   /* = --pk-white-border */
+  --ref-key-black: #1d1d1f;        /* = --pk-black-bg */
+  --ref-key-black-line: #000000;
+  --ref-key-chord-fg: #ffffff;     /* = --ww-chord-fg */
+  --ref-gd-line: #8a8a92;          /* = --gd-line */
+  --ref-gd-nut: #1d1d1f;           /* = --gd-nut */
+  --ref-gd-label: #6b6b70;         /* = --gd-label */
+  --ref-gd-barre: rgba(29, 29, 31, 0.18);   /* = --gd-barre */
   --ref-badge-fg-default: #ffffff;
   --ref-badge-bg-default: #303030;
   --ref-radius: 10px;
@@ -93,6 +103,86 @@
   line-height: 1.5;
   margin: 0 0 24px;
   max-width: 72ch;
+}
+
+/* progression data <div>: summary and steps side by side */
+.ref-prog-info {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--ref-gap);
+  margin: 0 0 24px;
+}
+
+/* progression summary <table> */
+.ref-prog-table {
+  flex: 1 1 320px;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: var(--ref-surface-alt);
+  border-radius: var(--ref-radius);
+  overflow: hidden;
+}
+
+/* progression summary <tr> */
+.ref-prog-row {
+}
+
+/* progression summary label <th> */
+.ref-prog-label {
+  width: 1%;
+  padding: 8px 16px;
+  color: var(--ref-muted);
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  vertical-align: top;
+}
+
+/* progression summary value <td> */
+.ref-prog-value {
+  padding: 8px 16px 8px 0;
+  color: var(--ref-ink);
+  font-weight: 600;
+}
+
+/* progression steps <table> */
+.ref-steps-table {
+  flex: 1 1 320px;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: var(--ref-surface-alt);
+  border-radius: var(--ref-radius);
+  overflow: hidden;
+  text-align: center;
+}
+
+/* progression steps header <tr> */
+.ref-steps-head {
+}
+
+/* progression steps header <th> */
+.ref-steps-heading {
+  padding: 8px 10px;
+  color: var(--ref-muted);
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--ref-rule);
+}
+
+/* progression steps <tr> */
+.ref-steps-row {
+}
+
+/* progression steps <td> */
+.ref-steps-cell {
+  padding: 8px 10px;
+  color: var(--ref-ink);
+  font-weight: 600;
 }
 
 /* chord section <div> */
@@ -184,6 +274,174 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+/* keyboards <tr> and guitar diagrams <tr> */
+.ref-row-piano {
+}
+
+.ref-row-guitar {
+}
+
+/* keyboard <td> and guitar diagram <td> */
+.ref-piano-cell,
+.ref-guitar-cell {
+  padding: 10px 0 0;
+  text-align: center;
+  vertical-align: top;
+}
+
+/* one-octave keyboard <svg> (as .mk on the rest of the site) */
+.ref-piano {
+  display: block;
+  width: 100%;
+  max-width: 120px;
+  height: auto;
+  margin: 0 auto;
+}
+
+/* white key <rect>: octave tint; chord keys in the octave's chord shade */
+.ref-piano-white {
+  fill: var(--ref-oct-light, var(--ref-key-white));
+  stroke: var(--ref-key-white-line);
+  stroke-width: 1;
+}
+
+/* black key <rect> */
+.ref-piano-black {
+  fill: var(--ref-key-black);
+  stroke: var(--ref-key-black-line);
+  stroke-width: 1;
+}
+
+/* key of a chord note */
+.ref-piano-chord {
+}
+.ref-piano-white.ref-piano-chord,
+.ref-piano-black.ref-piano-chord { fill: var(--ref-oct-chord, var(--ref-key-black)); }
+.ref-piano-black.ref-piano-chord { stroke: rgba(255, 255, 255, 0.55); stroke-width: 1.5; }
+
+/* note name on a white key <text> */
+.ref-piano-label {
+  fill: var(--ref-key-chord-fg);
+  font-size: 10px;
+  font-weight: 700;
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+
+/* note circle on a black key <circle>: chord-role shade */
+.ref-piano-mark {
+  fill: var(--ref-dot, #555555);
+  stroke: rgba(0, 0, 0, 0.6);
+  stroke-width: 0.75;
+}
+
+/* note name on a black key <text> */
+.ref-piano-mark-label {
+  fill: var(--ref-key-chord-fg);
+  font-size: 6.5px;
+  font-weight: 700;
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+
+/* chord diagram <svg> (as .gd on the rest of the site) */
+.ref-guitar {
+  display: block;
+  width: 100%;
+  max-width: 110px;
+  height: auto;
+  margin: 0 auto;
+  overflow: visible;
+}
+
+/* fret <line> and string <line> */
+.ref-guitar-fret,
+.ref-guitar-string {
+  stroke: var(--ref-gd-line);
+  stroke-width: 1.2;
+}
+
+/* nut <rect> */
+.ref-guitar-nut {
+  fill: var(--ref-gd-nut);
+}
+
+/* lowest fret label <text> */
+.ref-guitar-base {
+  fill: var(--ref-gd-label);
+  font-size: 9px;
+  font-weight: 700;
+  text-anchor: end;
+  dominant-baseline: central;
+}
+
+/* muted string <text> */
+.ref-guitar-mute {
+  fill: var(--ref-gd-label);
+  font-size: 12px;
+  font-weight: 700;
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+
+/* barre <rect> */
+.ref-guitar-barre {
+  fill: var(--ref-gd-barre);
+}
+
+/* fretted or open note <g> */
+.ref-guitar-dot {
+}
+
+/* open string note */
+.ref-guitar-open {
+}
+
+/* note <circle>: chord-role shade of its octave */
+.ref-guitar-dot-circle {
+  fill: var(--ref-dot, #555555);
+  stroke: rgba(0, 0, 0, 0.25);
+  stroke-width: 1;
+}
+
+/* note name <text> */
+.ref-guitar-dot-label {
+  fill: var(--ref-dot-fg, #ffffff);
+  font-size: 8px;
+  font-weight: 700;
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+.ref-guitar-open .ref-guitar-dot-label { font-size: 6.5px; }
+
+/* no playable shape <span> */
+.ref-guitar-none {
+  color: var(--ref-muted);
+}
+
+/* chord root: white ring with a dark outline, as on the keyboard and the chord diagrams */
+.ref-root {
+}
+.ref-guitar-dot.ref-root .ref-guitar-dot-circle,
+.ref-piano-mark.ref-root { stroke: #ffffff; stroke-width: 2; filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.9)); }
+
+/* octave of a key or note: the site's octave colours (www.css STATIC PAGES --ww-oN-*) */
+.ref-oct-0 { --ref-oct-light: var(--ww-o0-100); --ref-oct-chord: var(--ww-o0-700); --ref-r0: var(--ww-o0-900); --ref-r0-fg: var(--ww-o0-900-fg); --ref-r1: var(--ww-o0-700); --ref-r1-fg: var(--ww-o0-700-fg); --ref-r2: var(--ww-o0-500); --ref-r2-fg: var(--ww-o0-500-fg); --ref-r3: var(--ww-o0-300); --ref-r3-fg: var(--ww-o0-300-fg); }
+.ref-oct-1 { --ref-oct-light: var(--ww-o1-100); --ref-oct-chord: var(--ww-o1-700); --ref-r0: var(--ww-o1-900); --ref-r0-fg: var(--ww-o1-900-fg); --ref-r1: var(--ww-o1-700); --ref-r1-fg: var(--ww-o1-700-fg); --ref-r2: var(--ww-o1-500); --ref-r2-fg: var(--ww-o1-500-fg); --ref-r3: var(--ww-o1-300); --ref-r3-fg: var(--ww-o1-300-fg); }
+.ref-oct-2 { --ref-oct-light: var(--ww-o2-100); --ref-oct-chord: var(--ww-o2-700); --ref-r0: var(--ww-o2-900); --ref-r0-fg: var(--ww-o2-900-fg); --ref-r1: var(--ww-o2-700); --ref-r1-fg: var(--ww-o2-700-fg); --ref-r2: var(--ww-o2-500); --ref-r2-fg: var(--ww-o2-500-fg); --ref-r3: var(--ww-o2-300); --ref-r3-fg: var(--ww-o2-300-fg); }
+.ref-oct-3 { --ref-oct-light: var(--ww-o3-100); --ref-oct-chord: var(--ww-o3-700); --ref-r0: var(--ww-o3-900); --ref-r0-fg: var(--ww-o3-900-fg); --ref-r1: var(--ww-o3-700); --ref-r1-fg: var(--ww-o3-700-fg); --ref-r2: var(--ww-o3-500); --ref-r2-fg: var(--ww-o3-500-fg); --ref-r3: var(--ww-o3-300); --ref-r3-fg: var(--ww-o3-300-fg); }
+.ref-oct-4 { --ref-oct-light: var(--ww-o4-100); --ref-oct-chord: var(--ww-o4-700); --ref-r0: var(--ww-o4-900); --ref-r0-fg: var(--ww-o4-900-fg); --ref-r1: var(--ww-o4-700); --ref-r1-fg: var(--ww-o4-700-fg); --ref-r2: var(--ww-o4-500); --ref-r2-fg: var(--ww-o4-500-fg); --ref-r3: var(--ww-o4-300); --ref-r3-fg: var(--ww-o4-300-fg); }
+.ref-oct-5 { --ref-oct-light: var(--ww-o5-100); --ref-oct-chord: var(--ww-o5-700); --ref-r0: var(--ww-o5-900); --ref-r0-fg: var(--ww-o5-900-fg); --ref-r1: var(--ww-o5-700); --ref-r1-fg: var(--ww-o5-700-fg); --ref-r2: var(--ww-o5-500); --ref-r2-fg: var(--ww-o5-500-fg); --ref-r3: var(--ww-o5-300); --ref-r3-fg: var(--ww-o5-300-fg); }
+.ref-oct-6 { --ref-oct-light: var(--ww-o6-100); --ref-oct-chord: var(--ww-o6-700); --ref-r0: var(--ww-o6-900); --ref-r0-fg: var(--ww-o6-900-fg); --ref-r1: var(--ww-o6-700); --ref-r1-fg: var(--ww-o6-700-fg); --ref-r2: var(--ww-o6-500); --ref-r2-fg: var(--ww-o6-500-fg); --ref-r3: var(--ww-o6-300); --ref-r3-fg: var(--ww-o6-300-fg); }
+.ref-oct-7 { --ref-oct-light: var(--ww-o7-100); --ref-oct-chord: var(--ww-o7-700); --ref-r0: var(--ww-o7-900); --ref-r0-fg: var(--ww-o7-900-fg); --ref-r1: var(--ww-o7-700); --ref-r1-fg: var(--ww-o7-700-fg); --ref-r2: var(--ww-o7-500); --ref-r2-fg: var(--ww-o7-500-fg); --ref-r3: var(--ww-o7-300); --ref-r3-fg: var(--ww-o7-300-fg); }
+.ref-oct-8 { --ref-oct-light: var(--ww-o8-100); --ref-oct-chord: var(--ww-o8-700); --ref-r0: var(--ww-o8-900); --ref-r0-fg: var(--ww-o8-900-fg); --ref-r1: var(--ww-o8-700); --ref-r1-fg: var(--ww-o8-700-fg); --ref-r2: var(--ww-o8-500); --ref-r2-fg: var(--ww-o8-500-fg); --ref-r3: var(--ww-o8-300); --ref-r3-fg: var(--ww-o8-300-fg); }
+
+/* chord role of a note (root darkest -> 7th lightest), in its octave's colours */
+.ref-role-0 { --ref-dot: var(--ref-r0); --ref-dot-fg: var(--ref-r0-fg); }
+.ref-role-1 { --ref-dot: var(--ref-r1); --ref-dot-fg: var(--ref-r1-fg); }
+.ref-role-2 { --ref-dot: var(--ref-r2); --ref-dot-fg: var(--ref-r2-fg); }
+.ref-role-3 { --ref-dot: var(--ref-r3); --ref-dot-fg: var(--ref-r3-fg); }
 
 /* chord badges: one class per chord, coloured by root note */
 
@@ -623,6 +881,9 @@
 
 @media (max-width: 767.98px) {
   .ref-title { font-size: 1.625rem; }
+  .ref-table-group { overflow-x: auto; }
+  .ref-table { table-layout: auto; min-width: 100%; width: auto; }
+  .ref-chord, .ref-piano-cell, .ref-guitar-cell { min-width: 84px; }
   .ref-section { grid-template-columns: 1fr; gap: 12px 0; }
   .ref-section-title { font-size: 1.25rem; margin-bottom: 0; }
 }
@@ -631,6 +892,10 @@
   .ref-title { font-size: 1.375rem; }
   .ref-toc { padding: 4px 12px; }
   .ref-toc-list { column-count: 1; }
+  .ref-prog-table, .ref-steps-table { flex-basis: 100%; }
+  .ref-steps-heading { padding: 6px 4px; font-size: 0.75rem; letter-spacing: 0; }
+  .ref-steps-cell { padding: 6px 4px; font-size: 0.9375rem; }
+  .ref-prog-label { padding: 8px 10px; }
   .description { font-size: 1rem; }
   .ref-table-group { padding: 10px 8px; }
   .ref-table { border-spacing: 4px 0; }
