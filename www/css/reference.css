@@ -34,6 +34,9 @@
   --ref-cf-dot-fg: #546e7a;        /* Blue Grey 600 */
   --ref-cf-track: #cfd8dc;         /* Blue Grey 100 */
   --ref-cf-max: 300px;
+  /* home page menu */
+  --ref-menu-gap: 64px;            /* space above the menu */
+  --ref-menu-sticky-top: 0px;      /* where the genre headers stick; set to the pinned fretboard's height if it overlaps */
   --ref-badge-fg-default: #ffffff;
   --ref-badge-bg-default: #303030;
   --ref-radius: 10px;
@@ -679,33 +682,46 @@
  * Bootstrap .row of six genre columns (col-12 col-sm-6 col-md-4 col-xl-2), full width of its parent.
 */
 
-/* home page menu <div> */
+/* home page menu <div>: space above it, so it starts well clear of the pinned keyboard / fretboard */
 .ref-menu {
+  margin-top: var(--ref-menu-gap);
+  padding-top: 16px;
   text-align: left;
   color: var(--ref-ink);
 }
 
-/* genre column <div> */
+/* genre column <div>: light vertical line between columns (which column starts a row: BREAKPOINTS) */
 .ref-menu-col {
   margin-bottom: 24px;
+  border-left: 1px solid var(--ref-rule);
 }
 
-/* genre <h2> */
+/* genre <h2>: sticks to the top of the screen while its column scrolls past */
 .ref-menu-genre {
+  position: -webkit-sticky;
+  position: sticky;
+  top: var(--ref-menu-sticky-top);
+  z-index: 5;                      /* above the links; below the pinned keyboard / fretboard (1020 / 1021) */
   margin: 0 0 8px;
-  padding-bottom: 6px;
+  padding: 10px 0 8px;
   border-bottom: 2px solid var(--ref-cf-root);
+  background: var(--ref-surface);  /* opaque, so the links scroll behind it */
   color: var(--ref-heading);
   font-size: 1.25rem;
   font-weight: 700;
 }
 
-/* progression <h3> */
+/* progression <h3>: a clear break between progressions */
 .ref-menu-progression {
-  margin: 14px 0 4px;
-  color: var(--ref-muted);
-  font-size: 0.9375rem;
+  margin: 22px 0 8px;
+  padding: 6px 10px;
+  border-left: 3px solid var(--ref-cf-root);
+  border-radius: 0 6px 6px 0;
+  background: var(--ref-surface-alt);
+  color: var(--ref-heading);
+  font-size: 1rem;
   font-weight: 700;
+  line-height: 1.3;
   /* no uppercase: the case of a numeral is its meaning (ii = minor, II = major) */
 }
 
@@ -718,15 +734,15 @@
 
 /* link <li> */
 .ref-menu-item {
-  margin: 0;
+  margin: 0 0 4px;
 }
 
 /* link <a> */
 .ref-menu-link {
   display: flex;
   align-items: center;
-  min-height: 28px;
-  padding: 2px 0;
+  min-height: 34px;
+  padding: 5px 0;
   color: var(--ref-link);
   font-size: 0.9375rem;
   font-weight: 600;
@@ -1245,4 +1261,18 @@
 /* touch screens: menu links at least 44px tall */
 @media (hover: none) and (pointer: coarse) {
   .ref-menu-link { min-height: 44px; }
+}
+
+/* menu column lines: no line on the first column of each row (1 per row < 576, 2 from 576, 3 from 768, 6 from 1200) */
+@media (max-width: 575.98px) {
+  .ref-menu-col { border-left: none; }
+}
+@media (min-width: 576px) and (max-width: 767.98px) {
+  .ref-menu-col:nth-child(2n+1) { border-left: none; }
+}
+@media (min-width: 768px) and (max-width: 1199.98px) {
+  .ref-menu-col:nth-child(3n+1) { border-left: none; }
+}
+@media (min-width: 1200px) {
+  .ref-menu-col:first-child { border-left: none; }
 }
