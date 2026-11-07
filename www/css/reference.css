@@ -35,6 +35,7 @@
   --ref-cf-track: #cfd8dc;         /* Blue Grey 100 */
   --ref-cf-max: 300px;
   /* home page menu */
+  --ref-title-space: 96px;         /* room for the pinned <h1> (up to two lines) when a contents link jumps to a section */
   --ref-menu-gap: 64px;            /* space above the menu */
   --ref-menu-sticky-top: 0px;      /* where the genre headers stick; set to the pinned fretboard's height if it overlaps */
   --ref-badge-fg-default: #ffffff;
@@ -64,11 +65,18 @@
 
 /* page <h1> */
 .ref-title {
+  position: -webkit-sticky;
+  position: sticky;
+  top: 0;
+  z-index: 30;                     /* above the tables, drawings and circle */
+  margin: 16px 0 8px;
+  padding: 10px 0;
+  background: var(--ref-surface);  /* opaque, so the page scrolls behind it */
+  box-shadow: 0 6px 6px -6px rgba(0, 0, 0, 0.15);
   color: var(--ref-heading);
   font-size: 2rem;
   font-weight: 700;
   line-height: 1.2;
-  margin: 16px 0 8px;
 }
 
 /* table of contents <div> */
@@ -201,6 +209,7 @@
 .ref-section {
   padding: 20px 0;
   border-top: 1px solid var(--ref-rule);
+  scroll-margin-top: var(--ref-title-space);   /* contents links land below the pinned title */
 }
 
 /* chord section <h2> */
@@ -1196,6 +1205,7 @@
   :root { --ref-cf-max: 280px; }      /* = circle-o-5ths.css --cf-max at 768px */
   .ref-section-body { grid-template-columns: minmax(0, 1fr); }
   .ref-title { font-size: 1.625rem; }
+  :root { --ref-title-space: 88px; }
   .ref-section-title { font-size: 1.25rem; }
 }
 
@@ -1245,7 +1255,8 @@
 }
 
 @media (max-width: 430px) {
-  .ref-title { font-size: 1.375rem; }
+  .ref-title { font-size: 1.25rem; padding: 8px 0; }
+  :root { --ref-title-space: 100px; }
   .ref-toc { padding: 4px 12px; }
   .ref-toc-list { column-count: 1; }
   .ref-prog-table, .ref-steps-table { flex-basis: 100%; }
