@@ -12,6 +12,7 @@
   --ref-rule: #e0e0e0;
   --ref-surface: #ffffff;
   --ref-surface-alt: #f5f5f5;
+  --ref-relative-bg: #e0f7fa;      /* Material Cyan 50: the site's relative panels (= --cp-relative-bg) */
   --ref-heading: #303030;
   --ref-link: #1565c0;             /* Material Blue 800: 5.6:1 on --ref-surface-alt */
   --ref-focus: rgba(21, 101, 192, 0.35);
@@ -394,6 +395,15 @@
   padding: 12px;
 }
 
+/* Root <div> */
+.ref-table-group-root {
+}
+
+/* Relative <div>: light teal, as the relative panels on the rest of the site */
+.ref-table-group-relative {
+  background: var(--ref-relative-bg);
+}
+
 /* Root / Relative <h3> */
 .ref-table-title {
   color: var(--ref-muted);
@@ -404,13 +414,16 @@
   margin: 0 0 8px;
 }
 
-/* progression <table> */
+/* progression <table>: white card inside its panel */
 .ref-table {
   width: 100%;
   table-layout: fixed;
   border-collapse: separate;
   border-spacing: 6px 0;
   margin: 0;
+  padding: 6px 2px 10px;
+  background: var(--ref-surface);
+  border-radius: var(--ref-radius);
 }
 
 /* numerals <tr> */
