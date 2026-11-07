@@ -1,0 +1,638 @@
+/*
+ * **************************************************************** CHORD REFERENCE
+ * Styles for the /chords/<chord type>/<chord type>-<progression>.html pages
+ * (structure: reference-shell.html, written by build_reference.py).
+ * Chord badges are coloured by root note, so the same chord, and its enharmonic
+ * spelling (C♯7 / D♭7), looks the same on every page.
+ */
+
+:root {
+  --ref-ink: #303030;
+  --ref-muted: #5f6368;
+  --ref-rule: #e0e0e0;
+  --ref-surface: #ffffff;
+  --ref-surface-alt: #f5f5f5;
+  --ref-heading: #303030;
+  --ref-link: #1565c0;             /* Material Blue 800: 5.6:1 on --ref-surface-alt */
+  --ref-focus: rgba(21, 101, 192, 0.35);
+  --ref-badge-fg-default: #ffffff;
+  --ref-badge-bg-default: #303030;
+  --ref-radius: 10px;
+  --ref-gap: 16px;
+  --ref-root-0: #d32f2f;  /* C */
+  --ref-root-1: #c2185b;  /* C♯/D♭ */
+  --ref-root-2: #7b1fa2;  /* D */
+  --ref-root-3: #512da8;  /* D♯/E♭ */
+  --ref-root-4: #303f9f;  /* E */
+  --ref-root-5: #1565c0;  /* F */
+  --ref-root-6: #01579b;  /* F♯/G♭ */
+  --ref-root-7: #00695c;  /* G */
+  --ref-root-8: #2e7d32;  /* G♯/A♭ */
+  --ref-root-9: #33691e;  /* A */
+  --ref-root-10: #6d4c41; /* A♯/B♭ */
+  --ref-root-11: #bf360c; /* B */
+}
+
+/* page wrapper <div> */
+.ref-page {
+  color: var(--ref-ink);
+  text-align: left;
+  padding: 8px 0 32px;
+}
+
+/* page <h1> */
+.ref-title {
+  color: var(--ref-heading);
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1.2;
+  margin: 16px 0 8px;
+}
+
+/* table of contents <div> */
+.ref-toc {
+  background: var(--ref-surface-alt);
+  border-radius: var(--ref-radius);
+  padding: 8px 16px;
+  margin: 0 0 16px;
+}
+
+/* table of contents <ul> */
+.ref-toc-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  column-count: 3;
+  column-gap: 24px;
+}
+
+/* table of contents <li> */
+.ref-toc-item {
+  break-inside: avoid;
+  margin: 0;
+}
+
+/* table of contents <a> */
+.ref-toc-link {
+  display: flex;
+  align-items: center;
+  min-height: 44px;                /* touch target */
+  color: var(--ref-link);
+  font-weight: 600;
+  text-decoration: none;
+  border-radius: 6px;
+}
+.ref-toc-link:hover { text-decoration: underline; color: var(--ref-link); }
+/* www.css removes :focus outlines with !important, so focus is shown with a shadow */
+.ref-toc-link:focus-visible { box-shadow: 0 0 0 3px var(--ref-focus); }
+
+/* progression description <div> */
+.description {
+  color: var(--ref-muted);
+  font-size: 1.125rem;
+  line-height: 1.5;
+  margin: 0 0 24px;
+  max-width: 72ch;
+}
+
+/* chord section <div> */
+.ref-section {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 var(--ref-gap);
+  padding: 20px 0;
+  border-top: 1px solid var(--ref-rule);
+}
+
+/* chord section <h2> */
+.ref-section-title {
+  grid-column: 1 / -1;
+  color: var(--ref-heading);
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.25;
+  margin: 0 0 12px;
+}
+
+/* Root / Relative <div> */
+.ref-table-group {
+  min-width: 0;
+  background: var(--ref-surface-alt);
+  border-radius: var(--ref-radius);
+  padding: 12px;
+}
+
+/* Root / Relative <h3> */
+.ref-table-title {
+  color: var(--ref-muted);
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin: 0 0 8px;
+}
+
+/* progression <table> */
+.ref-table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: separate;
+  border-spacing: 6px 0;
+  margin: 0;
+}
+
+/* numerals <tr> */
+.ref-row-positions {
+}
+
+/* chord names <tr> */
+.ref-row-chords {
+}
+
+/* numeral <th> */
+.ref-position {
+  color: var(--ref-muted);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  text-align: center;
+  padding: 0 0 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* chord name <td> */
+.ref-chord {
+  text-align: center;
+  padding: 0;
+  vertical-align: middle;
+}
+
+/* chord badge <div> */
+.ref-chord-badge {
+  display: block;
+  max-width: 120px;
+  margin: 0 auto;
+  padding: 8px 4px;
+  border-radius: 999px;
+  background: var(--ref-badge-bg, var(--ref-badge-bg-default));
+  color: var(--ref-badge-fg, var(--ref-badge-fg-default));
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* chord badges: one class per chord, coloured by root note */
+
+.chord-a {
+  --ref-badge-bg: var(--ref-root-9);
+}
+
+.chord-a-flat {
+  --ref-badge-bg: var(--ref-root-8);
+}
+
+.chord-a-flat-7 {
+  --ref-badge-bg: var(--ref-root-8);
+}
+
+.chord-a-flat-m {
+  --ref-badge-bg: var(--ref-root-8);
+}
+
+.chord-a-flat-m7 {
+  --ref-badge-bg: var(--ref-root-8);
+}
+
+.chord-a-flat-maj7 {
+  --ref-badge-bg: var(--ref-root-8);
+}
+
+.chord-a-sharp {
+  --ref-badge-bg: var(--ref-root-10);
+}
+
+.chord-a-sharp-7 {
+  --ref-badge-bg: var(--ref-root-10);
+}
+
+.chord-a-sharp-dim {
+  --ref-badge-bg: var(--ref-root-10);
+}
+
+.chord-a-sharp-m {
+  --ref-badge-bg: var(--ref-root-10);
+}
+
+.chord-a-sharp-m7 {
+  --ref-badge-bg: var(--ref-root-10);
+}
+
+.chord-a-sharp-m7-flat-5 {
+  --ref-badge-bg: var(--ref-root-10);
+}
+
+.chord-a7 {
+  --ref-badge-bg: var(--ref-root-9);
+}
+
+.chord-adim {
+  --ref-badge-bg: var(--ref-root-9);
+}
+
+.chord-am {
+  --ref-badge-bg: var(--ref-root-9);
+}
+
+.chord-am7 {
+  --ref-badge-bg: var(--ref-root-9);
+}
+
+.chord-am7-flat-5 {
+  --ref-badge-bg: var(--ref-root-9);
+}
+
+.chord-amaj7 {
+  --ref-badge-bg: var(--ref-root-9);
+}
+
+.chord-b {
+  --ref-badge-bg: var(--ref-root-11);
+}
+
+.chord-b-flat {
+  --ref-badge-bg: var(--ref-root-10);
+}
+
+.chord-b-flat-7 {
+  --ref-badge-bg: var(--ref-root-10);
+}
+
+.chord-b-flat-m {
+  --ref-badge-bg: var(--ref-root-10);
+}
+
+.chord-b-flat-m7 {
+  --ref-badge-bg: var(--ref-root-10);
+}
+
+.chord-b-flat-maj7 {
+  --ref-badge-bg: var(--ref-root-10);
+}
+
+.chord-b7 {
+  --ref-badge-bg: var(--ref-root-11);
+}
+
+.chord-bdim {
+  --ref-badge-bg: var(--ref-root-11);
+}
+
+.chord-bm {
+  --ref-badge-bg: var(--ref-root-11);
+}
+
+.chord-bm7 {
+  --ref-badge-bg: var(--ref-root-11);
+}
+
+.chord-bm7-flat-5 {
+  --ref-badge-bg: var(--ref-root-11);
+}
+
+.chord-bmaj7 {
+  --ref-badge-bg: var(--ref-root-11);
+}
+
+.chord-c {
+  --ref-badge-bg: var(--ref-root-0);
+}
+
+.chord-c-flat {
+  --ref-badge-bg: var(--ref-root-11);
+}
+
+.chord-c-flat-7 {
+  --ref-badge-bg: var(--ref-root-11);
+}
+
+.chord-c-flat-maj7 {
+  --ref-badge-bg: var(--ref-root-11);
+}
+
+.chord-c-sharp {
+  --ref-badge-bg: var(--ref-root-1);
+}
+
+.chord-c-sharp-7 {
+  --ref-badge-bg: var(--ref-root-1);
+}
+
+.chord-c-sharp-dim {
+  --ref-badge-bg: var(--ref-root-1);
+}
+
+.chord-c-sharp-m {
+  --ref-badge-bg: var(--ref-root-1);
+}
+
+.chord-c-sharp-m7 {
+  --ref-badge-bg: var(--ref-root-1);
+}
+
+.chord-c-sharp-m7-flat-5 {
+  --ref-badge-bg: var(--ref-root-1);
+}
+
+.chord-c7 {
+  --ref-badge-bg: var(--ref-root-0);
+}
+
+.chord-cdim {
+  --ref-badge-bg: var(--ref-root-0);
+}
+
+.chord-cm {
+  --ref-badge-bg: var(--ref-root-0);
+}
+
+.chord-cm7 {
+  --ref-badge-bg: var(--ref-root-0);
+}
+
+.chord-cm7-flat-5 {
+  --ref-badge-bg: var(--ref-root-0);
+}
+
+.chord-cmaj7 {
+  --ref-badge-bg: var(--ref-root-0);
+}
+
+.chord-d {
+  --ref-badge-bg: var(--ref-root-2);
+}
+
+.chord-d-flat {
+  --ref-badge-bg: var(--ref-root-1);
+}
+
+.chord-d-flat-7 {
+  --ref-badge-bg: var(--ref-root-1);
+}
+
+.chord-d-flat-maj7 {
+  --ref-badge-bg: var(--ref-root-1);
+}
+
+.chord-d-sharp {
+  --ref-badge-bg: var(--ref-root-3);
+}
+
+.chord-d-sharp-7 {
+  --ref-badge-bg: var(--ref-root-3);
+}
+
+.chord-d-sharp-dim {
+  --ref-badge-bg: var(--ref-root-3);
+}
+
+.chord-d-sharp-m {
+  --ref-badge-bg: var(--ref-root-3);
+}
+
+.chord-d-sharp-m7 {
+  --ref-badge-bg: var(--ref-root-3);
+}
+
+.chord-d-sharp-m7-flat-5 {
+  --ref-badge-bg: var(--ref-root-3);
+}
+
+.chord-d7 {
+  --ref-badge-bg: var(--ref-root-2);
+}
+
+.chord-ddim {
+  --ref-badge-bg: var(--ref-root-2);
+}
+
+.chord-dm {
+  --ref-badge-bg: var(--ref-root-2);
+}
+
+.chord-dm7 {
+  --ref-badge-bg: var(--ref-root-2);
+}
+
+.chord-dm7-flat-5 {
+  --ref-badge-bg: var(--ref-root-2);
+}
+
+.chord-dmaj7 {
+  --ref-badge-bg: var(--ref-root-2);
+}
+
+.chord-e {
+  --ref-badge-bg: var(--ref-root-4);
+}
+
+.chord-e-flat {
+  --ref-badge-bg: var(--ref-root-3);
+}
+
+.chord-e-flat-7 {
+  --ref-badge-bg: var(--ref-root-3);
+}
+
+.chord-e-flat-m {
+  --ref-badge-bg: var(--ref-root-3);
+}
+
+.chord-e-flat-m7 {
+  --ref-badge-bg: var(--ref-root-3);
+}
+
+.chord-e-flat-maj7 {
+  --ref-badge-bg: var(--ref-root-3);
+}
+
+.chord-e-sharp-dim {
+  --ref-badge-bg: var(--ref-root-5);
+}
+
+.chord-e-sharp-m7-flat-5 {
+  --ref-badge-bg: var(--ref-root-5);
+}
+
+.chord-e7 {
+  --ref-badge-bg: var(--ref-root-4);
+}
+
+.chord-edim {
+  --ref-badge-bg: var(--ref-root-4);
+}
+
+.chord-em {
+  --ref-badge-bg: var(--ref-root-4);
+}
+
+.chord-em7 {
+  --ref-badge-bg: var(--ref-root-4);
+}
+
+.chord-em7-flat-5 {
+  --ref-badge-bg: var(--ref-root-4);
+}
+
+.chord-emaj7 {
+  --ref-badge-bg: var(--ref-root-4);
+}
+
+.chord-f {
+  --ref-badge-bg: var(--ref-root-5);
+}
+
+.chord-f-flat {
+  --ref-badge-bg: var(--ref-root-4);
+}
+
+.chord-f-sharp {
+  --ref-badge-bg: var(--ref-root-6);
+}
+
+.chord-f-sharp-7 {
+  --ref-badge-bg: var(--ref-root-6);
+}
+
+.chord-f-sharp-dim {
+  --ref-badge-bg: var(--ref-root-6);
+}
+
+.chord-f-sharp-m {
+  --ref-badge-bg: var(--ref-root-6);
+}
+
+.chord-f-sharp-m7 {
+  --ref-badge-bg: var(--ref-root-6);
+}
+
+.chord-f-sharp-m7-flat-5 {
+  --ref-badge-bg: var(--ref-root-6);
+}
+
+.chord-f-sharp-maj7 {
+  --ref-badge-bg: var(--ref-root-6);
+}
+
+.chord-f7 {
+  --ref-badge-bg: var(--ref-root-5);
+}
+
+.chord-fdim {
+  --ref-badge-bg: var(--ref-root-5);
+}
+
+.chord-fm {
+  --ref-badge-bg: var(--ref-root-5);
+}
+
+.chord-fm7 {
+  --ref-badge-bg: var(--ref-root-5);
+}
+
+.chord-fm7-flat-5 {
+  --ref-badge-bg: var(--ref-root-5);
+}
+
+.chord-fmaj7 {
+  --ref-badge-bg: var(--ref-root-5);
+}
+
+.chord-g {
+  --ref-badge-bg: var(--ref-root-7);
+}
+
+.chord-g-flat {
+  --ref-badge-bg: var(--ref-root-6);
+}
+
+.chord-g-flat-7 {
+  --ref-badge-bg: var(--ref-root-6);
+}
+
+.chord-g-flat-maj7 {
+  --ref-badge-bg: var(--ref-root-6);
+}
+
+.chord-g-sharp {
+  --ref-badge-bg: var(--ref-root-8);
+}
+
+.chord-g-sharp-7 {
+  --ref-badge-bg: var(--ref-root-8);
+}
+
+.chord-g-sharp-dim {
+  --ref-badge-bg: var(--ref-root-8);
+}
+
+.chord-g-sharp-m {
+  --ref-badge-bg: var(--ref-root-8);
+}
+
+.chord-g-sharp-m7 {
+  --ref-badge-bg: var(--ref-root-8);
+}
+
+.chord-g-sharp-m7-flat-5 {
+  --ref-badge-bg: var(--ref-root-8);
+}
+
+.chord-g7 {
+  --ref-badge-bg: var(--ref-root-7);
+}
+
+.chord-gdim {
+  --ref-badge-bg: var(--ref-root-7);
+}
+
+.chord-gm {
+  --ref-badge-bg: var(--ref-root-7);
+}
+
+.chord-gm7 {
+  --ref-badge-bg: var(--ref-root-7);
+}
+
+.chord-gm7-flat-5 {
+  --ref-badge-bg: var(--ref-root-7);
+}
+
+.chord-gmaj7 {
+  --ref-badge-bg: var(--ref-root-7);
+}
+
+/* BREAKPOINTS */
+
+@media (max-width: 991.98px) {
+  .ref-toc-list { column-count: 2; }
+}
+
+@media (max-width: 767.98px) {
+  .ref-title { font-size: 1.625rem; }
+  .ref-section { grid-template-columns: 1fr; gap: 12px 0; }
+  .ref-section-title { font-size: 1.25rem; margin-bottom: 0; }
+}
+
+@media (max-width: 430px) {
+  .ref-title { font-size: 1.375rem; }
+  .ref-toc { padding: 4px 12px; }
+  .ref-toc-list { column-count: 1; }
+  .description { font-size: 1rem; }
+  .ref-table-group { padding: 10px 8px; }
+  .ref-table { border-spacing: 4px 0; }
+  .ref-chord-badge { font-size: 0.875rem; padding: 7px 2px; }
+}
