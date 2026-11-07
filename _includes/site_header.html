@@ -3,7 +3,11 @@
         <div class="feature">
             <div class="row">
                 <div class="col-3">
-                    <div class="pfp"><img src="{{ page.logo_url }}" class="feature-img"></div>
+                    <div class="pfp">
+                        <a href="https://{{ site.custom_domain }}">
+                            <img src="{{ page.logo_url }}" class="feature-img">
+                        </a>
+                    </div>
                 </div>
                 <div class="col-9">
                     <div class="title"><span class="brand">{{ page.entity }}</span></div>
