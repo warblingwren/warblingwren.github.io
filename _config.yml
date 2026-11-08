@@ -1,6 +1,32 @@
 permalink: /:year/:month/:day/:title.html
 highlighter: rouge
 
+## 
+## Provide a dummy repository to satisfy the plugin if it executes anyway
+##
+repository: "noop/noop"
+
+##
+## Tell Jekyll to use an empty whitelist array so it loads 
+## absolutely zero implicit gems
+##
+plugins: []
+
+##
+## Double exclude to catch old-legacy structures
+##
+exclude_plugins:
+  - jekyll-github-metadata
+plugins_exclude:
+  - jekyll-github-metadata
+
+##
+## Exclude certain paths
+##
+exclude:
+  - DATA/
+  - www/
+
 defaults:
   -
     scope:
@@ -20,8 +46,3 @@ defaults:
       g_analytics_id: G-SWHXT0HQYV
       custom_domain: warblingwren.com
       qr_img: /www/img/branding/qr.png
-    exclude:
-      - DATA/
-      - www/
-    plugins_exclude:
-      - jekyll-github-metadata
