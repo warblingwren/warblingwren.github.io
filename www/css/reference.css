@@ -231,7 +231,31 @@
   font-size: 1.5rem;
   font-weight: 700;
   line-height: 1.25;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0 16px;
 }
+
+/* heading text <span> in the <h2> */
+.ref-section-name {
+  min-width: 0;
+}
+
+/* Customize Voicing: permalink to the interactive page, at the right of the <h2> */
+.ref-section-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--ref-link);
+  text-decoration: underline;
+  white-space: nowrap;
+}
+.ref-section-link:hover { color: var(--ref-ink); }
+.ref-section-link:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--ref-focus); border-radius: 4px; }
 
 /* progression in order <div class="row"> / <div class="col-12">: round chord badges with | or – between */
 .ref-sequence-row {
@@ -464,11 +488,6 @@
 
 /* Root / Relative <h3> */
 .ref-table-title {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 0 12px;
   color: var(--ref-muted);
   font-size: 0.875rem;
   font-weight: 700;
@@ -476,21 +495,6 @@
   text-transform: uppercase;
   margin: 0 0 8px;
 }
-
-/* Customize Voicing: permalink to the interactive page, at the right of the Root / Relative heading */
-.ref-table-link {
-  letter-spacing: normal;
-  text-transform: none;
-  display: inline-flex;
-  align-items: center;
-  min-height: 44px;
-  font-size: 0.9375rem;
-  font-weight: 600;
-  color: var(--ref-link);
-  text-decoration: underline;
-}
-.ref-table-link:hover { color: var(--ref-ink); }
-.ref-table-link:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--ref-focus); border-radius: 4px; }
 
 /* progression <table>: white card inside its panel */
 .ref-table {
