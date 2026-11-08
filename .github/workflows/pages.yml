@@ -56,8 +56,13 @@ jobs:
           ## cache-version: Increment this number if you need to re-download cached gems
           ##
           ruby-version: '3.1'
-          bundler-cache: true
+          bundler-cache: false
           cache-version: 0
+
+      - name: Install Dependencies
+        run: |
+          bundle config set --global path '~/.gem' # Forces gems COMPLETELY out of the workspace
+          bundle install
 
       - name: Setup Pages
         id: pages

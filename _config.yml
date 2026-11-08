@@ -1,25 +1,6 @@
 permalink: /:year/:month/:day/:title.html
 highlighter: rouge
 
-## 
-## Provide a dummy repository to satisfy the plugin if it executes anyway
-##
-repository: "noop/noop"
-
-##
-## Tell Jekyll to use an empty whitelist array so it loads 
-## absolutely zero implicit gems
-##
-plugins: []
-
-##
-## Double exclude to catch old-legacy structures
-##
-exclude_plugins:
-  - jekyll-github-metadata
-plugins_exclude:
-  - jekyll-github-metadata
-
 ##
 ## Exclude certain paths
 ##
