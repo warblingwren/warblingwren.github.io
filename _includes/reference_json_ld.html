@@ -1,0 +1,38 @@
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebPage",
+      "@id": {{ page.canonical_url | jsonify }},
+      "url": {{ page.canonical_url | jsonify }},
+      "name": {{ page.title | jsonify }},
+      "description": {{ page.description | jsonify }},
+      "inLanguage": "en",
+      "isPartOf": {
+        "@type": "WebSite",
+        "name": "Warbling Wren",
+        "url": "https://warblingwren.com/"
+      },
+      "breadcrumb": { "@id": {{ page.canonical_url | append: "#breadcrumb" | jsonify }} }
+    },
+    {
+      "@type": "BreadcrumbList",
+      "@id": {{ page.canonical_url | append: "#breadcrumb" | jsonify }},
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Warbling Wren",
+          "item": "https://warblingwren.com/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": {{ page.title | jsonify }}
+        }
+      ]
+    }
+  ]
+}
+</script>

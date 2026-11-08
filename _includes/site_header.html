@@ -1,19 +1,19 @@
 <div class="row header">
     <div class="col-md-4 top-left">
         <div class="feature">
-            <div class="row">
-                <div class="col-3">
-                    <div class="pfp">
-                        <a href="https://{{ site.custom_domain }}">
+            <a href="https://{{ page.custom_domain }}">
+                <div class="row">
+                    <div class="col-3">
+                        <div class="pfp">
                             <img src="{{ page.logo_url }}" class="feature-img">
-                        </a>
+                        </div>
+                    </div>
+                    <div class="col-9">
+                        <div class="title"><span class="brand">{{ page.entity }}</span></div>
+                        <div class="subtitle"><span class="accent">{{ page.subtitle }}</span></div>
                     </div>
                 </div>
-                <div class="col-9">
-                    <div class="title"><span class="brand">{{ page.entity }}</span></div>
-                    <div class="subtitle"><span class="accent">{{ page.subtitle }}</span></div>
-                </div>
-            </div>
+            </a>
         </div>
     </div>
     <div class="col-md-4 top-center">

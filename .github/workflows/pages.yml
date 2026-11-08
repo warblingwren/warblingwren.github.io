@@ -21,6 +21,11 @@ env:
   ##
   WCAG_STANDARD: WCAG2AA
 
+  ##
+  ## Set to "false" to skip the accessibility check (e.g. during development).
+  ##
+  WCAG_ENABLED: "false"
+
 name: Pages
 
 on:
@@ -152,6 +157,7 @@ jobs:
       ##
       - name: Set up Node.js
         id: node
+        if: env.WCAG_ENABLED == 'true'
         continue-on-error: true
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1  # v7.1.0
         with:
@@ -163,6 +169,7 @@ jobs:
       ##
       - name: Accessibility check (${{ env.WCAG_STANDARD }})
         id: a11y
+        if: env.WCAG_ENABLED == 'true'
         continue-on-error: true
         shell: bash
         env:
