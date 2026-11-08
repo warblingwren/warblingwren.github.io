@@ -46,6 +46,21 @@ body {
     letter-spacing: 0.01em;
 }
 
+.brand-link,
+.brand-link:link,
+.brand-link:visited,
+.brand-link:hover,
+.brand-link:active,
+.brand-link:focus {
+    display: block;
+    color: inherit;
+    text-decoration: none;
+}
+.brand-link * {
+    color: inherit;
+    text-decoration: none;
+}
+
 .accent {
   font-family: var(--accent-font);
   font-weight: 200;
