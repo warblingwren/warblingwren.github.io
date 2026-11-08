@@ -1,38 +1,48 @@
+{%- capture site_root -%}https://{{ page.custom_domain }}/{%- endcapture -%}
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
   "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": {{ site_root | append: "#website" | jsonify }},
+      "name": {{ page.entity | jsonify }},
+      "alternateName": {{ page.subtitle | jsonify }},
+      "url": {{ site_root | jsonify }},
+      "inLanguage": {{ site.lang | default: "en" | jsonify }}
+    }
+{%- if page.layout == 'reference' %},
     {
       "@type": "WebPage",
       "@id": {{ page.canonical_url | jsonify }},
       "url": {{ page.canonical_url | jsonify }},
       "name": {{ page.title | jsonify }},
       "description": {{ page.description | jsonify }},
-      "inLanguage": "en",
-      "isPartOf": {
-        "@type": "WebSite",
-        "name": "Warbling Wren",
-        "url": "https://warblingwren.com/"
-      },
+      "isPartOf": { "@id": {{ site_root | append: "#website" | jsonify }} },
       "breadcrumb": { "@id": {{ page.canonical_url | append: "#breadcrumb" | jsonify }} }
     },
     {
       "@type": "BreadcrumbList",
       "@id": {{ page.canonical_url | append: "#breadcrumb" | jsonify }},
       "itemListElement": [
-        {
-          "@type": "ListItem",
-          "position": 1,
-          "name": "Warbling Wren",
-          "item": "https://warblingwren.com/"
-        },
-        {
-          "@type": "ListItem",
-          "position": 2,
-          "name": {{ page.title | jsonify }}
-        }
+        { "@type": "ListItem", "position": 1, "name": {{ page.entity | jsonify }}, "item": {{ site_root | jsonify }} },
+        { "@type": "ListItem", "position": 2, "name": {{ page.title | jsonify }} }
       ]
     }
+{%- elsif page.url == '/' or page.url == '/index.html' %},
+    {
+      "@type": "WebApplication",
+      "@id": {{ site_root | append: "#app" | jsonify }},
+      "name": {{ page.entity | jsonify }},
+      "url": {{ site_root | jsonify }},
+      "image": {{ page.logo_url | jsonify }},
+      "applicationCategory": "MusicApplication",
+      "operatingSystem": "Any (web browser)",
+      "isAccessibleForFree": true,
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+      "isPartOf": { "@id": {{ site_root | append: "#website" | jsonify }} }
+    }
+{%- endif %}
   ]
 }
 </script>
