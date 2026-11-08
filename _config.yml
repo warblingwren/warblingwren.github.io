@@ -23,3 +23,5 @@ defaults:
     exclude:
       - DATA/
       - www/
+    plugins_exclude:
+      - jekyll-github-metadata
