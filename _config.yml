@@ -1,6 +1,9 @@
 permalink: /:year/:month/:day/:title.html
 highlighter: rouge
 
+url: "https://warblingwren.com"
+baseurl: ""  
+
 defaults:
   -
     scope:
