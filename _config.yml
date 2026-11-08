@@ -8,6 +8,10 @@ exclude:
   - DATA/
   - www/
 
+url: "https://warblingwren.com"
+baseurl: ""
+repository: "warblingwren/warblingwren.github.io"
+
 defaults:
   -
     scope:
