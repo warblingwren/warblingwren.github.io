@@ -1,95 +1,325 @@
 ##
-## Bulid and deploy a Jekyll site to GitHub Pages
+## GitHub Pages (Jekyll) deployment
 ##
-name: Deploy Jekyll site to Pages
+## Drop-in template: site-specific settings belong in _config.yml, not here.
+
+##
+## One-time repo setting (required): Settings -> Pages -> Build and deployment
+## -> Source: "GitHub Actions". If the source is left on "Deploy from a branch",
+## GitHub also runs its own legacy build on every push, competing with this one.
+##
+
+##
+## ---------------------------------------------------------------------------
+## Repo-developer variables (keep this list minimal)
+## ---------------------------------------------------------------------------
+##
+env:
+  ##
+  ## Accessibility check level. One of: WCAG2A, WCAG2AA, WCAG2AAA.
+  ## Violations are reported as warnings; they do not block the deploy.
+  ##
+  WCAG_STANDARD: WCAG2AA
+
+name: Pages
 
 on:
-  ##
-  ## Runs on pushes targeting the default branch
-  ##
   push:
-    branches: ["main"]
-
-  ##
-  ## Allows you to run this workflow manually from the Actions tab
-  ##
+    branches: [main]
   workflow_dispatch:
 
 ##
-## Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
+## Deny-by-default. Each job requests only the scopes it needs.
 ##
-permissions:
-  contents: read
-  pages: write
-  id-token: write
+permissions: {}
 
 ##
-## Allow only one concurrent deployment, skipping runs queued between the run 
-## in-progress and latest queued.  However, do NOT cancel in-progress runs as 
-## we want to allow these production deployments to complete.
+## One deploy at a time, never cancelled mid-flight. If several pushes land
+## while a deploy is running, GitHub keeps only the newest pending run, so the
+## latest commit always wins and superseded builds never reach production.
 ##
 concurrency:
-  group: "pages"
+  group: pages-deploy
   cancel-in-progress: false
 
 jobs:
-  ##
-  ## build job
-  ##
   build:
-    runs-on: ubuntu-latest
+    name: Build, validate & accessibility check
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      pages: read
     steps:
+      ##
+      ## Shallow clone of exactly the commit that triggered this run.
+      ##
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
-          fetch-depth: 1 # Forces shallow clone
+          ref: ${{ github.sha }}
+          fetch-depth: 1
+          persist-credentials: false
 
-      - name: Setup Ruby
-        ##
-        ## verified SHA for v1.207.0 of ruby/setup-ruby
-        ##
-        uses: ruby/setup-ruby@4a9ddd6f338a97768b8006bf671dfbad383215f4
-        with:
-          ##
-          ## ruby-version: Not needed with a .ruby-version file
-          ## bundler-cache: runs 'bundle install' and caches installed gems automatically
-          ## cache-version: Increment this number if you need to re-download cached gems
-          ##
-          ruby-version: '3.1'
-          bundler-cache: false
-          cache-version: 0
-
-      - name: Install Dependencies
-        run: |
-          bundle config set --global path '~/.gem' # Forces gems COMPLETELY out of the workspace
-          bundle install
-
-      - name: Setup Pages
-        id: pages
-        uses: actions/configure-pages@v5
+      ##
+      ## Fails early with a clear error if the Pages source isn't "GitHub Actions".
+      ##
+      - name: Configure Pages
+        uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d  # v6.0.0
 
       - name: Build with Jekyll
-        run: bundle exec jekyll build
+        uses: actions/jekyll-build-pages@44a6e6beabd48582f863aeeb6cb2151cc1716697  # v1.0.13
+        with:
+          source: ./
+          destination: ./_site
+
+      ##
+      ## The Jekyll action runs in a container that writes _site as root.
+      ##
+      - name: Take ownership of build output
+        run: sudo chown -R "$(id -u):$(id -g)" _site
+
+      ##
+      ## Lets the post-deploy smoke test prove the live site serves this commit.
+      ##
+      - name: Write build marker
+        run: printf '%s\n' "$GITHUB_SHA" > _site/build-info.txt
+
+      - name: Validate site output
+        id: validate
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd _site
+          fail=0
+
+          if [[ ! -f index.html ]]; then
+            echo "::error::_site/index.html is missing — the site root would 404"
+            fail=1
+          fi
+
+          ##
+          ## Pages artifacts must not contain symbolic or hard links.
+          ##
+          links=$(find . -type l)
+
+          if [[ -n "$links" ]]; then
+            echo "::error::Symbolic links are not allowed in a Pages artifact:"
+            echo "$links"
+            fail=1
+          fi
+
+          hardlinks=$(find . -type f -links +1)
+
+          if [[ -n "$hardlinks" ]]; then
+            echo "::error::Hard links are not allowed in a Pages artifact:"
+            echo "$hardlinks"
+            fail=1
+          fi
+
+          ##
+          ## Everything in _site becomes public. Name-based guard only — it cannot
+          ## detect secrets embedded inside HTML/JS/JSON content.
+          ##
+          risky=$(find . -type f \( -iname '*.pem' -o -iname '*.key' -o -iname '*.p12' \
+            -o -iname '*.pfx' -o -iname 'id_rsa*' -o -iname 'id_ed25519*' -o -iname '*.env' \
+            -o -iname '.env*' -o -iname '*.tfstate' -o -iname '*.tfstate.backup' \
+            -o -iname '*.sqlite' -o -iname '*.sqlite3' -o -iname '*.db' \))
+
+          if [[ -n "$risky" ]]; then
+            echo "::error::Files that look like secrets or data stores would be published:"
+            echo "$risky"
+            fail=1
+          fi
+
+          ##
+          ## GitHub's supported maximum published site size is 1 GB. Warn only:
+          ## larger deploys are not guaranteed but are not blocked here.
+          ##
+          bytes=$(du -sb . | cut -f1)
+          files=$(find . -type f | wc -l)
+          pages=$(find . -type f -name '*.html' | wc -l)
+
+          if (( bytes > 1073741824 )); then
+            echo "::warning::Site is ${bytes} bytes, over GitHub's supported 1 GB Pages limit — deploy may fail or time out"
+          fi
+
+          {
+            echo "bytes=${bytes}"
+            echo "files=${files}"
+            echo "pages=${pages}"
+          } >> "$GITHUB_OUTPUT"
+
+          exit "$fail"
+
+      ##
+      ## Accessibility tooling is advisory: any failure here (including tool
+      ## download problems) warns and the deploy continues.
+      ##
+      - name: Set up Node.js
+        id: node
+        continue-on-error: true
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1  # v7.1.0
+        with:
+          node-version: 24
+
+      ##
+      ## Serves _site locally and scans every HTML page with axe-core via pa11y-ci.
+      ## Uses the runner's preinstalled Google Chrome rather than downloading one.
+      ##
+      - name: Accessibility check (${{ env.WCAG_STANDARD }})
+        id: a11y
+        continue-on-error: true
+        shell: bash
         env:
-          JEKYLL_ENV: production
-          PAGES_REPO_NWO: ${{ github.repository }}
+          PUPPETEER_SKIP_DOWNLOAD: "true"
+          A11Y_PORT: "4000"
+        run: |
+          set -euo pipefail
+          chrome=$(command -v google-chrome || true)
 
-      - name: Upload artifact
-        ##
-        ## Automatically uploads an artifact from the './_site' directory by default
-        ##
-        uses: actions/upload-pages-artifact@v3
+          if [[ -z "$chrome" ]]; then
+            echo "::error::google-chrome not found on the runner image"
+            exit 1
+          fi
 
-  ##
-  ## Deployment job
-  ##
+          tooldir="$RUNNER_TEMP/a11y"
+          mkdir -p "$tooldir"
+          npm install --prefix "$tooldir" --no-save --no-audit --no-fund pa11y-ci@5.0.0
+
+          python3 -m http.server "$A11Y_PORT" --bind 127.0.0.1 --directory _site \
+            > "$RUNNER_TEMP/http.log" 2>&1 &
+
+          for _ in $(seq 1 20); do
+            curl -sf -o /dev/null "http://127.0.0.1:${A11Y_PORT}/" && break
+            sleep 0.5
+          done
+
+          CHROME="$chrome" python3 - <<'PY'
+          import json, os, pathlib
+          root = pathlib.Path("_site")
+          port = os.environ["A11Y_PORT"]
+
+          urls = sorted(
+              f"http://127.0.0.1:{port}/{p.relative_to(root).as_posix()}"
+              for p in root.rglob("*.html")
+          )
+
+          config = {
+              "defaults": {
+                  "standard": os.environ["WCAG_STANDARD"],
+                  "runners": ["axe"],
+                  "concurrency": 4,
+                  ##
+                  ## Per-page incognito contexts caused intermittent
+                  ## "Target.closeTarget" errors in testing; shared context is stable.
+                  ##
+                  "useIncognitoBrowserContext": False,
+                  "timeout": 60000,
+                  "chromeLaunchConfig": {
+                      "executablePath": os.environ["CHROME"],
+                      "args": ["--no-sandbox"],
+                  },
+              },
+              "urls": urls,
+          }
+
+          out = pathlib.Path(os.environ["RUNNER_TEMP"]) / "pa11yci.json"
+          out.write_text(json.dumps(config, indent=2))
+          print(f"Scanning {len(urls)} page(s) against {os.environ['WCAG_STANDARD']}")
+          PY
+
+          "$tooldir/node_modules/.bin/pa11y-ci" --config "$RUNNER_TEMP/pa11yci.json"
+
+      - name: Accessibility warning
+        if: steps.node.outcome == 'failure' || steps.a11y.outcome == 'failure'
+        run: |
+          msg="Accessibility check (${WCAG_STANDARD}) reported violations or could not run"
+          echo "::warning::${msg} — see the 'Accessibility check' step log. Deploy continues."
+
+      - name: Build summary
+        if: always()
+        shell: bash
+        env:
+          SITE_BYTES: ${{ steps.validate.outputs.bytes }}
+          SITE_FILES: ${{ steps.validate.outputs.files }}
+          SITE_PAGES: ${{ steps.validate.outputs.pages }}
+          VALIDATION: ${{ steps.validate.outcome }}
+          A11Y: ${{ steps.a11y.outcome }}
+        run: |
+          {
+            echo "### Pages build"
+            echo "| Item | Value |"
+            echo "|---|---|"
+            echo "| Commit | \`${GITHUB_SHA}\` |"
+            echo "| Files / HTML pages | ${SITE_FILES:-n/a} / ${SITE_PAGES:-n/a} |"
+            echo "| Size (bytes) | ${SITE_BYTES:-n/a} |"
+            echo "| Output validation | ${VALIDATION} |"
+            echo "| Accessibility (${WCAG_STANDARD}, advisory) | ${A11Y} |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9  # v5.0.0
+        with:
+          path: ./_site
+
   deploy:
+    name: Deploy
+    if: github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    needs: build
+    outputs:
+      page_url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v5
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346  # v5.0.1
+
+  verify:
+    name: Smoke test
+    needs: deploy
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions: {}
+    steps:
+      - name: Live site serves this commit
+        shell: bash
+        env:
+          PAGE_URL: ${{ needs.deploy.outputs.page_url }}
+        run: |
+          set -euo pipefail
+          base="${PAGE_URL%/}"
+
+          code=$(curl -sS -o /dev/null -w '%{http_code}' \
+            --retry 5 --retry-delay 10 --retry-all-errors "${base}/")
+
+          if [[ "$code" != "200" ]]; then
+            echo "::error::${base}/ returned HTTP ${code}"
+            exit 1
+          fi
+
+          ##
+          ## Cache-busting query string; poll until the CDN serves this build.
+          ##
+          served=""
+
+          for i in $(seq 1 20); do
+            served=$(curl -sS --fail "${base}/build-info.txt?cb=${GITHUB_SHA}-${i}" || true)
+            if [[ "$served" == "$GITHUB_SHA" ]]; then
+              echo "### Smoke test passed — ${base} serves \`${GITHUB_SHA}\`" >> "$GITHUB_STEP_SUMMARY"
+              exit 0
+            fi
+            sleep 30
+          done
+
+          echo "::error::${base} did not serve ${GITHUB_SHA} within ~10 minutes (last: '${served}')"
+          echo "### Smoke test FAILED — see logs" >> "$GITHUB_STEP_SUMMARY"
+
+          exit 1

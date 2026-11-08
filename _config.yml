@@ -1,17 +1,6 @@
 permalink: /:year/:month/:day/:title.html
 highlighter: rouge
 
-##
-## Exclude certain paths
-##
-exclude:
-  - DATA/
-  - www/
-
-url: "https://warblingwren.com"
-baseurl: ""
-repository: "warblingwren/warblingwren.github.io"
-
 defaults:
   -
     scope:
@@ -31,3 +20,9 @@ defaults:
       g_analytics_id: G-SWHXT0HQYV
       custom_domain: warblingwren.com
       qr_img: /www/img/branding/qr.png
+    ##
+    ## Exclude certain paths
+    ##
+    exclude:
+      - DATA/
+      - www/

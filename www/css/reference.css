@@ -786,9 +786,30 @@
   font-weight: 700;
 }
 
-/* progression <h3>: a clear break between progressions */
+/* progression <details>: starts collapsed; several can be open at once (no JavaScript) */
+.ref-menu-group {
+  margin: 22px 0 0;
+}
+
+/* progression <summary>: the whole heading opens / closes the links; browser marker replaced by the chevron */
+.ref-menu-toggle {
+  display: block;
+  list-style: none;
+  cursor: pointer;
+  border-radius: 0 6px 6px 0;
+}
+.ref-menu-toggle::-webkit-details-marker { display: none; }
+.ref-menu-toggle:focus { outline: none; }
+.ref-menu-toggle:focus-visible { box-shadow: 0 0 0 3px var(--ref-focus); }
+
+/* progression <h3>: a clear break between progressions, at least 44px tall, chevron at the right */
 .ref-menu-progression {
-  margin: 22px 0 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 44px;
+  margin: 0;
   padding: 6px 10px;
   border-left: 3px solid var(--ref-cf-root);
   border-radius: 0 6px 6px 0;
@@ -799,11 +820,29 @@
   line-height: 1.3;
   /* no uppercase: the case of a numeral is its meaning (ii = minor, II = major) */
 }
+.ref-menu-toggle:hover .ref-menu-progression { color: var(--ref-link); }
+
+/* chevron: points down when collapsed, up when open */
+.ref-menu-progression::after {
+  content: "";
+  flex: 0 0 auto;
+  width: 8px;
+  height: 8px;
+  margin: 0 4px 4px 0;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(45deg);
+  transition: transform 0.15s ease;
+}
+.ref-menu-group[open] > .ref-menu-toggle .ref-menu-progression::after {
+  margin: 4px 4px 0 0;
+  transform: rotate(-135deg);
+}
 
 /* links <ul> */
 .ref-menu-list {
   list-style: none;
-  margin: 0;
+  margin: 8px 0 0;
   padding: 0;
 }
 
