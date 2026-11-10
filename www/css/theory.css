@@ -1,0 +1,450 @@
+/*
+ * **************************************************************** theory
+ * /theory/ pages: root motion, circle of fifths, cadences, progression relationships, glossary.
+ * Chords, notes and keys are coloured by pitch class (C = 0 … B = 11), the same colours as the
+ * reference pages' chord badges (reference.css --ref-root-N). Roman numerals use brand tones, and a
+ * shape per scale degree, so they never share a colour with a chord.
+ *   chord   <span class="theory-chord theory-root-N theory-q-QUALITY">    solid pill
+ *   note    <span class="theory-note theory-pc-N">                        outlined circle
+ *   key     <span class="theory-key theory-pc-N">                         coloured, underlined text
+ *   numeral <span class="theory-num theory-num-D theory-num-upper|lower [theory-num-altered]">
+*/
+:root {
+  --theory-ink: #303030;          /* = --ws-ink */
+  --theory-ink-soft: #6b6f76;     /* = --ws-ink-soft */
+  --theory-paper: #ffffff;
+  --theory-line: #e6e9ee;         /* = --ws-line */
+  --theory-field: #f5f6f8;        /* = --ws-field */
+  --theory-zebra: #fafbfc;
+  --theory-accent: #a8dade;       /* = --ws-accent, the brand border colour */
+  --theory-accent-soft: rgba(168, 218, 222, 0.45);
+  --theory-hover: #eef7f8;
+  --theory-link: #1565c0;
+  --theory-focus: rgba(48, 48, 48, 0.35);
+  --theory-radius: 14px;
+  --theory-shadow: 0 1px 2px rgba(16, 18, 22, 0.06), 0 8px 24px rgba(16, 18, 22, 0.06);
+  --theory-hit: 44px;
+  --theory-nav-h: 64px;           /* glossary letter bar height (sticky); letters scroll in below it */
+
+  /* chord roots, by pitch class: SYNC with reference.css --ref-root-N */
+  --theory-root-0: #d32f2f;       /* C */
+  --theory-root-1: #c2185b;       /* C♯/D♭ */
+  --theory-root-2: #7b1fa2;       /* D */
+  --theory-root-3: #512da8;       /* D♯/E♭ */
+  --theory-root-4: #303f9f;       /* E */
+  --theory-root-5: #1565c0;       /* F */
+  --theory-root-6: #01579b;       /* F♯/G♭ */
+  --theory-root-7: #00695c;       /* G */
+  --theory-root-8: #2e7d32;       /* G♯/A♭ */
+  --theory-root-9: #33691e;       /* A */
+  --theory-root-10: #6d4c41;      /* A♯/B♭ */
+  --theory-root-11: #bf360c;      /* B */
+
+  /* Roman numerals, by scale degree: brand ink, blue-grey, brand accent and amber (no chord root uses these) */
+  --theory-num-1: #303030;  --theory-num-1-fg: #ffffff;   /* I   home: ink, circle */
+  --theory-num-2: #546e7a;  --theory-num-2-fg: #ffffff;   /* ii  blue grey 600, square */
+  --theory-num-3: #a8dade;  --theory-num-3-fg: #303030;   /* iii brand accent, leaf */
+  --theory-num-4: #ffe082;  --theory-num-4-fg: #303030;   /* IV  amber 200, arch */
+  --theory-num-5: #ffb300;  --theory-num-5-fg: #303030;   /* V   amber 600, arrow (tension pointing home) */
+  --theory-num-6: #cfd8dc;  --theory-num-6-fg: #303030;   /* vi  blue grey 100, mirrored leaf */
+  --theory-num-7: #78909c;  --theory-num-7-fg: #ffffff;   /* vii blue grey 400, hexagon */
+
+  /* level tags on the Part headings */
+  --theory-level-1: #a8dade;  --theory-level-1-fg: #303030;
+  --theory-level-2: #ffe082;  --theory-level-2-fg: #303030;
+  --theory-level-3: #303030;  --theory-level-3-fg: #ffffff;
+}
+
+/* pitch class -> colour, shared by chords, notes and keys */
+.theory .theory-root-0, .theory .theory-pc-0 { --theory-c: var(--theory-root-0); }
+.theory .theory-root-1, .theory .theory-pc-1 { --theory-c: var(--theory-root-1); }
+.theory .theory-root-2, .theory .theory-pc-2 { --theory-c: var(--theory-root-2); }
+.theory .theory-root-3, .theory .theory-pc-3 { --theory-c: var(--theory-root-3); }
+.theory .theory-root-4, .theory .theory-pc-4 { --theory-c: var(--theory-root-4); }
+.theory .theory-root-5, .theory .theory-pc-5 { --theory-c: var(--theory-root-5); }
+.theory .theory-root-6, .theory .theory-pc-6 { --theory-c: var(--theory-root-6); }
+.theory .theory-root-7, .theory .theory-pc-7 { --theory-c: var(--theory-root-7); }
+.theory .theory-root-8, .theory .theory-pc-8 { --theory-c: var(--theory-root-8); }
+.theory .theory-root-9, .theory .theory-pc-9 { --theory-c: var(--theory-root-9); }
+.theory .theory-root-10, .theory .theory-pc-10 { --theory-c: var(--theory-root-10); }
+.theory .theory-root-11, .theory .theory-pc-11 { --theory-c: var(--theory-root-11); }
+
+/* ---------------------------------------------------------------- page */
+.theory {
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 8px 0 64px;
+  color: var(--theory-ink);
+  font-size: 1.0625rem;
+  line-height: 1.75;
+  text-align: left;
+}
+.theory .theory-title {
+  margin: 24px 0 12px;
+  font-size: 2.5rem;
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+}
+.theory .theory-lede {
+  margin: 0 0 40px;
+  padding: 18px 22px;
+  border-left: 5px solid var(--theory-accent);
+  border-radius: 0 var(--theory-radius) var(--theory-radius) 0;
+  background: var(--theory-field);
+  color: var(--theory-ink);
+  font-size: 1.1875rem;
+  line-height: 1.7;
+}
+.theory .theory-section {
+  margin: 0 0 56px;
+}
+.theory .theory-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin: 0 0 20px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid var(--theory-line);
+  font-size: 1.875rem;
+  font-weight: 800;
+  line-height: 1.25;
+}
+/* level tag before "Part 1/2/3" headings */
+.theory .theory-section[id$="-basics"] > .theory-heading::before,
+.theory .theory-section[id$="-deeper"] > .theory-heading::before,
+.theory .theory-section[id$="-pro"] > .theory-heading::before {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 12px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  line-height: 1.6;
+}
+.theory .theory-section[id$="-basics"] > .theory-heading::before { content: "Beginner"; background: var(--theory-level-1); color: var(--theory-level-1-fg); }
+.theory .theory-section[id$="-deeper"] > .theory-heading::before { content: "Intermediate"; background: var(--theory-level-2); color: var(--theory-level-2-fg); }
+.theory .theory-section[id$="-pro"] > .theory-heading::before { content: "Professional"; background: var(--theory-level-3); color: var(--theory-level-3-fg); }
+
+.theory .theory-subheading {
+  margin: 36px 0 12px;
+  padding-left: 14px;
+  border-left: 4px solid var(--theory-accent);
+  font-size: 1.3125rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+.theory .theory-text {
+  margin: 0 0 16px;
+}
+.theory .theory-term,
+.theory .theory-emphasis {
+  font-weight: 700;
+}
+/* new words: a brand-accent highlighter stroke */
+.theory .theory-word {
+  font-style: italic;
+  background: linear-gradient(transparent 62%, var(--theory-accent-soft) 62%);
+  padding: 0 2px;
+}
+
+/* lists */
+.theory .theory-list {
+  margin: 0 0 20px;
+  padding: 0;
+  list-style: none;
+}
+.theory .theory-item {
+  position: relative;
+  margin: 0 0 12px;
+  padding-left: 26px;
+}
+.theory .theory-item::before {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 0.68em;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--theory-accent);
+  box-shadow: 0 0 0 3px var(--theory-accent-soft);
+}
+.theory .theory-steps {
+  margin: 0 0 20px;
+  padding: 0;
+  list-style: none;
+  counter-reset: theory-step;
+}
+.theory .theory-step {
+  position: relative;
+  margin: 0 0 14px;
+  padding-left: 44px;
+  counter-increment: theory-step;
+}
+.theory .theory-step::before {
+  content: counter(theory-step);
+  position: absolute;
+  left: 0;
+  top: 0.1em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--theory-ink);
+  color: var(--theory-paper);
+  font-size: 0.875rem;
+  font-weight: 800;
+}
+
+/* ---------------------------------------------------------------- chords, notes, keys */
+.theory .theory-chord {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.1em;
+  padding: 0.05em 0.6em;
+  margin: 0.1em 0.06em;
+  border-radius: 999px;
+  background: var(--theory-c, var(--theory-ink));
+  color: #ffffff;
+  font-size: 0.9em;
+  font-weight: 700;
+  line-height: 1.5;
+  white-space: nowrap;
+  vertical-align: baseline;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18);
+}
+/* chord quality: a small mark on the badge, so C, Cm, C7 and C° share a colour but not a look */
+.theory .theory-chord.theory-q-minor { box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.55), 0 1px 2px rgba(0, 0, 0, 0.18); }
+.theory .theory-chord.theory-q-dominant { box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.28), 0 1px 2px rgba(0, 0, 0, 0.18); }
+.theory .theory-chord.theory-q-diminished { outline: 1.5px dotted rgba(255, 255, 255, 0.9); outline-offset: -4px; }
+.theory .theory-chord.theory-q-augmented { outline: 1.5px dashed rgba(255, 255, 255, 0.9); outline-offset: -4px; }
+.theory .theory-chord.theory-q-suspended { box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.35), inset 0 0 0 4px rgba(0, 0, 0, 0.15); }
+
+.theory .theory-note {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.75em;
+  height: 1.75em;
+  padding: 0 0.3em;
+  margin: 0.1em 0.04em;
+  border: 2px solid var(--theory-c, var(--theory-ink));
+  border-radius: 999px;
+  background: var(--theory-paper);
+  color: var(--theory-c, var(--theory-ink));
+  font-size: 0.82em;
+  font-weight: 800;
+  line-height: 1;
+  white-space: nowrap;
+  vertical-align: 0.05em;
+}
+.theory .theory-key {
+  color: var(--theory-c, var(--theory-ink));
+  font-weight: 800;
+  white-space: nowrap;
+  border-bottom: 2px solid var(--theory-c, var(--theory-ink));
+}
+
+/* a progression written out (badges joined by – or →): one unit, kept on one line inside tables */
+.theory .theory-run { white-space: normal; }
+.theory .theory-table .theory-run { white-space: nowrap; }
+
+/* ---------------------------------------------------------------- Roman numerals */
+.theory .theory-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2em;
+  padding: 0.05em 0.55em;
+  margin: 0.1em 0.06em;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 0.92em;
+  font-weight: 700;
+  line-height: 1.45;
+  white-space: nowrap;
+  vertical-align: baseline;
+}
+.theory .theory-num-lower { font-style: italic; }
+.theory .theory-num-1 { background: var(--theory-num-1); color: var(--theory-num-1-fg); border-radius: 999px; }
+.theory .theory-num-2 { background: var(--theory-num-2); color: var(--theory-num-2-fg); border-radius: 3px; }
+.theory .theory-num-3 { background: var(--theory-num-3); color: var(--theory-num-3-fg); border-radius: 12px 3px 12px 3px; }
+.theory .theory-num-4 { background: var(--theory-num-4); color: var(--theory-num-4-fg); border-radius: 12px 12px 3px 3px; }
+.theory .theory-num-5 {
+  background: var(--theory-num-5);
+  color: var(--theory-num-5-fg);
+  padding-right: 0.95em;
+  clip-path: polygon(0 0, calc(100% - 0.55em) 0, 100% 50%, calc(100% - 0.55em) 100%, 0 100%);
+  border-radius: 3px 0 0 3px;
+}
+.theory .theory-num-6 { background: var(--theory-num-6); color: var(--theory-num-6-fg); border-radius: 3px 12px 3px 12px; }
+.theory .theory-num-7 {
+  background: var(--theory-num-7);
+  color: var(--theory-num-7-fg);
+  padding-left: 0.85em;
+  padding-right: 0.85em;
+  clip-path: polygon(0.45em 0, calc(100% - 0.45em) 0, 100% 50%, calc(100% - 0.45em) 100%, 0.45em 100%, 0 50%);
+}
+/* ♭VII, ♭VI, ♭II: borrowed from outside the key — striped */
+.theory .theory-num-altered {
+  background-image: repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.28) 0 4px, transparent 4px 8px);
+}
+
+/* ---------------------------------------------------------------- tables */
+.theory .theory-table-wrap {
+  margin: 8px 0 28px;
+  border: 1px solid var(--theory-line);
+  border-radius: var(--theory-radius);
+  background: var(--theory-paper);
+  box-shadow: var(--theory-shadow);
+}
+.theory .theory-table {
+  width: 100%;
+  margin: 0;
+  border-collapse: separate;
+  border-spacing: 0;
+  color: var(--theory-ink);
+  font-size: 0.97rem;
+}
+.theory .theory-table .theory-table-cell {
+  padding: 12px 16px;
+  border-top: 0;
+  border-bottom: 1px solid var(--theory-line);
+  vertical-align: middle;
+  text-align: left;
+}
+.theory .theory-table-head .theory-table-cell {
+  position: sticky;
+  top: 0;
+  background: var(--theory-field);
+  border-bottom: 2px solid var(--theory-line);
+  color: var(--theory-ink-soft);
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.theory .theory-table-head .theory-table-row:first-child .theory-table-cell:first-child { border-top-left-radius: var(--theory-radius); }
+.theory .theory-table-head .theory-table-row:first-child .theory-table-cell:last-child { border-top-right-radius: var(--theory-radius); }
+.theory .theory-table-body .theory-table-row:nth-child(even) .theory-table-cell { background: var(--theory-zebra); }
+.theory .theory-table-body .theory-table-row:hover .theory-table-cell { background: var(--theory-hover); }
+.theory .theory-table-body .theory-table-row:last-child .theory-table-cell { border-bottom: 0; }
+.theory .theory-table-body .theory-table-cell:first-child { font-weight: 700; }
+
+/* ---------------------------------------------------------------- glossary */
+.theory .theory-glossary-nav {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0 0 32px;
+  padding: 10px 0;
+  list-style: none;
+  background: var(--theory-paper);
+  border-bottom: 1px solid var(--theory-line);
+}
+.theory .theory-glossary-nav-item { margin: 0; }
+.theory .theory-glossary-nav-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--theory-hit);
+  height: var(--theory-hit);
+  border-radius: 12px;
+  background: var(--theory-field);
+  color: var(--theory-ink);
+  font-weight: 800;
+  text-decoration: none;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+.theory .theory-glossary-nav-link:hover { background: var(--theory-accent); color: var(--theory-ink); text-decoration: none; }
+.theory .theory-glossary-nav-link:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--theory-focus); }
+.theory .theory-glossary-letter {
+  margin: 0 0 40px;
+  scroll-margin-top: calc(var(--theory-nav-h) + 12px);
+}
+.theory .theory-glossary-letter-heading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  margin: 0 0 16px;
+  border-radius: 16px;
+  background: var(--theory-ink);
+  color: var(--theory-paper);
+  font-size: 1.75rem;
+  font-weight: 800;
+}
+.theory .theory-glossary-list { margin: 0; }
+.theory .theory-glossary-entry {
+  padding: 16px 0;
+  border-bottom: 1px solid var(--theory-line);
+  scroll-margin-top: calc(var(--theory-nav-h) + 12px);
+}
+.theory .theory-glossary-entry:target {
+  margin: 0 -12px;
+  padding: 16px 12px;
+  border-radius: 12px;
+  background: var(--theory-hover);
+}
+.theory .theory-glossary-term {
+  margin: 0 0 4px;
+  font-size: 1.125rem;
+  font-weight: 800;
+}
+.theory .theory-glossary-definition { margin: 0; }
+.theory .theory-glossary-see {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  margin-top: 8px;
+  color: var(--theory-ink-soft);
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+.theory .theory-glossary-see-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 0 12px;
+  border: 1.5px solid var(--theory-accent);
+  border-radius: 999px;
+  color: var(--theory-ink);
+  font-weight: 700;
+  text-decoration: none;
+}
+.theory .theory-glossary-see-link:hover { background: var(--theory-accent); color: var(--theory-ink); text-decoration: none; }
+.theory .theory-glossary-see-link:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--theory-focus); }
+
+/* ---------------------------------------------------------------- BREAKPOINTS (theory) */
+@media (max-width: 767.98px) {
+  .theory { font-size: 1rem; }
+  .theory .theory-title { font-size: 2rem; }
+  .theory .theory-lede { padding: 14px 16px; font-size: 1.0625rem; }
+  .theory .theory-heading { font-size: 1.5rem; }
+  .theory .theory-subheading { font-size: 1.1875rem; }
+  .theory .theory-table { font-size: 0.9375rem; }
+  .theory .theory-table .theory-table-cell { padding: 10px 12px; }
+}
+@media (max-width: 430px) {
+  .theory .theory-title { font-size: 1.75rem; }
+  .theory .theory-table { font-size: 0.875rem; }
+  .theory .theory-table .theory-table-cell { padding: 9px 10px; }
+  .theory .theory-chord { padding: 0.05em 0.5em; }
+  .theory .theory-glossary-nav { gap: 4px; }
+  :root { --theory-nav-h: 112px; }
+}
+@media (hover: none) and (pointer: coarse) {
+  .theory .theory-glossary-see-link { min-height: var(--theory-hit); }
+}
