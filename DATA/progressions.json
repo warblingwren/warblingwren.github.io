@@ -44,7 +44,7 @@
      "quality": "dom7"
     }
    ],
-   "description": "The foundation of blues: four bars of I, two of IV, back to I, then the V–IV–I turnaround.",
+   "description": "The foundation of blues: four bars of I7, two of IV7, two of I7, then V7–IV7–I7–V7, with the last V7 turning the form back to the top.",
    "bars": [
     0,
     0,
@@ -86,7 +86,7 @@
      "quality": "dom7"
     }
    ],
-   "description": "Like the 12-bar, but visits IV in bar 2.",
+   "description": "The 12-bar blues with a quick change to IV7 in bar 2, then back to I7 for bars 3 and 4.",
    "bars": [
     0,
     1,
@@ -128,7 +128,7 @@
      "quality": "dom7"
     }
    ],
-   "description": "A shorter blues form.",
+   "description": "A shorter blues form in eight bars: I7–V7–IV7–IV7–I7–V7–I7–V7, as in “Key to the Highway”.",
    "bars": [
     0,
     1,
@@ -166,7 +166,7 @@
      "quality": "dom7"
     }
    ],
-   "description": "12-bar form in a minor key; the V7 is borrowed from harmonic minor.",
+   "description": "The 12-bar form in a minor key: i7 and iv7 from natural minor, with a V7 borrowed from harmonic minor to pull back to i7.",
    "bars": [
     0,
     0,
@@ -208,7 +208,7 @@
      "quality": "maj7"
     }
    ],
-   "description": "The most common cadence in jazz: each chord a fifth below the last."
+   "description": "ii7–V7–Imaj7, the most common cadence in jazz: each root falls a fifth (D–G–C in C major)."
   },
   {
    "id": "jazz-i-vi-ii-v",
@@ -242,7 +242,7 @@
      "quality": "dom7"
     }
    ],
-   "description": "Turnaround used in rhythm changes; roots move by fifths after the vi."
+   "description": "Imaj7–vi7–ii7–V7, the turnaround behind rhythm changes: from vi7 on, each root falls a fifth, and V7 leads back to Imaj7."
   },
   {
    "id": "jazz-iii-vi-ii-v",
@@ -276,7 +276,7 @@
      "quality": "dom7"
     }
    ],
-   "description": "Every root moves down a fifth around the circle."
+   "description": "iii7–vi7–ii7–V7: every root falls a fifth around the circle (E–A–D–G in C major), and V7 leads home to I."
   },
   {
    "id": "jazz-minor-ii-v-i",
@@ -304,7 +304,7 @@
      "quality": "min7"
     }
    ],
-   "description": "Minor-key cadence with a half-diminished ii."
+   "description": "iiø7–V7–i7, the minor-key cadence: a half-diminished ii, and a V7 borrowed from harmonic minor."
   },
   {
    "id": "country-i-iv-v",
@@ -332,7 +332,7 @@
      "quality": "major"
     }
    ],
-   "description": "Three-chord country: tonic, subdominant, dominant."
+   "description": "Three-chord country: the tonic (I), subdominant (IV) and dominant (V) triads."
   },
   {
    "id": "country-i-ii7-v7",
@@ -360,7 +360,7 @@
      "quality": "dom7"
     }
    ],
-   "description": "II7 is a secondary dominant (V of V) that pulls to V."
+   "description": "II7 is a secondary dominant (V7 of V) that pulls to V7, which pulls back to I."
   },
   {
    "id": "rock-three-chord",
@@ -388,7 +388,7 @@
      "quality": "major"
     }
    ],
-   "description": "The classic rock & roll progression; the circle neighbours of the tonic."
+   "description": "The classic rock & roll progression: I with its two neighbours on the circle of fifths, IV and V."
   },
   {
    "id": "rock-50s",
@@ -422,7 +422,7 @@
      "quality": "major"
     }
    ],
-   "description": "Doo-wop and early rock & roll."
+   "description": "I–vi–IV–V, the doo-wop progression behind much of 1950s pop and early rock & roll."
   },
   {
    "id": "rock-mixolydian",
@@ -450,7 +450,7 @@
      "quality": "major"
     }
    ],
-   "description": "♭VII is borrowed from the Mixolydian mode; a staple of classic rock."
+   "description": "♭VII is borrowed from the Mixolydian mode; I–♭VII–IV is a staple of classic rock."
   },
   {
    "id": "rock-aeolian",
@@ -478,7 +478,7 @@
      "quality": "major"
     }
    ],
-   "description": "Minor-key rock climb."
+   "description": "A natural-minor rock climb: from i, up through VI and VII, back to i."
   },
   {
    "id": "folk-canon",
@@ -518,7 +518,7 @@
      "quality": "major"
     }
    ],
-   "description": "Pachelbel’s Canon pattern, common in folk ballads."
+   "description": "The first five chords of Pachelbel’s Canon (the full pattern is I–V–vi–iii–IV–I–IV–V), common in folk ballads."
   },
   {
    "id": "folk-i-iv-vi-v",
@@ -552,7 +552,7 @@
      "quality": "major"
     }
    ],
-   "description": "Gentle folk progression."
+   "description": "A gentle folk progression: I to IV, then the relative minor (vi) before V leads back to I."
   },
   {
    "id": "folk-minor-i-iv-v",
@@ -580,7 +580,7 @@
      "quality": "minor"
     }
    ],
-   "description": "Three-chord progression in natural minor."
+   "description": "Three-chord progression in natural minor, where the v chord stays minor."
   },
   {
    "id": "folk-andalusian",
@@ -614,7 +614,7 @@
      "quality": "major"
     }
    ],
-   "description": "Descending minor cadence from Spanish folk and flamenco."
+   "description": "A descending minor cadence from Spanish folk and flamenco: i–VII–VI–V, with the major V from harmonic minor."
   },
   {
    "id": "pop-axis",
@@ -648,7 +648,7 @@
      "quality": "major"
     }
    ],
-   "description": "The “axis” progression behind many pop songs."
+   "description": "The “axis” progression behind many pop songs: I–V–vi–IV."
   },
   {
    "id": "pop-vi-iv-i-v",
@@ -682,7 +682,7 @@
      "quality": "major"
     }
    ],
-   "description": "The axis progression started on vi for a minor feel."
+   "description": "The axis progression started on vi for a minor feel: the same four chords as I–V–vi–IV."
   },
   {
    "id": "pop-minor",
@@ -716,7 +716,7 @@
      "quality": "major"
     }
    ],
-   "description": "Minor-key pop loop."
+   "description": "Minor-key pop loop: i–VI–III–VII, the axis progression in the relative minor."
   }
  ]
 }
