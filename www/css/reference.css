@@ -1301,6 +1301,57 @@
   --ref-badge-bg: var(--ref-root-7);
 }
 
+/* breadcrumb <nav>: above the <h1>, scrolls away with the page (not sticky) */
+.ref-breadcrumb {
+  margin: 12px 0 4px;
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+.ref-breadcrumb-list {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ref-breadcrumb-item {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+}
+/* separator between levels */
+.ref-breadcrumb-item + .ref-breadcrumb-item::before {
+  content: "›";
+  padding: 0 8px;
+  color: var(--ref-muted);
+  font-weight: 700;
+}
+/* breadcrumb <a>: every level above this page */
+.ref-breadcrumb-link {
+  display: inline-flex;
+  align-items: center;
+  color: var(--ref-link);
+  font-weight: 600;
+  text-decoration: none;
+}
+.ref-breadcrumb-link:hover { text-decoration: underline; }
+.ref-breadcrumb-link:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--ref-focus); border-radius: 4px; }
+/* breadcrumb <span>: this page */
+.ref-breadcrumb-current {
+  color: var(--ref-muted);
+  font-weight: 600;
+}
+
+/* chord type index wrapper <div> */
+.ref-index {
+  padding-bottom: 32px;
+}
+/* the chord type menu sits right under the <h1>, without the home page menu's top gap */
+.ref-index .ref-menu {
+  margin-top: 16px;
+}
+
 /* BREAKPOINTS (Bootstrap 4.6 widths: 576 / 768 / 992 / 1200) */
 
 @media (max-width: 991.98px) {
@@ -1383,6 +1434,7 @@
 /* touch screens: menu links at least 44px tall */
 @media (hover: none) and (pointer: coarse) {
   .ref-menu-link { min-height: 44px; }
+  .ref-breadcrumb-link { min-height: 44px; }
 }
 
 /* menu column lines: no line on the first column of each row (1 per row < 576, 2 from 576, 3 from 768, 6 from 1200) */
