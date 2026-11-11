@@ -11,6 +11,9 @@
 */
 :root {
   --theory-ink: #303030;          /* = --ws-ink */
+  --theory-quirk-bg: #fff8e1;     /* quirky shape tag: amber 50 */
+  --theory-quirk-fg: #5d4300;     /* 8.9:1 on amber 50 */
+  --theory-quirk-line: #ffb300;   /* amber 600 */
   --theory-ink-soft: #6b6f76;     /* = --ws-ink-soft */
   --theory-paper: #ffffff;
   --theory-line: #e6e9ee;         /* = --ws-line */
@@ -274,7 +277,8 @@
 }
 
 /* a progression written out (badges joined by – or →): one unit, kept on one line inside tables */
-.theory .theory-run { white-space: normal; }
+/* a run (C – E – G, I → IV → V) moves to the next line as a whole when it doesn't fit; one longer than a line wraps inside */
+.theory .theory-run { display: inline-block; max-width: 100%; white-space: normal; }
 .theory .theory-table .theory-run { white-space: nowrap; }
 
 /* ---------------------------------------------------------------- Roman numerals */
@@ -366,6 +370,22 @@
 .theory .theory-table-body .theory-table-row:hover .theory-table-cell { background: var(--theory-hover); }
 .theory .theory-table-body .theory-table-row:last-child .theory-table-cell { border-bottom: 0; }
 .theory .theory-table-body .theory-table-cell:first-child { font-weight: 700; }
+
+/* quirky shape tag under a keyboard or guitar diagram (build_reference.py Drawing.guitar_quirk / piano_quirk) */
+.theory .theory-quirk {
+  display: inline-block;
+  margin: 4px 0 2px;
+  padding: 1px 8px;
+  border: 1px solid var(--theory-quirk-line);
+  border-radius: 999px;
+  background: var(--theory-quirk-bg);
+  color: var(--theory-quirk-fg);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+.theory .theory-quirk-sample { margin: 0 2px; padding: 0 6px; vertical-align: 1px; }
 
 /* ---------------------------------------------------------------- glossary */
 .theory .theory-glossary-nav {

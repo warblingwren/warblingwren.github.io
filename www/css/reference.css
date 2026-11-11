@@ -8,6 +8,9 @@
 
 :root {
   --ref-ink: #303030;
+  --ref-quirk-bg: #fff8e1;        /* quirky shape tag: amber 50 (= --theory-quirk-bg) */
+  --ref-quirk-fg: #5d4300;        /* 8.9:1 on amber 50 */
+  --ref-quirk-line: #ffb300;      /* amber 600 */
   --ref-muted: #5f6368;
   --ref-rule: #e0e0e0;
   --ref-surface: #ffffff;
@@ -732,6 +735,21 @@
 /* no playable shape <span> */
 .ref-guitar-none {
   color: var(--ref-muted);
+}
+
+/* quirky shape marker under a keyboard or guitar diagram <span> (Drawing.guitar_quirk / piano_quirk): a voicing worth noticing, not an error */
+.ref-quirk {
+  display: inline-block;
+  margin: 4px 0 2px;
+  padding: 1px 8px;
+  border: 1px solid var(--ref-quirk-line);
+  border-radius: 999px;
+  background: var(--ref-quirk-bg);
+  color: var(--ref-quirk-fg);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  line-height: 1.5;
+  white-space: nowrap;
 }
 
 /* chord root: white ring with a dark outline, as on the keyboard and the chord diagrams */
