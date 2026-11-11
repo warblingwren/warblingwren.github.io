@@ -641,7 +641,7 @@
   padding: 18px 20px 8px;
   border: 2px solid var(--theory-accent);
   border-radius: var(--theory-radius);
-  background: linear-gradient(180deg, var(--theory-hover) 0%, var(--theory-paper) 160px);
+  background: var(--theory-hover);
 }
 .theory .theory-try-heading {
   display: inline-flex;
@@ -656,10 +656,45 @@
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
-.theory .theory-try-caption {
-  margin: 8px 0 6px;
-  font-weight: 600;
+.theory .theory-try-points {
+  margin: 4px 0 8px;
+  padding: 0;
+  list-style: none;
 }
+.theory .theory-try-point {
+  margin: 0 0 10px;
+}
+.theory .theory-try-label {
+  display: block;
+  color: var(--theory-ink-soft);
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+/* two columns: Meet the chord = text | cards, Try it = cards | text; stacked on phones and in wide boxes */
+.theory .theory-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px 28px;
+  align-items: start;
+}
+.theory .theory-try .theory-split {
+  grid-template-columns: auto minmax(0, 1fr);
+}
+.theory .theory-wide .theory-split,
+.theory .theory-try.theory-wide .theory-split {
+  grid-template-columns: minmax(0, 1fr);
+}
+.theory .theory-split-text,
+.theory .theory-split-diagrams {
+  min-width: 0;
+}
+.theory .theory-split-diagrams .theory-chart {
+  margin: 0 0 12px;
+}
+/* a box that spans the full width (several cards) */
+.theory .theory-wide { }
 .theory .theory-try-link,
 .theory .theory-aside-link {
   margin: 4px 0 12px;
@@ -711,6 +746,8 @@
 @media (max-width: 767.98px) {
   .theory { font-size: 1rem; }
   .theory .theory-try { padding: 14px 12px 6px; }
+  .theory .theory-split,
+  .theory .theory-try .theory-split { grid-template-columns: minmax(0, 1fr); }
   .theory .theory-aside { padding: 14px 12px 4px; }
   .theory .theory-title { font-size: 2rem; }
   .theory .theory-lede { padding: 14px 16px; font-size: 1.0625rem; }
