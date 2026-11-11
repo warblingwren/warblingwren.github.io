@@ -87,6 +87,7 @@
   padding: 8px 0 64px;
   color: var(--theory-ink);
   font-size: 1.0625rem;
+  font-weight: 400;               /* the site body is font-weight 100 (proxima-nova Thin): too light to read at text sizes */
   line-height: 1.75;
   text-align: left;
 }

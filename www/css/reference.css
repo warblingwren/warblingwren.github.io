@@ -60,6 +60,7 @@
 /* page wrapper <div> */
 .ref-page {
   color: var(--ref-ink);
+  font-weight: 400;               /* the site body is font-weight 100 (proxima-nova Thin): too light to read at text sizes */
   text-align: left;
   padding: 8px 0 32px;
 }
