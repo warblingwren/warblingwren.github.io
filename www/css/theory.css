@@ -53,6 +53,17 @@
   --theory-level-1: #a8dade;  --theory-level-1-fg: #303030;
   --theory-level-2: #ffe082;  --theory-level-2-fg: #303030;
   --theory-level-3: #303030;  --theory-level-3-fg: #ffffff;
+  /* chord diagrams: SYNC with reference.css --ref-key-* / --ref-gd-* (the site's .mk keyboards and .gd chord diagrams) */
+  --theory-key-white: #fbfaf7;
+  --theory-key-white-line: #c9c4b8;
+  --theory-key-black: #1d1d1f;
+  --theory-key-black-line: #000000;
+  --theory-key-chord-fg: #ffffff;
+  --theory-gd-line: #8a8a92;
+  --theory-gd-nut: #1d1d1f;
+  --theory-gd-label: #6b6b70;
+  --theory-gd-barre: rgba(29, 29, 31, 0.18);
+  --theory-card-w: 128px;         /* one chord card in a Try it row */
 }
 
 /* pitch class -> colour, shared by chords, notes and keys */
@@ -444,15 +455,274 @@
 .theory .theory-glossary-see-link:hover { background: var(--theory-accent); color: var(--theory-ink); text-decoration: none; }
 .theory .theory-glossary-see-link:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--theory-focus); }
 
+/* ---------------------------------------------------------------- chord cards and diagrams */
+/* chord chart: one card per chord (numeral, chord, notes, keyboard, guitar), as the reference pages' progression tables */
+.theory .theory-chart {
+  margin: 8px 0 20px;
+}
+/* a scale: seven cards in one row, wrapping on narrow screens */
+.theory .theory-chart-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 10px;
+}
+/* a progression (Try it): cards in playing order with arrows between */
+.theory .theory-chart-flow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 10px 6px;
+}
+.theory .theory-chart-flow .theory-chart-chord {
+  flex: 0 0 var(--theory-card-w);
+  width: var(--theory-card-w);
+}
+/* an aside's chart: cards at their natural width */
+.theory .theory-chart-small.theory-chart-grid {
+  grid-template-columns: repeat(auto-fill, minmax(112px, 128px));
+}
+.theory .theory-chart-chord {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  padding: 10px 6px 12px;
+  border: 1px solid var(--theory-line);
+  border-radius: var(--theory-radius);
+  background: var(--theory-paper);
+  box-shadow: var(--theory-shadow);
+  text-align: center;
+}
+.theory .theory-chart-position,
+.theory .theory-chart-name {
+  display: flex;
+  justify-content: center;
+  min-height: 1.9em;
+}
+.theory .theory-chart-notes {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 2px;
+  font-size: 0.9rem;
+}
+.theory .theory-chart-piano,
+.theory .theory-chart-guitar {
+  width: 100%;
+}
+.theory .theory-chart-arrow {
+  display: flex;
+  align-items: center;
+  color: var(--theory-ink-soft);
+  font-size: 1.5rem;
+  font-weight: 800;
+}
+
+/* one-octave keyboard <svg> (as .mk on the rest of the site) */
+.theory .theory-piano {
+  display: block;
+  width: 100%;
+  max-width: 120px;
+  height: auto;
+  margin: 0 auto;
+}
+.theory .theory-piano-white {
+  fill: var(--theory-oct-light, var(--theory-key-white));
+  stroke: var(--theory-key-white-line);
+  stroke-width: 1;
+}
+.theory .theory-piano-black {
+  fill: var(--theory-key-black);
+  stroke: var(--theory-key-black-line);
+  stroke-width: 1;
+}
+/* key of a chord note */
+.theory .theory-piano-white.theory-piano-chord,
+.theory .theory-piano-black.theory-piano-chord { fill: var(--theory-oct-chord, var(--theory-key-black)); }
+.theory .theory-piano-black.theory-piano-chord { stroke: rgba(255, 255, 255, 0.55); stroke-width: 1.5; }
+.theory .theory-piano-label {
+  fill: var(--theory-key-chord-fg);
+  font-size: 11px;
+  font-weight: 700;
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+.theory .theory-piano-mark {
+  fill: var(--theory-dot, #555555);
+  stroke: rgba(0, 0, 0, 0.6);
+  stroke-width: 0.75;
+}
+.theory .theory-piano-mark-label {
+  fill: var(--theory-key-chord-fg);
+  font-size: 7px;
+  font-weight: 700;
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+
+/* chord diagram <svg> (as .gd on the rest of the site) */
+.theory .theory-guitar {
+  display: block;
+  width: 100%;
+  max-width: 110px;
+  height: auto;
+  margin: 0 auto;
+  overflow: visible;
+}
+.theory .theory-guitar-fret,
+.theory .theory-guitar-string {
+  stroke: var(--theory-gd-line);
+  stroke-width: 1.2;
+}
+.theory .theory-guitar-nut { fill: var(--theory-gd-nut); }
+.theory .theory-guitar-base {
+  fill: var(--theory-gd-label);
+  font-size: 9px;
+  font-weight: 700;
+  text-anchor: end;
+  dominant-baseline: central;
+}
+.theory .theory-guitar-mute {
+  fill: var(--theory-gd-label);
+  font-size: 12px;
+  font-weight: 700;
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+.theory .theory-guitar-barre { fill: var(--theory-gd-barre); }
+.theory .theory-guitar-dot { }
+.theory .theory-guitar-open { }
+.theory .theory-guitar-dot-circle {
+  fill: var(--theory-dot, #555555);
+  stroke: rgba(0, 0, 0, 0.25);
+  stroke-width: 1;
+}
+.theory .theory-guitar-dot-label {
+  fill: var(--theory-dot-fg, #ffffff);
+  font-size: 9.5px;
+  font-weight: 700;
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+.theory .theory-guitar-open .theory-guitar-dot-label { font-size: 7.5px; }
+.theory .theory-guitar-none { color: var(--theory-ink-soft); }
+/* the chord's root: white ring with a dark outline */
+.theory .theory-chord-root { }
+.theory .theory-guitar-dot.theory-chord-root .theory-guitar-dot-circle,
+.theory .theory-piano-mark.theory-chord-root { stroke: #ffffff; stroke-width: 2; filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.9)); }
+/* octave of a key or note: the site's octave colours (www.css STATIC PAGES --ww-oN-*) */
+.theory .theory-oct-0 { --theory-oct-light: var(--ww-o0-100); --theory-oct-chord: var(--ww-o0-700); --theory-r0: var(--ww-o0-900); --theory-r0-fg: var(--ww-o0-900-fg); --theory-r1: var(--ww-o0-700); --theory-r1-fg: var(--ww-o0-700-fg); --theory-r2: var(--ww-o0-500); --theory-r2-fg: var(--ww-o0-500-fg); --theory-r3: var(--ww-o0-300); --theory-r3-fg: var(--ww-o0-300-fg); }
+.theory .theory-oct-1 { --theory-oct-light: var(--ww-o1-100); --theory-oct-chord: var(--ww-o1-700); --theory-r0: var(--ww-o1-900); --theory-r0-fg: var(--ww-o1-900-fg); --theory-r1: var(--ww-o1-700); --theory-r1-fg: var(--ww-o1-700-fg); --theory-r2: var(--ww-o1-500); --theory-r2-fg: var(--ww-o1-500-fg); --theory-r3: var(--ww-o1-300); --theory-r3-fg: var(--ww-o1-300-fg); }
+.theory .theory-oct-2 { --theory-oct-light: var(--ww-o2-100); --theory-oct-chord: var(--ww-o2-700); --theory-r0: var(--ww-o2-900); --theory-r0-fg: var(--ww-o2-900-fg); --theory-r1: var(--ww-o2-700); --theory-r1-fg: var(--ww-o2-700-fg); --theory-r2: var(--ww-o2-500); --theory-r2-fg: var(--ww-o2-500-fg); --theory-r3: var(--ww-o2-300); --theory-r3-fg: var(--ww-o2-300-fg); }
+.theory .theory-oct-3 { --theory-oct-light: var(--ww-o3-100); --theory-oct-chord: var(--ww-o3-700); --theory-r0: var(--ww-o3-900); --theory-r0-fg: var(--ww-o3-900-fg); --theory-r1: var(--ww-o3-700); --theory-r1-fg: var(--ww-o3-700-fg); --theory-r2: var(--ww-o3-500); --theory-r2-fg: var(--ww-o3-500-fg); --theory-r3: var(--ww-o3-300); --theory-r3-fg: var(--ww-o3-300-fg); }
+.theory .theory-oct-4 { --theory-oct-light: var(--ww-o4-100); --theory-oct-chord: var(--ww-o4-700); --theory-r0: var(--ww-o4-900); --theory-r0-fg: var(--ww-o4-900-fg); --theory-r1: var(--ww-o4-700); --theory-r1-fg: var(--ww-o4-700-fg); --theory-r2: var(--ww-o4-500); --theory-r2-fg: var(--ww-o4-500-fg); --theory-r3: var(--ww-o4-300); --theory-r3-fg: var(--ww-o4-300-fg); }
+.theory .theory-oct-5 { --theory-oct-light: var(--ww-o5-100); --theory-oct-chord: var(--ww-o5-700); --theory-r0: var(--ww-o5-900); --theory-r0-fg: var(--ww-o5-900-fg); --theory-r1: var(--ww-o5-700); --theory-r1-fg: var(--ww-o5-700-fg); --theory-r2: var(--ww-o5-500); --theory-r2-fg: var(--ww-o5-500-fg); --theory-r3: var(--ww-o5-300); --theory-r3-fg: var(--ww-o5-300-fg); }
+.theory .theory-oct-6 { --theory-oct-light: var(--ww-o6-100); --theory-oct-chord: var(--ww-o6-700); --theory-r0: var(--ww-o6-900); --theory-r0-fg: var(--ww-o6-900-fg); --theory-r1: var(--ww-o6-700); --theory-r1-fg: var(--ww-o6-700-fg); --theory-r2: var(--ww-o6-500); --theory-r2-fg: var(--ww-o6-500-fg); --theory-r3: var(--ww-o6-300); --theory-r3-fg: var(--ww-o6-300-fg); }
+.theory .theory-oct-7 { --theory-oct-light: var(--ww-o7-100); --theory-oct-chord: var(--ww-o7-700); --theory-r0: var(--ww-o7-900); --theory-r0-fg: var(--ww-o7-900-fg); --theory-r1: var(--ww-o7-700); --theory-r1-fg: var(--ww-o7-700-fg); --theory-r2: var(--ww-o7-500); --theory-r2-fg: var(--ww-o7-500-fg); --theory-r3: var(--ww-o7-300); --theory-r3-fg: var(--ww-o7-300-fg); }
+.theory .theory-oct-8 { --theory-oct-light: var(--ww-o8-100); --theory-oct-chord: var(--ww-o8-700); --theory-r0: var(--ww-o8-900); --theory-r0-fg: var(--ww-o8-900-fg); --theory-r1: var(--ww-o8-700); --theory-r1-fg: var(--ww-o8-700-fg); --theory-r2: var(--ww-o8-500); --theory-r2-fg: var(--ww-o8-500-fg); --theory-r3: var(--ww-o8-300); --theory-r3-fg: var(--ww-o8-300-fg); }
+/* chord role of a note: root darkest -> 7th lightest */
+.theory .theory-role-0 { --theory-dot: var(--theory-r0); --theory-dot-fg: var(--theory-r0-fg); }
+.theory .theory-role-1 { --theory-dot: var(--theory-r1); --theory-dot-fg: var(--theory-r1-fg); }
+.theory .theory-role-2 { --theory-dot: var(--theory-r2); --theory-dot-fg: var(--theory-r2-fg); }
+.theory .theory-role-3 { --theory-dot: var(--theory-r3); --theory-dot-fg: var(--theory-r3-fg); }
+
+/* ---------------------------------------------------------------- Try it, asides, links */
+/* small heading inside a section (h4) */
+.theory .theory-minor-heading {
+  margin: 28px 0 10px;
+  font-size: 1.125rem;
+  font-weight: 800;
+  line-height: 1.35;
+}
+/* Try it: the cadence as chord cards, to play along */
+.theory .theory-try {
+  margin: 20px 0 32px;
+  padding: 18px 20px 8px;
+  border: 2px solid var(--theory-accent);
+  border-radius: var(--theory-radius);
+  background: linear-gradient(180deg, var(--theory-hover) 0%, var(--theory-paper) 160px);
+}
+.theory .theory-try-heading {
+  display: inline-flex;
+  align-items: center;
+  margin: 0 0 8px;
+  padding: 3px 12px;
+  border-radius: 999px;
+  background: var(--theory-ink);
+  color: var(--theory-paper);
+  font-size: 0.8125rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.theory .theory-try-caption {
+  margin: 8px 0 6px;
+  font-weight: 600;
+}
+.theory .theory-try-link,
+.theory .theory-aside-link {
+  margin: 4px 0 12px;
+}
+/* Meet the chord: a chord from outside the two scales, defined where it first appears */
+.theory .theory-aside {
+  margin: 16px 0 28px;
+  padding: 16px 20px 6px;
+  border-left: 5px solid var(--theory-num-5);
+  border-radius: 0 var(--theory-radius) var(--theory-radius) 0;
+  background: var(--theory-field);
+}
+.theory .theory-aside-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 8px;
+  font-size: 1.0625rem;
+  font-weight: 800;
+}
+/* links: inline text links, and the Warbling Wren permalinks */
+.theory .theory-link {
+  color: var(--theory-link);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.theory .theory-link:hover { color: var(--theory-ink); }
+.theory .theory-link:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--theory-focus); border-radius: 4px; }
+.theory .theory-try-link .theory-link,
+.theory .theory-aside-link .theory-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--theory-hit);
+}
+.theory .theory-try-link .theory-link::before,
+.theory .theory-aside-link .theory-link::before {
+  content: "▶";
+  flex: 0 0 auto;
+  margin-right: 8px;
+  font-size: 0.75em;
+}
+
 /* ---------------------------------------------------------------- BREAKPOINTS (theory) */
+@media (max-width: 991.98px) {
+  .theory .theory-chart-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
 @media (max-width: 767.98px) {
   .theory { font-size: 1rem; }
+  .theory .theory-try { padding: 14px 12px 6px; }
+  .theory .theory-aside { padding: 14px 12px 4px; }
   .theory .theory-title { font-size: 2rem; }
   .theory .theory-lede { padding: 14px 16px; font-size: 1.0625rem; }
   .theory .theory-heading { font-size: 1.5rem; }
   .theory .theory-subheading { font-size: 1.1875rem; }
   .theory .theory-table { font-size: 0.9375rem; }
   .theory .theory-table .theory-table-cell { padding: 10px 12px; }
+}
+@media (max-width: 575.98px) {
+  .theory .theory-chart-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  :root { --theory-card-w: 104px; }
+  .theory .theory-chart-arrow { font-size: 1.125rem; }
 }
 @media (max-width: 430px) {
   .theory .theory-title { font-size: 1.75rem; }
