@@ -25,6 +25,19 @@
   --ww-home-ink: var(--ws-ink);
   --ww-home-hover-bg: var(--ws-field);
   --ww-home-focus: var(--ws-focus);
+
+  /* about page (.about) */
+  --ab-ink: var(--ws-ink);
+  --ab-ink-soft: var(--ws-ink-soft);
+  --ab-accent: var(--ws-accent);
+  --ab-accent-soft: #e6f4f5;      /* tint of --ws-accent: panels, step numbers */
+  --ab-paper: var(--ws-paper);
+  --ab-line: var(--ws-line);
+  --ab-link: #00796b;             /* teal 700: 5.3:1 on white */
+  --ab-measure: 760px;            /* reading column */
+  --ab-avatar: 160px;
+  --ab-radius: 14px;
+  --ab-shadow: 0 6px 20px rgba(16, 18, 22, 0.12);
 }
 
 body {
@@ -953,6 +966,187 @@ img:not(.header img) {
 #no-script a,
 .no-script a { color: var(--ns-link); font-weight: 600; text-decoration: underline; }
 
+/*
+ * **************************************************************** ABOUT (about/index.html)
+ * One centred reading column. body is centred and weight 100 (proxima-nova Thin): .about resets both for long text.
+*/
+.about {
+    max-width: var(--ab-measure);
+    margin: 0 auto 48px;
+    color: var(--ab-ink);
+    font-weight: 400;
+    font-size: 1.0625rem;
+    line-height: 1.7;
+    text-align: left;
+}
+
+/* intro: round portrait beside the title */
+.about-intro {
+    display: flex;
+    align-items: center;
+    gap: 32px;
+    padding: 8px 0 32px;
+    border-bottom: 1px solid var(--ab-accent);
+}
+.about-avatar { flex: 0 0 var(--ab-avatar); }
+.about .about-avatar-img {
+    display: block;
+    width: var(--ab-avatar);
+    height: var(--ab-avatar) !important;   /* wins over the page-wide img { height: auto !important } */
+    max-width: none;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 4px solid var(--ab-paper);
+    box-shadow: 0 0 0 2px var(--ab-accent), var(--ab-shadow);
+}
+.about-intro-text { min-width: 0; }
+.about-title {
+    margin: 0 0 8px;
+    font-family: var(--brand-font);
+    font-weight: 400;
+    font-size: 2.75rem;
+    line-height: 1.15;
+}
+.about-lede {
+    margin: 0 0 6px;
+    font-size: 1.25rem;
+    font-weight: 600;
+    line-height: 1.5;
+}
+
+/* sections */
+.about-section { padding-top: 40px; }
+.about-heading {
+    margin: 0 0 16px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--ab-accent);
+    font-size: 1.625rem;
+    font-weight: 700;
+    line-height: 1.3;
+}
+.about-subheading {
+    margin: 28px 0 12px;
+    color: var(--ab-ink-soft);
+    font-size: 0.875rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+.about-text { margin: 0 0 16px; }
+.about-text-question { font-weight: 700; }
+.about-emphasis { font-weight: 700; }
+.about-link {
+    color: var(--ab-link);
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+.about-link:hover { color: var(--ab-ink); }
+.about-link:focus-visible { border-radius: 4px; box-shadow: 0 0 0 3px var(--ws-focus); }
+
+.about-pullquote {
+    margin: 24px 0 8px;
+    padding: 4px 0 4px 20px;
+    border-left: 4px solid var(--ab-accent);
+    font-family: var(--accent-font);
+    font-size: 1.75rem;
+    line-height: 1.3;
+}
+
+/* what's in a name: a soft panel */
+.about-section-name .about-text:last-child {
+    padding: 16px 20px;
+    border-radius: var(--ab-radius);
+    background: var(--ab-accent-soft);
+}
+
+/* feature lists: an accent bar on each item */
+.about-features {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+.about-feature {
+    margin: 0 0 12px;
+    padding: 12px 16px;
+    border-left: 3px solid var(--ab-accent);
+    border-radius: 0 10px 10px 0;
+    background: var(--ab-paper);
+    box-shadow: 0 1px 0 var(--ab-line);
+}
+.about-feature-name { font-weight: 700; }
+
+/* numbered steps: round numbers from a CSS counter */
+.about-steps {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    counter-reset: about-step;
+}
+.about-step {
+    position: relative;
+    margin: 0 0 14px;
+    padding-left: 48px;
+    counter-increment: about-step;
+}
+.about-step::before {
+    content: counter(about-step);
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--ab-accent-soft);
+    border: 1.5px solid var(--ab-accent);
+    font-size: 0.9375rem;
+    font-weight: 700;
+    line-height: 1;
+}
+.about-step-name { font-weight: 700; }
+
+/* FAQ */
+.about-faq { margin: 0; }
+.about-faq-item {
+    padding: 16px 0;
+    border-bottom: 1px solid var(--ab-line);
+}
+.about-faq-item:last-child { border-bottom: 0; }
+.about-question {
+    margin: 0 0 6px;
+    font-size: 1.125rem;
+    font-weight: 700;
+    line-height: 1.4;
+}
+.about-answer { margin: 0 0 8px; }
+.about-answer:last-child { margin-bottom: 0; }
+
+/* closing */
+.about-closing {
+    margin-top: 48px;
+    padding: 32px 24px;
+    border-top: 1px solid var(--ab-accent);
+    border-bottom: 1px solid var(--ab-accent);
+    text-align: center;
+}
+.about-closing-title {
+    margin: 0 0 12px;
+    font-family: var(--brand-font);
+    font-weight: 400;
+    font-size: 2.5rem;
+    line-height: 1.2;
+}
+.about-closing-text { margin: 0 auto 12px; max-width: 560px; }
+.about-closing-sign {
+    margin: 0;
+    font-family: var(--accent-font);
+    font-size: 1.5rem;
+}
+
 /* BREAKPOINTS */
 /* Mobile: the header keeps only its 1st column (logo / title); the 2nd and 3rd columns are hidden.
    SYNC POINT: 768px = the app's mobile breakpoint (mobileQuery in dashboard.js / guitar.css / piano.css) */
@@ -962,6 +1156,10 @@ img:not(.header img) {
     /* the logo / title column is the only one left: give it the full width instead of a third */
     .header .top-left { flex: 0 0 100%; max-width: 100%; }
     .ws-dialog { margin-left: auto; margin-right: auto; }
+    /* about: portrait above the title, centred */
+    :root { --ab-avatar: 128px; }
+    .about-intro { flex-direction: column; text-align: center; gap: 20px; }
+    .about-title { font-size: 2.25rem; }
 }
 
 /* Laptop / desktop: header columns sized to their content instead of three equal thirds, so the
@@ -996,6 +1194,14 @@ img:not(.header img) {
     .ws-copy { flex: 1 1 100%; }
     #no-script,
     .no-script { padding: 14px 14px 14px 14px; font-size: 15px; }
+    :root { --ab-avatar: 112px; }
+    .about { font-size: 1rem; }
+    .about-title { font-size: 2rem; }
+    .about-lede { font-size: 1.125rem; }
+    .about-heading { font-size: 1.375rem; }
+    .about-pullquote { font-size: 1.5rem; }
+    .about-closing { padding: 24px 8px; }
+    .about-closing-title { font-size: 2rem; }
 }
 
 /* touch screens: 16px text in the share link field (phones zoom in on smaller text fields) */
