@@ -643,18 +643,35 @@
   border-radius: var(--theory-radius);
   background: var(--theory-hover);
 }
+/* Try it heading: the "Try it" tag, then what is being tried */
 .theory .theory-try-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  margin: 0 0 12px;
+  font-size: 1.125rem;
+  font-weight: 800;
+  line-height: 1.4;
+}
+.theory .theory-try-tag {
   display: inline-flex;
   align-items: center;
-  margin: 0 0 8px;
   padding: 3px 12px;
   border-radius: 999px;
   background: var(--theory-ink);
   color: var(--theory-paper);
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+}
+.theory .theory-try-title {
+  color: var(--theory-ink);
+}
+/* a sentence under the title that sets up the example */
+.theory .theory-try-intro {
+  margin: 0 0 14px;
 }
 .theory .theory-try-points {
   margin: 4px 0 8px;
@@ -692,6 +709,16 @@
 }
 .theory .theory-split-diagrams .theory-chart {
   margin: 0 0 12px;
+}
+/* several cards beside the text: one row, side by side (an "auto" column would otherwise squeeze a grid to one card wide) */
+.theory .theory-split-diagrams .theory-chart-small {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.theory .theory-split-diagrams .theory-chart-small .theory-chart-chord {
+  flex: 0 0 var(--theory-card-w);
+  width: var(--theory-card-w);
 }
 /* a box that spans the full width (several cards) */
 .theory .theory-wide { }
