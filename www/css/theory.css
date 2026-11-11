@@ -432,6 +432,10 @@
   font-weight: 800;
 }
 .theory .theory-glossary-definition { margin: 0; }
+/* chord-type entries: definition | chord card, stacked on phones (see .theory-split) */
+.theory .theory-glossary-text { margin: 0; }
+.theory .theory-glossary-definition .theory-try-link { margin: 8px 0 0; }
+.theory .theory-glossary-definition .theory-chart-position:empty { display: none; }
 .theory .theory-glossary-see {
   display: flex;
   flex-wrap: wrap;
