@@ -1,7 +1,6 @@
 # Warbling Wren
 
 ## Chord reference
-- [Interactive Musician's Companion - 21 Progressions in 14 Chord Types from All 12 Roots](https://warblingwren.com/)
 - [Chord Progressions - 21 Progressions in 14 Chord Types from All 12 Roots](https://warblingwren.com/progressions/index.html)
 - [Major Chord Progressions - 21 Progressions from All 12 Roots](https://warblingwren.com/progressions/major/index.html)
 - [Blues 12-bar blues with Major Chords](https://warblingwren.com/progressions/major/major-blues-12-bar.html)
