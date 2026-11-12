@@ -38,6 +38,15 @@
   --ab-avatar: 160px;
   --ab-radius: 14px;
   --ab-shadow: 0 6px 20px rgba(16, 18, 22, 0.12);
+
+  /* theory page link list (_includes/theory-menu.html) */
+  --tm-ink: var(--ws-ink);
+  --tm-ink-soft: var(--ws-ink-soft);
+  --tm-accent: var(--ws-accent);
+  --tm-hover-bg: #e6f4f5;         /* tint of --ws-accent (= --ab-accent-soft) */
+  --tm-paper: var(--ws-paper);
+  --tm-focus: var(--ws-focus);
+  --tm-radius: 12px;
 }
 
 body {
@@ -1147,6 +1156,70 @@ img:not(.header img) {
     font-size: 1.5rem;
 }
 
+/*
+ * **************************************************************** THEORY MENU (_includes/theory-menu.html)
+ * Links to the /theory/ pages: a card per page (title + one-line summary), two columns where they fit, one on phones.
+ * SYNC: one <li> per theory page in the include; update it with every new page (backlog: dynamic menu management).
+*/
+.ww-theory-menu {
+    margin: 24px 0;
+    color: var(--tm-ink);
+    font-weight: 400;
+    text-align: left;
+}
+.ww-theory-menu-heading {
+    margin: 0 0 12px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--tm-accent);
+    font-size: 1.375rem;
+    font-weight: 700;
+    line-height: 1.3;
+}
+.ww-theory-menu-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+.ww-theory-menu-item { margin: 0; min-width: 0; }
+.ww-theory-menu-link,
+.ww-theory-menu-link:link,
+.ww-theory-menu-link:visited {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    height: 100%;
+    min-height: var(--ws-hit);
+    padding: 12px 16px;
+    border: 1px solid var(--tm-accent);
+    border-left-width: 4px;
+    border-radius: var(--tm-radius);
+    background: var(--tm-paper);
+    color: var(--tm-ink);
+    text-decoration: none;
+    transition: background-color 120ms ease, box-shadow 120ms ease;
+}
+.ww-theory-menu-link:hover {
+    background: var(--tm-hover-bg);
+    color: var(--tm-ink);
+    text-decoration: none;
+}
+/* the global *:focus rule removes outlines: keyboard focus needs its own ring */
+.ww-theory-menu-link:focus-visible { box-shadow: 0 0 0 4px var(--tm-focus); }
+.ww-theory-menu-title {
+    font-size: 1.0625rem;
+    font-weight: 700;
+    line-height: 1.35;
+}
+.ww-theory-menu-link:hover .ww-theory-menu-title { text-decoration: underline; }
+.ww-theory-menu-summary {
+    color: var(--tm-ink-soft);
+    font-size: 0.875rem;
+    line-height: 1.45;
+}
+
 /* BREAKPOINTS */
 /* Mobile: the header keeps only its 1st column (logo / title); the 2nd and 3rd columns are hidden.
    SYNC POINT: 768px = the app's mobile breakpoint (mobileQuery in dashboard.js / guitar.css / piano.css) */
@@ -1160,6 +1233,8 @@ img:not(.header img) {
     :root { --ab-avatar: 128px; }
     .about-intro { flex-direction: column; text-align: center; gap: 20px; }
     .about-title { font-size: 2.25rem; }
+    /* theory menu: one column */
+    .ww-theory-menu-list { grid-template-columns: minmax(0, 1fr); }
 }
 
 /* Laptop / desktop: header columns sized to their content instead of three equal thirds, so the
