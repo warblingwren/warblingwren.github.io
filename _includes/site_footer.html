@@ -1,10 +1,16 @@
 <div class="row footer">
-    <div class="col-md-4 bottom-left">
-        <div class="homelink">
-            <a href="https://{{ page.custom_domain }}">Home</a>
+    <div class="col-md-8 bottom-left">
+        <div class="row">
+            <div class="col-sm-6">
+                <div class="homelink">
+                    <a href="https://{{ page.custom_domain }}">Home</a>
+                </div>
+            </div>
+            <div class="col-sm-6">
+                {% include theory_menu.html %}
+            </div>
         </div>
     </div>
-    <div class="col-md-4 bottom-center"></div>
     <div class="col-md-4 bottom-right">
         <a href="https://nimblesa.github.io" target="_blank">
             <img src="/www/img/branding/powered_by_nimble.png" alt="Powered by Nimble" class="powered_by">
