@@ -91,8 +91,8 @@
   --theory-circle-a: #ffe082;     --theory-circle-a-fg: #303030;     --theory-circle-a-stroke: #b26a00;   /* amber 200 / amber, 4.0:1 on white */
   --theory-circle-b: #a8dade;     --theory-circle-b-fg: #303030;     --theory-circle-b-stroke: #00838f;   /* brand accent / cyan 800, 4.5:1 */
   --theory-circle-c: #cfd8dc;     --theory-circle-c-fg: #303030;     --theory-circle-c-stroke: #546e7a;   /* blue grey 100 / 600 */
-  --theory-circle-w: 320px;       /* the circle beside a section's text */
-  --theory-circle-small-w: 240px; /* the circle beside a list item */
+  --theory-circle-w: 320px;       /* the circle beside a long text column (narrow) */
+  --theory-circle-max-w: 440px;   /* a circle stacked above its text on phones */
 }
 
 /* pitch class -> colour, shared by chords, notes and keys */
@@ -1029,29 +1029,24 @@
 }
 
 /* ---------------------------------------------------------------- circles (build_theory.py Circles) */
-/* a section's opening: text | circle, the circle on alternating sides (circle_split); stacked on phones, circle first */
+/* a section's opening: heading and text | circle, half and half, the circle on alternating sides (circle_split);
+   narrow keeps the circle at --theory-circle-w beside a long text column; stacked on phones, circle first */
 .theory .theory-circle-split {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) var(--theory-circle-w);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   grid-template-areas: "text figure";
   gap: 12px 32px;
   align-items: start;
-  margin: 0 0 8px;
+  margin: 32px 0 8px;
 }
-.theory .theory-circle-split-flip {
-  grid-template-columns: var(--theory-circle-w) minmax(0, 1fr);
-  grid-template-areas: "figure text";
-}
-.theory .theory-circle-split-small { grid-template-columns: minmax(0, 1fr) var(--theory-circle-small-w); }
-.theory .theory-circle-split-small.theory-circle-split-flip { grid-template-columns: var(--theory-circle-small-w) minmax(0, 1fr); }
+.theory .theory-circle-split-flip { grid-template-areas: "figure text"; }
+.theory .theory-circle-split-narrow { grid-template-columns: minmax(0, 1fr) var(--theory-circle-w); }
+.theory .theory-circle-split-narrow.theory-circle-split-flip { grid-template-columns: var(--theory-circle-w) minmax(0, 1fr); }
 .theory .theory-circle-split-text { grid-area: text; min-width: 0; }
 .theory .theory-circle-split-figure { grid-area: figure; min-width: 0; }
+.theory .theory-circle-split-text > :first-child { margin-top: 0; }
 .theory .theory-circle-split-text > .theory-list:last-child,
 .theory .theory-circle-split-text > .theory-text:last-child { margin-bottom: 12px; }
-/* a bullet list, each item beside its own circle */
-.theory .theory-circle-items .theory-circle-item { margin: 0 0 24px; padding-left: 0; }
-.theory .theory-circle-items .theory-circle-item::before { content: none; }
-.theory .theory-circle-items .theory-circle-split { margin: 0; }
 /* a circle on its own, centred (above a table) */
 .theory .theory-circle-solo {
   max-width: 400px;
@@ -1198,13 +1193,12 @@
   .theory { font-size: 1rem; }
   .theory .theory-circle-split,
   .theory .theory-circle-split-flip,
-  .theory .theory-circle-split-small,
-  .theory .theory-circle-split-small.theory-circle-split-flip {
+  .theory .theory-circle-split-narrow,
+  .theory .theory-circle-split-narrow.theory-circle-split-flip {
     grid-template-columns: minmax(0, 1fr);
     grid-template-areas: "figure" "text";
   }
-  .theory .theory-circle-split-figure { width: 100%; max-width: var(--theory-circle-w); justify-self: center; }
-  .theory .theory-circle-split-small .theory-circle-split-figure { max-width: var(--theory-circle-small-w); }
+  .theory .theory-circle-split-figure { width: 100%; max-width: var(--theory-circle-max-w); justify-self: center; }
   .theory .theory-try { padding: 14px 12px 6px; }
   .theory .theory-split,
   .theory .theory-try .theory-split { grid-template-columns: minmax(0, 1fr); }
