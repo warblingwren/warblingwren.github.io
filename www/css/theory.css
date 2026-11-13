@@ -82,6 +82,17 @@
   --theory-gd-label: #6b6b70;
   --theory-gd-barre: rgba(29, 29, 31, 0.18);
   --theory-card-w: 128px;         /* one chord card in a Try it row */
+  /* circle of fifths drawings (build_theory.py Circles): fills, and the arrows and lines drawn in the same family */
+  --theory-circle-plain: #ffffff;
+  --theory-circle-line: #d5dae1;
+  --theory-circle-label: #303030;
+  --theory-circle-sub: #6b6f76;
+  --theory-circle-home: #303030;  --theory-circle-home-fg: #ffffff;  --theory-circle-home-stroke: #303030;
+  --theory-circle-a: #ffe082;     --theory-circle-a-fg: #303030;     --theory-circle-a-stroke: #b26a00;   /* amber 200 / amber, 4.0:1 on white */
+  --theory-circle-b: #a8dade;     --theory-circle-b-fg: #303030;     --theory-circle-b-stroke: #00838f;   /* brand accent / cyan 800, 4.5:1 */
+  --theory-circle-c: #cfd8dc;     --theory-circle-c-fg: #303030;     --theory-circle-c-stroke: #546e7a;   /* blue grey 100 / 600 */
+  --theory-circle-w: 320px;       /* the circle beside a section's text */
+  --theory-circle-small-w: 240px; /* the circle beside a list item */
 }
 
 /* pitch class -> colour, shared by chords, notes and keys */
@@ -1017,12 +1028,183 @@
   font-weight: 700;
 }
 
+/* ---------------------------------------------------------------- circles (build_theory.py Circles) */
+/* a section's opening: text | circle, the circle on alternating sides (circle_split); stacked on phones, circle first */
+.theory .theory-circle-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--theory-circle-w);
+  grid-template-areas: "text figure";
+  gap: 12px 32px;
+  align-items: start;
+  margin: 0 0 8px;
+}
+.theory .theory-circle-split-flip {
+  grid-template-columns: var(--theory-circle-w) minmax(0, 1fr);
+  grid-template-areas: "figure text";
+}
+.theory .theory-circle-split-small { grid-template-columns: minmax(0, 1fr) var(--theory-circle-small-w); }
+.theory .theory-circle-split-small.theory-circle-split-flip { grid-template-columns: var(--theory-circle-small-w) minmax(0, 1fr); }
+.theory .theory-circle-split-text { grid-area: text; min-width: 0; }
+.theory .theory-circle-split-figure { grid-area: figure; min-width: 0; }
+.theory .theory-circle-split-text > .theory-list:last-child,
+.theory .theory-circle-split-text > .theory-text:last-child { margin-bottom: 12px; }
+/* a bullet list, each item beside its own circle */
+.theory .theory-circle-items .theory-circle-item { margin: 0 0 24px; padding-left: 0; }
+.theory .theory-circle-items .theory-circle-item::before { content: none; }
+.theory .theory-circle-items .theory-circle-split { margin: 0; }
+/* a circle on its own, centred (above a table) */
+.theory .theory-circle-solo {
+  max-width: 400px;
+  margin: 0 auto 20px;
+}
+/* the figure */
+.theory .theory-circle {
+  margin: 0 0 16px;
+}
+.theory .theory-circle-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.theory .theory-circle-caption {
+  margin: 4px 0 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+.theory .theory-circle-title {
+  display: block;
+  margin: 0 0 6px;
+  font-weight: 700;
+  text-align: center;
+}
+.theory .theory-circle-legend {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.theory .theory-circle-legend-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0 0 4px;
+}
+.theory .theory-circle-legend-text { min-width: 0; }
+.theory .theory-circle-swatch {
+  flex: 0 0 auto;
+  width: 18px;
+  height: 12px;
+  margin-top: 0.3em;
+  border-radius: 3px;
+  border: 1px solid var(--theory-circle-line);
+}
+.theory .theory-circle-swatch-fill-plain { background: var(--theory-circle-plain); }
+.theory .theory-circle-swatch-fill-home { background: var(--theory-circle-home); border-color: var(--theory-circle-home); }
+.theory .theory-circle-swatch-fill-a { background: var(--theory-circle-a); }
+.theory .theory-circle-swatch-fill-b { background: var(--theory-circle-b); }
+.theory .theory-circle-swatch-fill-c { background: var(--theory-circle-c); }
+.theory .theory-circle-swatch-arrow-home,
+.theory .theory-circle-swatch-arrow-a,
+.theory .theory-circle-swatch-arrow-b,
+.theory .theory-circle-swatch-arrow-c {
+  height: 0;
+  margin-top: 0.75em;
+  border: 0;
+  border-top: 3px solid;
+  border-radius: 0;
+}
+.theory .theory-circle-swatch-arrow-home { border-top-color: var(--theory-circle-home-stroke); }
+.theory .theory-circle-swatch-arrow-a { border-top-color: var(--theory-circle-a-stroke); }
+.theory .theory-circle-swatch-arrow-b { border-top-color: var(--theory-circle-b-stroke); }
+.theory .theory-circle-swatch-arrow-c { border-top-color: var(--theory-circle-c-stroke); }
+/* rings: one segment per key */
+.theory .theory-circle-seg {
+  stroke: var(--theory-circle-line);
+  stroke-width: 1.5;
+}
+.theory .theory-circle-fill-plain { fill: var(--theory-circle-plain); }
+.theory .theory-circle-fill-home { fill: var(--theory-circle-home); }
+.theory .theory-circle-fill-a { fill: var(--theory-circle-a); }
+.theory .theory-circle-fill-b { fill: var(--theory-circle-b); }
+.theory .theory-circle-fill-c { fill: var(--theory-circle-c); }
+.theory .theory-circle-label {
+  fill: var(--theory-circle-label);
+  font-family: inherit;
+  font-weight: 700;
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+.theory .theory-circle-label-outer { font-size: 18px; }
+.theory .theory-circle-label-inner { font-size: 14px; }
+.theory .theory-circle-label-centre { font-size: 11px; }
+.theory .theory-circle-label-outer.theory-circle-two { font-size: 14px; }
+.theory .theory-circle-label-inner.theory-circle-two { font-size: 11px; }
+.theory .theory-circle-sub {
+  fill: var(--theory-circle-sub);
+  font-size: 11px;
+  font-weight: 400;
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+.theory .theory-circle-ink-plain { fill: var(--theory-circle-label); }
+.theory .theory-circle-sub.theory-circle-ink-plain { fill: var(--theory-circle-sub); }
+.theory .theory-circle-ink-home { fill: var(--theory-circle-home-fg); }
+.theory .theory-circle-ink-a { fill: var(--theory-circle-a-fg); }
+.theory .theory-circle-ink-b { fill: var(--theory-circle-b-fg); }
+.theory .theory-circle-ink-c { fill: var(--theory-circle-c-fg); }
+.theory .theory-circle-outside {
+  fill: var(--theory-circle-sub);
+  font-size: 13px;
+  font-weight: 700;
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+.theory .theory-circle-centre {
+  fill: var(--theory-circle-label);
+  font-size: 15px;
+  font-weight: 700;
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+/* arrows, brackets, lines across, shapes */
+.theory .theory-circle-arrow,
+.theory .theory-circle-tick,
+.theory .theory-circle-line,
+.theory .theory-circle-outline {
+  fill: none;
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+.theory .theory-circle-outline { stroke-width: 3.5; stroke-linejoin: round; }
+.theory .theory-circle-line { stroke-width: 2.5; }
+.theory .theory-circle-shape { stroke-width: 2.5; stroke-linejoin: round; fill-opacity: 0.35; }
+.theory .theory-circle-shape-a { fill: var(--theory-circle-a); }
+.theory .theory-circle-shape-b { fill: var(--theory-circle-b); }
+.theory .theory-circle-stroke-home { stroke: var(--theory-circle-home-stroke); }
+.theory .theory-circle-stroke-a { stroke: var(--theory-circle-a-stroke); }
+.theory .theory-circle-stroke-b { stroke: var(--theory-circle-b-stroke); }
+.theory .theory-circle-stroke-c { stroke: var(--theory-circle-c-stroke); }
+.theory .theory-circle-head-home, .theory .theory-circle-dot-home { fill: var(--theory-circle-home-stroke); }
+.theory .theory-circle-head-a, .theory .theory-circle-dot-a, .theory .theory-circle-note-a { fill: var(--theory-circle-a-stroke); }
+.theory .theory-circle-head-b, .theory .theory-circle-dot-b, .theory .theory-circle-note-b { fill: var(--theory-circle-b-stroke); }
+.theory .theory-circle-head-c, .theory .theory-circle-dot-c { fill: var(--theory-circle-c-stroke); }
+.theory .theory-circle-note { font-size: 13px; font-weight: 700; dominant-baseline: central; }
+.theory .theory-circle-defs, .theory .theory-circle-marker { overflow: visible; }
+
 /* ---------------------------------------------------------------- BREAKPOINTS (theory) */
 @media (max-width: 991.98px) {
   .theory .theory-chart-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }
 @media (max-width: 767.98px) {
   .theory { font-size: 1rem; }
+  .theory .theory-circle-split,
+  .theory .theory-circle-split-flip,
+  .theory .theory-circle-split-small,
+  .theory .theory-circle-split-small.theory-circle-split-flip {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "figure" "text";
+  }
+  .theory .theory-circle-split-figure { width: 100%; max-width: var(--theory-circle-w); justify-self: center; }
+  .theory .theory-circle-split-small .theory-circle-split-figure { max-width: var(--theory-circle-small-w); }
   .theory .theory-try { padding: 14px 12px 6px; }
   .theory .theory-split,
   .theory .theory-try .theory-split { grid-template-columns: minmax(0, 1fr); }
