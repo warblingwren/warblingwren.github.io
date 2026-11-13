@@ -25,9 +25,10 @@
 import { midiToNote, noteToMidi } from './piano-audio.js';
 import { textOn } from './piano.js';
 import * as pianoChords from './piano-chords.js';   // currentPanels, collapsibleVoicings (v8; optional)
+import * as circleModule from './circle-o-5ths.js'; // numeralClasses (optional: an older circle-o-5ths.js leaves plain numerals)
 const { currentPanels } = pianoChords;
 
-export const VERSION = 7;                 // 7: voicings() / setVoicings() for shared links (fret patterns); 6: collapsible voicing list; 5: sound (opts.audio); 4: rows + sliders per octave
+export const VERSION = 8;                 // 8: numeral icons on the progression cards (circle-o-5ths.js numeralClasses); 7: voicings() / setVoicings() for shared links (fret patterns); 6: collapsible voicing list; 5: sound (opts.audio); 4: rows + sliders per octave
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
 // --- playability ------------------------------------------------------------------------------
@@ -727,7 +728,7 @@ export async function renderGuitarProgressions(opts = {}) {
       const col = el('div', 'col-12 mb-3 cp-col');
       const card = el('div', 'card h-100 cp-card');
       const body = el('div', 'card-body cd cd--compact');
-      const rn = el('span', 'cp-card-roman', chord.roman);
+      const rn = el('span', `cp-card-roman ${circleModule.numeralClasses?.(chord.roman) ?? ''}`.trim(), chord.roman);
       const label = `${st.title} ${chord.roman}: ${chord.name}`;
       const { badge, showAll, parts } = chordBody(chord, label, card, panel.variant, (c) => { ctls[ci] = c; });
       body.append(rn, badge, ...parts);

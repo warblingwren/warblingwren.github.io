@@ -42,6 +42,14 @@
   --ref-title-space: var(--ref-title-h);   /* contents links land with the section's <h2> just below the <h1> */
   --ref-menu-gap: 64px;            /* space above the menu */
   --ref-menu-sticky-top: 0px;      /* where the genre headers stick; set to the pinned fretboard's height if it overlaps */
+  /* Roman numeral icons: shape + colour per scale degree. SYNC: --theory-num-* in theory.css, --cp-num-* in circle-o-5ths.css */
+  --ref-num-1: #303030;  --ref-num-1-fg: #ffffff;   /* I   home: ink, circle */
+  --ref-num-2: #546e7a;  --ref-num-2-fg: #ffffff;   /* ii  blue grey 600, square */
+  --ref-num-3: #a8dade;  --ref-num-3-fg: #303030;   /* iii brand accent, leaf */
+  --ref-num-4: #ffe082;  --ref-num-4-fg: #303030;   /* IV  amber 200, arch */
+  --ref-num-5: #ffb300;  --ref-num-5-fg: #303030;   /* V   amber 600, arrow (tension pointing home) */
+  --ref-num-6: #cfd8dc;  --ref-num-6-fg: #303030;   /* vi  blue grey 100, mirrored leaf */
+  --ref-num-7: #78909c;  --ref-num-7-fg: #ffffff;   /* vii blue grey 400, hexagon */
   --ref-badge-fg-default: #ffffff;
   --ref-badge-bg-default: #303030;
   --ref-radius: 10px;
@@ -528,8 +536,47 @@
   text-align: center;
   padding: 0 0 6px;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+}
+
+/* Roman numeral icon <span>: one shape and colour per scale degree (same as the theory pages and the app) */
+.ref-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2em;
+  padding: 0.05em 0.55em;
+  margin: 0.1em 0.06em;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 0.92em;
+  font-weight: 700;
+  line-height: 1.45;
+  white-space: nowrap;
+  vertical-align: baseline;
+}
+.ref-num-upper { font-style: normal; }
+.ref-num-lower { font-style: italic; }
+.ref-num-1 { background: var(--ref-num-1); color: var(--ref-num-1-fg); border-radius: 999px; }
+.ref-num-2 { background: var(--ref-num-2); color: var(--ref-num-2-fg); border-radius: 3px; }
+.ref-num-3 { background: var(--ref-num-3); color: var(--ref-num-3-fg); border-radius: 12px 3px 12px 3px; }
+.ref-num-4 { background: var(--ref-num-4); color: var(--ref-num-4-fg); border-radius: 12px 12px 3px 3px; }
+.ref-num-5 {
+  background: var(--ref-num-5);
+  color: var(--ref-num-5-fg);
+  padding-right: 0.95em;
+  clip-path: polygon(0 0, calc(100% - 0.55em) 0, 100% 50%, calc(100% - 0.55em) 100%, 0 100%);
+  border-radius: 3px 0 0 3px;
+}
+.ref-num-6 { background: var(--ref-num-6); color: var(--ref-num-6-fg); border-radius: 3px 12px 3px 12px; }
+.ref-num-7 {
+  background: var(--ref-num-7);
+  color: var(--ref-num-7-fg);
+  padding-left: 0.85em;
+  padding-right: 0.85em;
+  clip-path: polygon(0.45em 0, calc(100% - 0.45em) 0, 100% 50%, calc(100% - 0.45em) 100%, 0.45em 100%, 0 50%);
+}
+/* ♭VII, ♭VI: borrowed from outside the key, striped */
+.ref-num-altered {
+  background-image: repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.28) 0 4px, transparent 4px 8px);
 }
 
 /* chord name <td> */

@@ -32,6 +32,19 @@ const ACC = { '-2': '𝄫', '-1': '♭', 0: '', 1: '♯', 2: '𝄪' };
 
 const pcOf = (name) => (LETTER_PC[name[0]] + (ACC_OFFSET[name.slice(1)] ?? 0) + 12) % 12;
 
+// Roman numeral icon classes: one shape and colour per scale degree, as on the theory and reference pages.
+//   'V7' -> 'cp-num cp-num-5 cp-num-upper'   'iiø7' -> 'cp-num cp-num-2 cp-num-lower'   '♭VII' -> '… cp-num-altered'
+// SYNC: build_reference.py Theory.numeral_icon, theory.css .theory-num-*, reference.css .ref-num-*, circle-o-5ths.css .cp-num-*
+const NUMERAL = /^([♭♯]?)(vii|VII|iii|III|vi|VI|iv|IV|ii|II|v|V|i|I)/;
+const NUMERAL_DEGREE = { i: 1, ii: 2, iii: 3, iv: 4, v: 5, vi: 6, vii: 7 };
+export function numeralClasses(roman) {
+  const m = NUMERAL.exec(String(roman ?? ''));
+  if (!m) return '';
+  const classes = ['cp-num', `cp-num-${NUMERAL_DEGREE[m[2].toLowerCase()]}`, `cp-num-${m[2] === m[2].toUpperCase() ? 'upper' : 'lower'}`];
+  if (m[1]) classes.push('cp-num-altered');
+  return classes.join(' ');
+}
+
 // Spell the note `semis` semitones and `letters` letter-steps above `root`
 export function spell(root, semis, letters) {
   const letter = LETTERS[(LETTERS.indexOf(root[0]) + letters) % 7];
@@ -389,7 +402,7 @@ export async function renderCircleProgressions(opts = {}) {
       const card = el('div', 'card h-100 cp-card');           // Bootstrap card
       const body = el('div', 'card-body cd cd--compact');     // #chord-data layout, compact
 
-      const rn = el('span', 'cp-card-roman', chord.roman);
+      const rn = el('span', `cp-card-roman ${numeralClasses(chord.roman)}`.trim(), chord.roman);
       rn.setAttribute('aria-label', `Position ${chord.roman} in the progression`);
 
       const badge = el('button', 'cd-name', chord.name);

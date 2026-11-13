@@ -20,6 +20,21 @@
   --theory-field: #f5f6f8;        /* = --ws-field */
   --theory-zebra: #fafbfc;
   --theory-accent: #a8dade;       /* = --ws-accent, the brand border colour */
+  /* maps: fretboard, keyboard map, beats, song forms (build_theory.py Maps) */
+  --theory-fretmap-bg: #fbf8f3;   /* neck */
+  --theory-fretmap-fret: #b9b3aa;
+  --theory-fretmap-nut: #303030;
+  --theory-fretmap-string: #8d8780;
+  --theory-fretmap-inlay: #e3d9cc;
+  --theory-fretmap-label: #6b6f76;
+  --theory-beat-bg: #ffffff;
+  --theory-beat-accent: #ffe082;  /* = --theory-num-4: amber 200 */
+  --theory-form-0: #a8dade;       /* section colours: A / verse, B / chorus, ... (cycle of 6) */
+  --theory-form-1: #ffe082;
+  --theory-form-2: #cfd8dc;
+  --theory-form-3: #ffb300;
+  --theory-form-4: #b2dfdb;
+  --theory-form-5: #f8bbd0;
   --theory-accent-soft: rgba(168, 218, 222, 0.45);
   --theory-hover: #eef7f8;
   --theory-link: #1565c0;
@@ -745,6 +760,15 @@
   flex: 0 0 var(--theory-card-w);
   width: var(--theory-card-w);
 }
+/* a chord wider than an octave (9ths, 11ths, 13ths): two-octave keyboard, so the card is two cards wide;
+   the guitar diagram keeps its normal size (.theory-guitar max-width) (build_reference.py Drawing.octaves_for) */
+.theory .theory-chart-grid .theory-chart-chord-wide { grid-column: span 2; }
+.theory .theory-chart-chord-wide .theory-piano { max-width: 240px; }
+.theory .theory-chart-flow .theory-chart-chord-wide,
+.theory .theory-split-diagrams .theory-chart-small .theory-chart-chord-wide {
+  flex: 0 0 calc(var(--theory-card-w) * 2 + 10px);
+  width: calc(var(--theory-card-w) * 2 + 10px);
+}
 /* a box that spans the full width (several cards) */
 .theory .theory-wide { }
 .theory .theory-try-link,
@@ -791,6 +815,208 @@
   font-size: 0.75em;
 }
 
+/* ---------------------------------------------------------------- maps (build_theory.py Maps) */
+/* fretboard_map, scale_chart, interval_card: the neck drawn sideways, lowest string at the bottom */
+.theory .theory-fretmap-figure { margin: 8px 0 20px; }
+.theory .theory-fretmap-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.theory .theory-fretmap {
+  display: block;
+  width: 100%;
+  min-width: 420px;
+  max-width: 760px;
+  height: auto;
+  background: var(--theory-fretmap-bg);
+  border-radius: 8px;
+}
+.theory .theory-interval-guitar .theory-fretmap { min-width: 0; max-width: 220px; margin: 0 auto; }
+.theory .theory-fretmap-fret { stroke: var(--theory-fretmap-fret); stroke-width: 1.5; }
+.theory .theory-fretmap-nut { fill: var(--theory-fretmap-nut); }
+.theory .theory-fretmap-string { stroke: var(--theory-fretmap-string); stroke-width: 1; }
+.theory .theory-fretmap-inlay { fill: var(--theory-fretmap-inlay); }
+.theory .theory-fretmap-number {
+  fill: var(--theory-fretmap-label);
+  font-size: 9px;
+  font-weight: 700;
+  text-anchor: middle;
+}
+.theory .theory-fretmap-caption,
+.theory .theory-keymap-caption,
+.theory .theory-beats-caption,
+.theory .theory-form-caption,
+.theory .theory-bars-caption {
+  margin-top: 6px;
+  color: var(--theory-ink-soft);
+  font-size: 0.875rem;
+}
+
+/* keyboard_map: every key named, white keys tinted by octave family */
+.theory .theory-keymap-figure { margin: 8px 0 20px; }
+.theory .theory-keymap-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.theory .theory-keymap { display: block; width: 100%; min-width: 420px; max-width: 760px; height: auto; }
+.theory .theory-keymap-white { fill: var(--theory-oct-light, #ffffff); stroke: var(--theory-key-black-line); stroke-width: 1; }
+.theory .theory-keymap-black { fill: var(--theory-key-black); }
+.theory .theory-keymap-label {
+  fill: var(--theory-ink);
+  font-size: 8px;
+  font-weight: 700;
+  text-anchor: middle;
+}
+.theory .theory-keymap-black-label {
+  fill: #ffffff;
+  font-size: 5px;
+  font-weight: 700;
+  text-anchor: middle;
+}
+
+/* interval_card / interval_grid: the interval's name, size, notes, keyboard and neck */
+.theory .theory-interval-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+  margin: 8px 0 20px;
+}
+.theory .theory-interval {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 10px;
+  border: 1px solid var(--theory-line);
+  border-radius: var(--theory-radius);
+  background: var(--theory-paper);
+  box-shadow: var(--theory-shadow);
+  text-align: center;
+}
+.theory .theory-interval-name { font-size: 1.0625rem; font-weight: 800; text-transform: capitalize; }
+.theory .theory-interval-size { color: var(--theory-ink-soft); font-size: 0.875rem; font-weight: 700; }
+.theory .theory-interval-notes { display: flex; align-items: center; gap: 6px; }
+.theory .theory-interval-piano,
+.theory .theory-interval-guitar { width: 100%; }
+.theory .theory-interval-piano .theory-piano { max-width: 200px; margin: 0 auto; }
+
+/* scale_chart: notes with their degrees, one octave of keyboard, the neck */
+.theory .theory-scale {
+  margin: 8px 0 24px;
+  padding: 14px 14px 4px;
+  border: 1px solid var(--theory-line);
+  border-radius: var(--theory-radius);
+  background: var(--theory-paper);
+  box-shadow: var(--theory-shadow);
+}
+.theory .theory-scale-title { margin-bottom: 8px; font-size: 1.125rem; font-weight: 800; text-transform: capitalize; }
+.theory .theory-scale-notes { display: flex; flex-wrap: wrap; gap: 6px 10px; margin-bottom: 10px; }
+.theory .theory-scale-note { display: inline-flex; flex-direction: column; align-items: center; gap: 2px; }
+.theory .theory-scale-degree { color: var(--theory-ink-soft); font-size: 0.8125rem; font-weight: 700; }
+.theory .theory-scale-piano .theory-piano { max-width: 360px; margin: 0 0 10px; }
+
+/* beat_grid: bars of beats to count; accented beats shaded, swing eighths drawn long-short */
+.theory .theory-beats { margin: 8px 0 20px; }
+.theory .theory-beats-bars { display: flex; flex-wrap: wrap; gap: 10px; }
+.theory .theory-beats-bar { flex: 1 1 220px; min-width: 0; }
+.theory .theory-beats-chord { min-height: 1.9em; margin-bottom: 4px; }
+.theory .theory-beats-row {
+  display: flex;
+  border: 2px solid var(--theory-ink);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.theory .theory-beats-cell {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 8px 2px;
+  border-left: 1px solid var(--theory-line);
+  background: var(--theory-beat-bg);
+  color: var(--theory-ink-soft);
+  font-weight: 700;
+  text-align: center;
+}
+.theory .theory-beats-cell:first-child { border-left: 0; }
+.theory .theory-beats-beat { color: var(--theory-ink); border-left-color: var(--theory-ink-soft); }
+.theory .theory-beats-accent { background: var(--theory-beat-accent); }
+.theory .theory-beats-long { flex-grow: 2; }
+.theory .theory-beats-short { flex-grow: 1; }
+
+/* form_map: song sections as blocks, as wide as their bars */
+.theory .theory-form { margin: 8px 0 20px; }
+.theory .theory-form-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.theory .theory-form-section {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 64px;
+  padding: 10px 10px;
+  border-radius: 8px;
+  color: var(--theory-ink);
+}
+.theory .theory-form-label { font-size: 1.125rem; font-weight: 800; }
+.theory .theory-form-length { font-size: 0.8125rem; font-weight: 700; opacity: 0.8; }
+.theory .theory-form-detail { margin-top: 4px; font-size: 0.875rem; }
+.theory .theory-form-kind-0 { background: var(--theory-form-0); }
+.theory .theory-form-kind-1 { background: var(--theory-form-1); }
+.theory .theory-form-kind-2 { background: var(--theory-form-2); }
+.theory .theory-form-kind-3 { background: var(--theory-form-3); }
+.theory .theory-form-kind-4 { background: var(--theory-form-4); }
+.theory .theory-form-kind-5 { background: var(--theory-form-5); }
+.theory .theory-form-bars-1 { flex: 1 1 0; }
+.theory .theory-form-bars-2 { flex: 2 1 0; }
+.theory .theory-form-bars-3 { flex: 3 1 0; }
+.theory .theory-form-bars-4 { flex: 4 1 0; }
+.theory .theory-form-bars-5 { flex: 5 1 0; }
+.theory .theory-form-bars-6 { flex: 6 1 0; }
+.theory .theory-form-bars-7 { flex: 7 1 0; }
+.theory .theory-form-bars-8 { flex: 8 1 0; }
+.theory .theory-form-bars-9 { flex: 9 1 0; }
+.theory .theory-form-bars-10 { flex: 10 1 0; }
+.theory .theory-form-bars-11 { flex: 11 1 0; }
+.theory .theory-form-bars-12 { flex: 12 1 0; }
+.theory .theory-form-bars-13 { flex: 13 1 0; }
+.theory .theory-form-bars-14 { flex: 14 1 0; }
+.theory .theory-form-bars-15 { flex: 15 1 0; }
+.theory .theory-form-bars-16 { flex: 16 1 0; }
+.theory .theory-form-bars-17 { flex: 17 1 0; }
+.theory .theory-form-bars-18 { flex: 18 1 0; }
+.theory .theory-form-bars-19 { flex: 19 1 0; }
+.theory .theory-form-bars-20 { flex: 20 1 0; }
+.theory .theory-form-bars-21 { flex: 21 1 0; }
+.theory .theory-form-bars-22 { flex: 22 1 0; }
+.theory .theory-form-bars-23 { flex: 23 1 0; }
+.theory .theory-form-bars-24 { flex: 24 1 0; }
+.theory .theory-form-bars-25 { flex: 25 1 0; }
+.theory .theory-form-bars-26 { flex: 26 1 0; }
+.theory .theory-form-bars-27 { flex: 27 1 0; }
+.theory .theory-form-bars-28 { flex: 28 1 0; }
+.theory .theory-form-bars-29 { flex: 29 1 0; }
+.theory .theory-form-bars-30 { flex: 30 1 0; }
+.theory .theory-form-bars-31 { flex: 31 1 0; }
+.theory .theory-form-bars-32 { flex: 32 1 0; }
+
+/* bar_chart: one numbered box per bar with its chord (a 12-bar blues is three rows of 4) */
+.theory .theory-bars { margin: 8px 0 20px; }
+.theory .theory-bars-grid { display: grid; gap: 6px; }
+.theory .theory-bars-per-2 .theory-bars-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.theory .theory-bars-per-4 .theory-bars-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.theory .theory-bars-per-8 .theory-bars-grid { grid-template-columns: repeat(8, minmax(0, 1fr)); }
+.theory .theory-bars-bar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 56px;
+  padding: 16px 4px 8px;
+  border: 1px solid var(--theory-line);
+  border-left: 3px solid var(--theory-ink);
+  border-radius: 6px;
+  background: var(--theory-paper);
+}
+.theory .theory-bars-number {
+  position: absolute;
+  top: 3px;
+  left: 6px;
+  color: var(--theory-ink-soft);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
 /* ---------------------------------------------------------------- BREAKPOINTS (theory) */
 @media (max-width: 991.98px) {
   .theory .theory-chart-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
@@ -812,6 +1038,8 @@
   .theory .theory-chart-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
   :root { --theory-card-w: 104px; }
   .theory .theory-chart-arrow { font-size: 1.125rem; }
+  .theory .theory-bars-per-8 .theory-bars-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .theory .theory-form-section { flex-basis: 100%; }
 }
 @media (max-width: 430px) {
   .theory .theory-title { font-size: 1.75rem; }

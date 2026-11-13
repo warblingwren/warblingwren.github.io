@@ -12,6 +12,15 @@
   --cp-muted: #ffffff;
   --cp-rule: #8a8a92;            /* light grey dividers in the key box */
   --cp-roman: #6b6b70;
+  /* Roman numeral icons on the cards: shape + colour per scale degree.
+     SYNC: --theory-num-* in theory.css, --ref-num-* in reference.css (the same icons on every page) */
+  --cp-num-1: #303030;  --cp-num-1-fg: #ffffff;   /* I   home: ink, circle */
+  --cp-num-2: #546e7a;  --cp-num-2-fg: #ffffff;   /* ii  blue grey 600, square */
+  --cp-num-3: #a8dade;  --cp-num-3-fg: #303030;   /* iii brand accent, leaf */
+  --cp-num-4: #ffe082;  --cp-num-4-fg: #303030;   /* IV  amber 200, arch */
+  --cp-num-5: #ffb300;  --cp-num-5-fg: #303030;   /* V   amber 600, arrow (tension pointing home) */
+  --cp-num-6: #cfd8dc;  --cp-num-6-fg: #303030;   /* vi  blue grey 100, mirrored leaf */
+  --cp-num-7: #78909c;  --cp-num-7-fg: #ffffff;   /* vii blue grey 400, hexagon */
   --cp-active: #3d7be8;
   --cp-gutter: 15px;             /* matches Bootstrap .row gutter (-15px margins) */
   --cp-select-max: 480px;        /* progression dropdown width on wide screens */
@@ -257,6 +266,43 @@
   font-size: 15px;
   font-weight: 700;
   color: var(--cp-roman);
+}
+
+/* numeral icon (numeralClasses in circle-o-5ths.js): one shape and colour per scale degree */
+.cp-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2em;
+  padding: 0.05em 0.55em;
+  font-family: Georgia, "Times New Roman", serif;
+  line-height: 1.45;
+  white-space: nowrap;
+}
+.cp-num-upper { font-style: normal; }
+.cp-num-lower { font-style: italic; }
+.cp-num-1 { background: var(--cp-num-1); color: var(--cp-num-1-fg); border-radius: 999px; }
+.cp-num-2 { background: var(--cp-num-2); color: var(--cp-num-2-fg); border-radius: 3px; }
+.cp-num-3 { background: var(--cp-num-3); color: var(--cp-num-3-fg); border-radius: 12px 3px 12px 3px; }
+.cp-num-4 { background: var(--cp-num-4); color: var(--cp-num-4-fg); border-radius: 12px 12px 3px 3px; }
+.cp-num-5 {
+  background: var(--cp-num-5);
+  color: var(--cp-num-5-fg);
+  padding-right: 0.95em;
+  clip-path: polygon(0 0, calc(100% - 0.55em) 0, 100% 50%, calc(100% - 0.55em) 100%, 0 100%);
+  border-radius: 3px 0 0 3px;
+}
+.cp-num-6 { background: var(--cp-num-6); color: var(--cp-num-6-fg); border-radius: 3px 12px 3px 12px; }
+.cp-num-7 {
+  background: var(--cp-num-7);
+  color: var(--cp-num-7-fg);
+  padding-left: 0.85em;
+  padding-right: 0.85em;
+  clip-path: polygon(0.45em 0, calc(100% - 0.45em) 0, 100% 50%, calc(100% - 0.45em) 100%, 0.45em 100%, 0 50%);
+}
+/* ♭VII, ♭VI: borrowed from outside the key, striped */
+.cp-num-altered {
+  background-image: repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.28) 0 4px, transparent 4px 8px);
 }
 
 .cd--compact .cd-name {

@@ -1214,6 +1214,11 @@ img:not(.header img) {
     line-height: 1.35;
 }
 .ww-theory-menu-link:hover .ww-theory-menu-title { text-decoration: underline; }
+/* the page you're on (aria-current, set by the include) */
+.ww-theory-menu-link[aria-current="page"] {
+    background: var(--tm-hover-bg);
+    border-color: var(--tm-ink);
+}
 .ww-theory-menu-summary {
     color: var(--tm-ink-soft);
     font-size: 0.875rem;
