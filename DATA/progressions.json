@@ -3,15 +3,42 @@
   "description": "Chord progressions by genre. Steps are relative to the key tonic and resolve against circle_of_fifths.json at run time.",
   "step": "degree = scale step (1–7), semitones = root distance above the tonic, quality = circle_of_fifths.json chord_qualities id",
   "mode": "major | minor — which keys the progression applies to",
-  "version": 1
+  "version": 1,
+  "menu_columns": "site menu layout: one list of genres per column, top to bottom (build_reference.py); the app ignores it",
+  "history": "where the progression comes from, in a sentence or three (sources: progressions-sources.md)",
+  "listen_for": "what to listen for when it plays",
+  "famous_songs": "[{title, artist}]: songs that use it, each confirmed by two or more sources (progressions-sources.md); empty when none were",
+  "related": "ids of related progressions in this file"
  },
  "genres": [
   "Blues",
   "Jazz",
   "Country",
+  "Bluegrass",
   "Rock & Roll",
   "Folk",
   "Pop"
+ ],
+ "menu_columns": [
+  [
+   "Blues"
+  ],
+  [
+   "Jazz"
+  ],
+  [
+   "Country",
+   "Bluegrass"
+  ],
+  [
+   "Rock & Roll"
+  ],
+  [
+   "Folk"
+  ],
+  [
+   "Pop"
+  ]
  ],
  "defaults": {
   "major": "rock-three-chord",
@@ -58,6 +85,28 @@
     1,
     0,
     2
+   ],
+   "history": "The blues grew out of work songs and spirituals in the American South in the early 1900s and was passed on by ear until W. C. Handy began writing it down. The 12-bar form carried the music through the swing era of the 1930s and 1940s and became the backbone of early rock & roll in the 1950s.",
+   "listen_for": "The pull to IV7 at bar 5, the long settle on I7 in bars 7 and 8, then V7 at bar 9: the strongest push in the form, falling through IV7 to home.",
+   "famous_songs": [
+    {
+     "title": "Johnny B. Goode",
+     "artist": "Chuck Berry"
+    },
+    {
+     "title": "Hound Dog",
+     "artist": "Elvis Presley"
+    },
+    {
+     "title": "Rock Around the Clock",
+     "artist": "Bill Haley & His Comets"
+    }
+   ],
+   "related": [
+    "blues-quick-change",
+    "blues-8-bar",
+    "blues-minor",
+    "rock-three-chord"
    ]
   },
   {
@@ -100,6 +149,18 @@
     1,
     0,
     2
+   ],
+   "history": "The quick change (also called the quick four) is a common variation of the 12-bar blues: the band touches IV7 in bar 2 and comes straight back to I7. Robert Johnson's \"Sweet Home Chicago\" uses it.",
+   "listen_for": "The early lift in bar 2. The first line moves at once instead of sitting on I7 for four bars, so the whole form feels busier from the start.",
+   "famous_songs": [
+    {
+     "title": "Sweet Home Chicago",
+     "artist": "Robert Johnson"
+    }
+   ],
+   "related": [
+    "blues-12-bar",
+    "blues-8-bar"
    ]
   },
   {
@@ -138,6 +199,18 @@
     1,
     0,
     1
+   ],
+   "history": "Often called the second most common blues form, the 8-bar blues was on record by the 1920s, in songs such as \"Trouble in Mind\" (1926) and \"How Long Blues\" (1928). Big Bill Broonzy's \"Key to the Highway\" (1941) set the version used here, with V7 in bar 2.",
+   "listen_for": "How fast it moves: V7 in bar 2, IV7 by bar 3, and a turnaround in the last two bars that sends the song straight back to the top.",
+   "famous_songs": [
+    {
+     "title": "Key to the Highway",
+     "artist": "Big Bill Broonzy"
+    }
+   ],
+   "related": [
+    "blues-12-bar",
+    "blues-quick-change"
    ]
   },
   {
@@ -180,6 +253,23 @@
     1,
     0,
     2
+   ],
+   "history": "The minor blues keeps the 12-bar form but uses minor chords on I and IV. It's a staple in jazz, where John Coltrane's \"Mr. P.C.\" is the standard example, and in blues, where B.B. King's \"The Thrill Is Gone\" is built on a version of it.",
+   "listen_for": "The major V7 in bar 9 after eight bars of minor chords: a bright, sharp turn that pulls hard back to the minor home chord.",
+   "famous_songs": [
+    {
+     "title": "Mr. P.C.",
+     "artist": "John Coltrane"
+    },
+    {
+     "title": "The Thrill Is Gone",
+     "artist": "B.B. King"
+    }
+   ],
+   "related": [
+    "blues-12-bar",
+    "jazz-minor-ii-v-i",
+    "folk-minor-i-iv-v"
    ]
   },
   {
@@ -208,7 +298,29 @@
      "quality": "maj7"
     }
    ],
-   "description": "ii7–V7–Imaj7, the most common cadence in jazz: each root falls a fifth (D–G–C in C major)."
+   "description": "ii7–V7–Imaj7, the most common cadence in jazz: each root falls a fifth (D–G–C in C major).",
+   "history": "The ii–V–I is found in almost every kind of Western popular music, and it's everywhere in jazz, where chains of ii–Vs lead the ear through passing keys and land firmly on I. Standards such as \"All the Things You Are\" and \"Satin Doll\" are built from it.",
+   "listen_for": "Each root falling a fifth, two steps in a row, and the moment V7 resolves: the tension in V7 dissolves into the calm of Imaj7.",
+   "famous_songs": [
+    {
+     "title": "Satin Doll",
+     "artist": "Duke Ellington"
+    },
+    {
+     "title": "All the Things You Are",
+     "artist": "Jerome Kern and Oscar Hammerstein II"
+    },
+    {
+     "title": "Autumn Leaves",
+     "artist": "Joseph Kosma"
+    }
+   ],
+   "related": [
+    "jazz-minor-ii-v-i",
+    "jazz-i-vi-ii-v",
+    "jazz-iii-vi-ii-v",
+    "country-i-ii7-v7"
+   ]
   },
   {
    "id": "jazz-i-vi-ii-v",
@@ -242,7 +354,28 @@
      "quality": "dom7"
     }
    ],
-   "description": "Imaj7–vi7–ii7–V7, the turnaround behind rhythm changes: from vi7 on, each root falls a fifth, and V7 leads back to Imaj7."
+   "description": "Imaj7–vi7–ii7–V7, the turnaround behind rhythm changes: from vi7 on, each root falls a fifth, and V7 leads back to Imaj7.",
+   "history": "This turnaround opens George Gershwin's \"I Got Rhythm\", introduced by Ethel Merman in the 1930 Broadway show Girl Crazy. Its chords, the \"rhythm changes\", were first used for a new tune in 1932, and bebop musicians of the 1940s wrote dozens of new melodies on them.",
+   "listen_for": "Two bars that loop: home, the relative minor, then ii7 and V7 pulling back to the start. Jazz players repeat it to keep a song turning over.",
+   "famous_songs": [
+    {
+     "title": "I Got Rhythm",
+     "artist": "George Gershwin"
+    },
+    {
+     "title": "Anthropology",
+     "artist": "Charlie Parker and Dizzy Gillespie"
+    },
+    {
+     "title": "Lester Leaps In",
+     "artist": "Lester Young"
+    }
+   ],
+   "related": [
+    "jazz-iii-vi-ii-v",
+    "jazz-ii-v-i",
+    "rock-50s"
+   ]
   },
   {
    "id": "jazz-iii-vi-ii-v",
@@ -276,7 +409,20 @@
      "quality": "dom7"
     }
    ],
-   "description": "iii7–vi7–ii7–V7: every root falls a fifth around the circle (E–A–D–G in C major), and V7 leads home to I."
+   "description": "iii7–vi7–ii7–V7: every root falls a fifth around the circle (E–A–D–G in C major), and V7 leads home to I.",
+   "history": "iii–vi–ii–V extends the ii–V–I backwards around the circle of fifths and is a common turnaround in jazz. In rhythm changes, players often swap the opening I chord for iii to make this progression.",
+   "listen_for": "Four roots in a row, each falling a fifth (E, A, D, G in C major), so the progression sounds like a staircase that always leads home.",
+   "famous_songs": [
+    {
+     "title": "I Got Rhythm",
+     "artist": "George Gershwin"
+    }
+   ],
+   "related": [
+    "jazz-i-vi-ii-v",
+    "jazz-ii-v-i",
+    "bluegrass-i-vi7-ii7-v7"
+   ]
   },
   {
    "id": "jazz-minor-ii-v-i",
@@ -304,7 +450,23 @@
      "quality": "min7"
     }
    ],
-   "description": "iiø7–V7–i7, the minor-key cadence: a half-diminished ii, and a V7 borrowed from harmonic minor."
+   "description": "iiø7–V7–i7, the minor-key cadence: a half-diminished ii, and a V7 borrowed from harmonic minor.",
+   "history": "In a minor key, the ii chord is half-diminished (iiø7), and V7 borrows its raised 7th from harmonic minor. The minor ii–V–i drives jazz standards such as \"Autumn Leaves\" and Kenny Dorham's \"Blue Bossa\", which Joe Henderson recorded in 1963.",
+   "listen_for": "The dark, unstable iiø7, the major V7 with its leading tone, then the minor home chord: a resolution that settles, but stays shadowed.",
+   "famous_songs": [
+    {
+     "title": "Autumn Leaves",
+     "artist": "Joseph Kosma"
+    },
+    {
+     "title": "Blue Bossa",
+     "artist": "Kenny Dorham"
+    }
+   ],
+   "related": [
+    "jazz-ii-v-i",
+    "blues-minor"
+   ]
   },
   {
    "id": "country-i-iv-v",
@@ -332,7 +494,24 @@
      "quality": "major"
     }
    ],
-   "description": "Three-chord country: the tonic (I), subdominant (IV) and dominant (V) triads."
+   "description": "Three-chord country: the tonic (I), subdominant (IV) and dominant (V) triads.",
+   "history": "The three primary chords are the foundation of country, as of folk, blues and rock & roll: with I, IV and V, a player can accompany hundreds of songs.",
+   "listen_for": "IV as the warm step away and V as the push home. Country songs often sit on I for a long time before each change.",
+   "famous_songs": [
+    {
+     "title": "Ring of Fire",
+     "artist": "Johnny Cash"
+    },
+    {
+     "title": "Blue Suede Shoes",
+     "artist": "Carl Perkins"
+    }
+   ],
+   "related": [
+    "rock-three-chord",
+    "blues-12-bar",
+    "country-i-ii7-v7"
+   ]
   },
   {
    "id": "country-i-ii7-v7",
@@ -360,7 +539,156 @@
      "quality": "dom7"
     }
    ],
-   "description": "II7 is a secondary dominant (V7 of V) that pulls to V7, which pulls back to I."
+   "description": "II7 is a secondary dominant (V7 of V) that pulls to V7, which pulls back to I.",
+   "history": "Raising the ii chord to a major II7 makes it the dominant of V, a secondary dominant, and gives a song a jaunty, old-time push. Hank Williams's \"Hey, Good Lookin'\" is a well-known country example.",
+   "listen_for": "The surprise of II7: a major chord where a minor one is expected, which leans hard into V7 before the song lands back on I.",
+   "famous_songs": [
+    {
+     "title": "Hey, Good Lookin'",
+     "artist": "Hank Williams"
+    }
+   ],
+   "related": [
+    "bluegrass-i-vi7-ii7-v7",
+    "jazz-ii-v-i",
+    "country-i-iv-v"
+   ]
+  },
+  {
+   "id": "bluegrass-i-vi7-ii7-v7",
+   "name": "I–VI7–II7–V7",
+   "genre": "Bluegrass",
+   "mode": "major",
+   "roman": "I – VI7 – II7 – V7",
+   "steps": [
+    {
+     "roman": "I",
+     "degree": 1,
+     "semitones": 0,
+     "quality": "major"
+    },
+    {
+     "roman": "VI7",
+     "degree": 6,
+     "semitones": 9,
+     "quality": "dom7"
+    },
+    {
+     "roman": "II7",
+     "degree": 2,
+     "semitones": 2,
+     "quality": "dom7"
+    },
+    {
+     "roman": "V7",
+     "degree": 5,
+     "semitones": 7,
+     "quality": "dom7"
+    }
+   ],
+   "description": "The \"Salty Dog\" changes: a chain of secondary dominants, VI7 to II7 to V7, each root a fifth above the next, falling back to I.",
+   "history": "Known as the ragtime progression for its popularity in ragtime, this chain of dominants is much older: Liszt used it in Liebesträume (1850). It came into bluegrass through \"Salty Dog Blues\", whose words were printed by 1911 and which Papa Charlie Jackson recorded in 1924.",
+   "listen_for": "Every chord after I is a dominant 7th, each one a fifth above the next: VI7 pulls to II7, II7 to V7, V7 to home.",
+   "famous_songs": [
+    {
+     "title": "Salty Dog Blues",
+     "artist": "Papa Charlie Jackson; later Rev. Gary Davis"
+    },
+    {
+     "title": "Alice's Restaurant",
+     "artist": "Arlo Guthrie"
+    },
+    {
+     "title": "Sweet Georgia Brown",
+     "artist": "Ben Bernie and Maceo Pinkard"
+    }
+   ],
+   "related": [
+    "country-i-ii7-v7",
+    "jazz-iii-vi-ii-v",
+    "jazz-i-vi-ii-v"
+   ]
+  },
+  {
+   "id": "bluegrass-mixolydian",
+   "name": "I–♭VII–I",
+   "genre": "Bluegrass",
+   "mode": "major",
+   "roman": "I – ♭VII – I",
+   "steps": [
+    {
+     "roman": "I",
+     "degree": 1,
+     "semitones": 0,
+     "quality": "major"
+    },
+    {
+     "roman": "♭VII",
+     "degree": 7,
+     "semitones": 10,
+     "quality": "major"
+    },
+    {
+     "roman": "I",
+     "degree": 1,
+     "semitones": 0,
+     "quality": "major"
+    }
+   ],
+   "description": "The Mixolydian fiddle-tune sound of \"Old Joe Clark\": a major key with a ♭VII chord a whole step below home, and straight back.",
+   "history": "\"Old Joe Clark\" was printed as sung in Virginia in 1918, and Cowan Powers and his Family Band recorded it in 1924. Its melody is Mixolydian, the major scale with a lowered 7th, which is where the ♭VII chord comes from.",
+   "listen_for": "The drop to ♭VII and straight back: a rugged, old-time sound with no leading tone, so home is reached by stepping, not by resolving.",
+   "famous_songs": [
+    {
+     "title": "Old Joe Clark",
+     "artist": "traditional"
+    }
+   ],
+   "related": [
+    "rock-mixolydian",
+    "bluegrass-dorian"
+   ]
+  },
+  {
+   "id": "bluegrass-dorian",
+   "name": "i–VII–i",
+   "genre": "Bluegrass",
+   "mode": "minor",
+   "roman": "i – VII – i",
+   "steps": [
+    {
+     "roman": "i",
+     "degree": 1,
+     "semitones": 0,
+     "quality": "minor"
+    },
+    {
+     "roman": "VII",
+     "degree": 7,
+     "semitones": 10,
+     "quality": "major"
+    },
+    {
+     "roman": "i",
+     "degree": 1,
+     "semitones": 0,
+     "quality": "minor"
+    }
+   ],
+   "description": "The modal minor sound of \"Shady Grove\": the minor home chord and the major chord a whole step below it, back and forth.",
+   "history": "\"Shady Grove\" is believed to come from eastern Kentucky around 1900. Its melody was published in 1915, and it moved from old-time music into the bluegrass repertoire. The tune is Dorian, a minor scale with a raised 6th; players accompany it with the minor home chord and the major chord a whole step below.",
+   "listen_for": "Two chords, back and forth: the minor home chord and the major VII, a modal sound that never needs a V chord to feel home.",
+   "famous_songs": [
+    {
+     "title": "Shady Grove",
+     "artist": "traditional"
+    }
+   ],
+   "related": [
+    "bluegrass-mixolydian",
+    "rock-aeolian",
+    "folk-minor-i-iv-v"
+   ]
   },
   {
    "id": "rock-three-chord",
@@ -388,7 +716,28 @@
      "quality": "major"
     }
    ],
-   "description": "The classic rock & roll progression: I with its two neighbours on the circle of fifths, IV and V."
+   "description": "The classic rock & roll progression: I with its two neighbours on the circle of fifths, IV and V.",
+   "history": "I–IV–V is the foundation of rock & roll, as it was of the blues, country and folk before it: a big share of early rock & roll was built on three chords.",
+   "listen_for": "The lift to IV and the drive of V, often played as a short riff that repeats all song long.",
+   "famous_songs": [
+    {
+     "title": "Twist and Shout",
+     "artist": "The Beatles"
+    },
+    {
+     "title": "La Bamba",
+     "artist": "Ritchie Valens"
+    },
+    {
+     "title": "Wild Thing",
+     "artist": "The Troggs"
+    }
+   ],
+   "related": [
+    "country-i-iv-v",
+    "blues-12-bar",
+    "rock-50s"
+   ]
   },
   {
    "id": "rock-50s",
@@ -422,7 +771,28 @@
      "quality": "major"
     }
    ],
-   "description": "I–vi–IV–V, the doo-wop progression behind much of 1950s pop and early rock & roll."
+   "description": "I–vi–IV–V, the doo-wop progression behind much of 1950s pop and early rock & roll.",
+   "history": "Long before the 1950s, the same chords ran as a bass line in Buxtehude, Bach and Mozart. \"Heart and Soul\" (1938) made them popular, and doo-wop groups of the 1950s and early 1960s used them so often that they're called the doo-wop or '50s progression.",
+   "listen_for": "The bass stepping down from I to vi to IV, then V turning the loop back to the start.",
+   "famous_songs": [
+    {
+     "title": "Stand by Me",
+     "artist": "Ben E. King"
+    },
+    {
+     "title": "Heart and Soul",
+     "artist": "Larry Clinton feat. Bea Wain"
+    },
+    {
+     "title": "This Magic Moment",
+     "artist": "The Drifters"
+    }
+   ],
+   "related": [
+    "pop-axis",
+    "jazz-i-vi-ii-v",
+    "folk-i-iv-vi-v"
+   ]
   },
   {
    "id": "rock-mixolydian",
@@ -450,7 +820,24 @@
      "quality": "major"
     }
    ],
-   "description": "♭VII is borrowed from the Mixolydian mode; I–♭VII–IV is a staple of classic rock."
+   "description": "♭VII is borrowed from the Mixolydian mode; I–♭VII–IV is a staple of classic rock.",
+   "history": "Often called the Mixolydian vamp, I–♭VII–IV borrows ♭VII from the Mixolydian mode. It's a mainstay of rock, from Them's \"Gloria\" to Guns N' Roses.",
+   "listen_for": "I down a whole step to ♭VII, then down a fourth to IV: the open, unresolved sound of a song that would rather walk home than fall into it.",
+   "famous_songs": [
+    {
+     "title": "Gloria",
+     "artist": "Them"
+    },
+    {
+     "title": "Sweet Child O' Mine",
+     "artist": "Guns N' Roses"
+    }
+   ],
+   "related": [
+    "bluegrass-mixolydian",
+    "rock-three-chord",
+    "rock-aeolian"
+   ]
   },
   {
    "id": "rock-aeolian",
@@ -478,7 +865,15 @@
      "quality": "major"
     }
    ],
-   "description": "A natural-minor rock climb: from i, up through VI and VII, back to i."
+   "description": "A natural-minor rock climb: from i, up through VI and VII, back to i.",
+   "history": "The Aeolian vamp, built from the natural minor scale, starts as i–VII and grows to i–VI–VII. Rock and pop songs use it as a loop.",
+   "listen_for": "The climb from VI to VII and back to i: a rising, building sound in a minor key, with no leading tone.",
+   "famous_songs": [],
+   "related": [
+    "folk-andalusian",
+    "pop-minor",
+    "rock-mixolydian"
+   ]
   },
   {
    "id": "folk-canon",
@@ -518,7 +913,27 @@
      "quality": "major"
     }
    ],
-   "description": "The first five chords of Pachelbel’s Canon (the full pattern is I–V–vi–iii–IV–I–IV–V), common in folk ballads."
+   "description": "The first five chords of Pachelbel’s Canon (the full pattern is I–V–vi–iii–IV–I–IV–V), common in folk ballads.",
+   "history": "Johann Pachelbel wrote his Canon in D sometime between 1680 and 1706. It was published in 1919, and Jean-François Paillard's 1968 recording made it famous. Since then its bass line and chords have been borrowed by pop songs again and again.",
+   "listen_for": "The bass stepping down by fourths and up by seconds under a gently descending melody, a sequence that feels inevitable.",
+   "famous_songs": [
+    {
+     "title": "Canon in D",
+     "artist": "Johann Pachelbel"
+    },
+    {
+     "title": "Streets of London",
+     "artist": "Ralph McTell"
+    },
+    {
+     "title": "Basket Case",
+     "artist": "Green Day"
+    }
+   ],
+   "related": [
+    "pop-axis",
+    "rock-50s"
+   ]
   },
   {
    "id": "folk-i-iv-vi-v",
@@ -552,7 +967,14 @@
      "quality": "major"
     }
    ],
-   "description": "A gentle folk progression: I to IV, then the relative minor (vi) before V leads back to I."
+   "description": "A gentle folk progression: I to IV, then the relative minor (vi) before V leads back to I.",
+   "history": "A variant of the '50s progression with IV and vi in the other order, it keeps the same four chords but leaves home through IV.",
+   "listen_for": "The warm IV first, then the shadow of vi before V turns back home.",
+   "famous_songs": [],
+   "related": [
+    "rock-50s",
+    "pop-axis"
+   ]
   },
   {
    "id": "folk-minor-i-iv-v",
@@ -580,7 +1002,20 @@
      "quality": "minor"
     }
    ],
-   "description": "Three-chord progression in natural minor, where the v chord stays minor."
+   "description": "Three-chord progression in natural minor, where the v chord stays minor.",
+   "history": "Built only from the natural minor scale, this keeps v as a minor chord, with no leading tone pulling home. It's common in modal folk and in blues-rock: Peter Green's \"Black Magic Woman\", made famous by Santana, moves between i, iv and v.",
+   "listen_for": "The soft, minor v: no sharp pull home, just a calm sway between three minor chords.",
+   "famous_songs": [
+    {
+     "title": "Black Magic Woman",
+     "artist": "Peter Green (Fleetwood Mac); Santana"
+    }
+   ],
+   "related": [
+    "blues-minor",
+    "folk-andalusian",
+    "rock-aeolian"
+   ]
   },
   {
    "id": "folk-andalusian",
@@ -614,7 +1049,27 @@
      "quality": "major"
     }
    ],
-   "description": "A descending minor cadence from Spanish folk and flamenco: i–VII–VI–V, with the major V from harmonic minor."
+   "description": "A descending minor cadence from Spanish folk and flamenco: i–VII–VI–V, with the major V from harmonic minor.",
+   "history": "The Andalusian cadence has deep roots in the music of southern Spain, especially flamenco. From there it spread into Latin music, then pop, rock and jazz, with hits such as \"Hit the Road Jack\" and \"Runaway\" in 1961.",
+   "listen_for": "The bass walking down four steps, from i to the major V, which lands with a dramatic, Spanish-sounding pause.",
+   "famous_songs": [
+    {
+     "title": "Hit the Road Jack",
+     "artist": "Ray Charles"
+    },
+    {
+     "title": "Runaway",
+     "artist": "Del Shannon"
+    },
+    {
+     "title": "Stray Cat Strut",
+     "artist": "Stray Cats"
+    }
+   ],
+   "related": [
+    "rock-aeolian",
+    "folk-minor-i-iv-v"
+   ]
   },
   {
    "id": "pop-axis",
@@ -648,7 +1103,29 @@
      "quality": "major"
     }
    ],
-   "description": "The “axis” progression behind many pop songs: I–V–vi–IV."
+   "description": "The “axis” progression behind many pop songs: I–V–vi–IV.",
+   "history": "The progression was in pop hits by 1958, in the Teddy Bears' \"To Know Him Is to Love Him\". By the late 1990s it was everywhere, and the comedy group Axis of Awesome's medley \"Four Chords\" showed how many hits share it.",
+   "listen_for": "The lift to V, the turn to the relative minor (vi) and the release on IV: a loop that sounds hopeful and works under almost any melody.",
+   "famous_songs": [
+    {
+     "title": "Let It Be",
+     "artist": "The Beatles"
+    },
+    {
+     "title": "With or Without You",
+     "artist": "U2"
+    },
+    {
+     "title": "Someone Like You",
+     "artist": "Adele"
+    }
+   ],
+   "related": [
+    "pop-vi-iv-i-v",
+    "pop-minor",
+    "folk-canon",
+    "rock-50s"
+   ]
   },
   {
    "id": "pop-vi-iv-i-v",
@@ -682,7 +1159,27 @@
      "quality": "major"
     }
    ],
-   "description": "The axis progression started on vi for a minor feel: the same four chords as I–V–vi–IV."
+   "description": "The axis progression started on vi for a minor feel: the same four chords as I–V–vi–IV.",
+   "history": "Starting the axis loop on vi gives it a minor feel. Boston Globe critic Marc Hirsh, who noticed it in songs of the late 1990s, called it the \"sensitive female chord progression\" in a 2008 article.",
+   "listen_for": "The minor start: vi sets a wistful mood, and the major chords that follow lift it without ever fully resolving.",
+   "famous_songs": [
+    {
+     "title": "Numb",
+     "artist": "Linkin Park"
+    },
+    {
+     "title": "Poker Face",
+     "artist": "Lady Gaga"
+    },
+    {
+     "title": "Despacito",
+     "artist": "Luis Fonsi feat. Daddy Yankee"
+    }
+   ],
+   "related": [
+    "pop-axis",
+    "pop-minor"
+   ]
   },
   {
    "id": "pop-minor",
@@ -716,7 +1213,24 @@
      "quality": "major"
     }
    ],
-   "description": "Minor-key pop loop: i–VI–III–VII, the axis progression in the relative minor."
+   "description": "Minor-key pop loop: i–VI–III–VII, the axis progression in the relative minor.",
+   "history": "This is the axis progression with the relative minor as home: the same four chords, heard from the minor side, in rock and pop hits such as Linkin Park's \"Numb\".",
+   "listen_for": "The minor home chord at the start of each loop, and the bright VII at the end that lifts back into it.",
+   "famous_songs": [
+    {
+     "title": "Numb",
+     "artist": "Linkin Park"
+    },
+    {
+     "title": "Love the Way You Lie",
+     "artist": "Eminem feat. Rihanna"
+    }
+   ],
+   "related": [
+    "pop-axis",
+    "pop-vi-iv-i-v",
+    "rock-aeolian"
+   ]
   }
  ]
 }

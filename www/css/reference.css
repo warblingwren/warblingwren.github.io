@@ -54,6 +54,7 @@
   --ref-badge-bg-default: #303030;
   --ref-radius: 10px;
   --ref-gap: 16px;
+  --ref-section-gap: 2vh;          /* extra space above every section, so a new one shows as the page scrolls (= --theory-section-gap) */
   --ref-root-0: #d32f2f;  /* C */
   --ref-root-1: #c2185b;  /* C♯/D♭ */
   --ref-root-2: #7b1fa2;  /* D */
@@ -224,6 +225,7 @@
 
 /* chord section <div> */
 .ref-section {
+  margin-top: var(--ref-section-gap);
   padding: 20px 0;
   border-top: 1px solid var(--ref-rule);
   scroll-margin-top: calc(var(--ref-title-space) - 20px);   /* contents links land with the <h2> right below the pinned title (20px = padding-top) */
@@ -835,13 +837,13 @@
   color: var(--ref-ink);
 }
 
-/* genre column <div>: light vertical line between columns (which column starts a row: BREAKPOINTS) */
+/* menu column <div>: one or more genres (progressions.json menu_columns); light vertical line between columns (which column starts a row: BREAKPOINTS) */
 .ref-menu-col {
   margin-bottom: 24px;
   border-left: 1px solid var(--ref-rule);
 }
 
-/* genre <h2>: sticks to the top of the screen while its column scrolls past */
+/* genre <h2>: sticks to the top of the screen while its genre scrolls past */
 .ref-menu-genre {
   position: -webkit-sticky;
   position: sticky;
@@ -854,6 +856,12 @@
   color: var(--ref-heading);
   font-size: 1.25rem;
   font-weight: 700;
+}
+
+/* a second genre in the same column (Bluegrass under Country): space above its <h2> */
+.ref-menu-group + .ref-menu-genre,
+.ref-menu-list + .ref-menu-genre {
+  margin-top: 32px;
 }
 
 /* progression <details>: starts collapsed; several can be open at once (no JavaScript) */
@@ -1418,6 +1426,88 @@
   margin-top: 16px;
 }
 
+/* about this progression <div> (progressions.json history, listen_for, famous_songs, related) */
+.ref-about {
+  margin: 0 0 24px;
+  padding: 16px 20px;
+  background: var(--ref-surface-alt);
+  border-radius: var(--ref-radius);
+}
+
+/* about <h2> */
+.ref-about-title {
+  margin: 0 0 12px;
+  color: var(--ref-heading);
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+/* about blocks <div>: two columns from 768px (BREAKPOINTS) */
+.ref-about-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px 32px;
+}
+
+/* one about block <div> */
+.ref-about-block {
+  min-width: 0;
+}
+
+/* about block <h3> */
+.ref-about-heading {
+  margin: 0 0 6px;
+  color: var(--ref-muted);
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* about block <p> */
+.ref-about-text {
+  margin: 0;
+  color: var(--ref-ink);
+  line-height: 1.6;
+}
+
+/* famous songs / related progressions <ul> */
+.ref-about-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* famous song / related progression <li> */
+.ref-about-item {
+  margin: 0 0 6px;
+  line-height: 1.5;
+}
+
+/* song title <cite> */
+.ref-about-song {
+  color: var(--ref-ink);
+  font-style: normal;
+  font-weight: 700;
+}
+
+/* artist / genre <span>, after a song or a related progression */
+.ref-about-note {
+  color: var(--ref-muted);
+}
+.ref-about-note::before { content: "· "; }
+
+/* related progression <a>: at least 44px to tap */
+.ref-about-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--ref-link);
+  font-weight: 600;
+  text-decoration: underline;
+}
+.ref-about-link:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--ref-focus); border-radius: 4px; }
+
 /* BREAKPOINTS (Bootstrap 4.6 widths: 576 / 768 / 992 / 1200) */
 
 @media (max-width: 991.98px) {
@@ -1433,6 +1523,7 @@
   .ref-title { font-size: 1.625rem; }
   :root { --ref-title-h: 52px; }
   .ref-section-title { font-size: 1.25rem; }
+  .ref-about-grid { grid-template-columns: minmax(0, 1fr); }
 }
 
 /* phones: each chord is a column (numeral, badge, tones, keyboard, guitar), three chords per band, so a

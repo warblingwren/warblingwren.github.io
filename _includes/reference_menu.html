@@ -1,22 +1,26 @@
 {%- comment -%}
-  Chord reference menu (home page): one column per genre, a collapsed <details> per progression, one link per chord type.
-  Built from the front matter build_reference.py writes on each progression page, so a rebuild updates the menu:
-    menu_sort            GG-PP-TT: genre, progression and chord type order (index pages leave it empty: not listed)
-    menu_genre_slug      column id, e.g. rock-roll
+  Chord reference menu (home page): one column per menu column, a heading per genre in it, a collapsed <details> per progression,
+  one link per chord type. Built from the front matter build_reference.py writes on each progression page, so a rebuild updates the menu:
+    menu_sort            CC-PP-TT: menu column, progression and chord type order (index pages leave it empty: not listed)
+    menu_column          column id: slug of the column's first genre, e.g. country (progressions.json menu_columns puts Bluegrass there)
+    menu_genre_slug      genre slug, e.g. bluegrass
     menu_progression_id  progression id, e.g. jazz-ii-v-i
     genre, progression, chord_type   the names shown
-  SYNC: the markup and classes match build_reference.py (CLASS_MENU*, MENU_ID, MENU_COLUMNS) and reference.css.
+  SYNC: the markup and classes match build_reference.py (CLASS_MENU*, MENU_ID, MENU_COLUMNS, type_menu) and reference.css.
   GitHub Pages Liquid only: site.pages, where_exp, sort, group_by, escape. No plugins.
 {%- endcomment -%}
 {%- assign ref_pages = site.pages | where_exp: "p", "p.menu_sort" | sort: "menu_sort" -%}
-{%- assign ref_genres = ref_pages | group_by: "genre" -%}
+{%- assign ref_columns = ref_pages | group_by: "menu_column" -%}
 <div class="ref-menu row" id="reference-menu">
+{% for ref_column in ref_columns -%}
+<div class="ref-menu-col col-12 col-sm-6 col-md-4 col-xl-2" id="reference-menu-{{ ref_column.name }}">
+{% assign ref_genres = ref_column.items | group_by: "genre" -%}
 {% for ref_genre in ref_genres -%}
-<div class="ref-menu-col col-12 col-sm-6 col-md-4 col-xl-2" id="reference-menu-{{ ref_genre.items[0].menu_genre_slug }}">
-<h2 class="ref-menu-genre">{{ ref_genre.name | escape }}</h2>
+<h2 class="ref-menu-genre" id="reference-menu-genre-{{ ref_genre.items[0].menu_genre_slug }}">{{ ref_genre.name | escape }}</h2>
 {% assign ref_progressions = ref_genre.items | group_by: "menu_progression_id" -%}
 {% for ref_progression in ref_progressions -%}
 <details class="ref-menu-group" id="reference-menu-{{ ref_progression.name }}"><summary class="ref-menu-toggle"><h3 class="ref-menu-progression">{{ ref_progression.items[0].progression | escape }}</h3></summary><ul class="ref-menu-list">{% for ref_page in ref_progression.items %}<li class="ref-menu-item"><a class="ref-menu-link" href="{{ ref_page.url }}">{{ ref_page.progression | escape }} in {{ ref_page.chord_type | escape }}</a></li>{% endfor %}</ul></details>
+{% endfor -%}
 {% endfor -%}
 </div>
 {% endfor -%}
