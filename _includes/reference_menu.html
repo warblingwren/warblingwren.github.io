@@ -1,27 +1,85 @@
 {%- comment -%}
-  Chord reference menu (home page): one column per menu column, a heading per genre in it, a collapsed <details> per progression,
-  one link per chord type. Built from the front matter build_reference.py writes on each progression page, so a rebuild updates the menu:
-    menu_sort            CC-PP-TT: menu column, progression and chord type order (index pages leave it empty: not listed)
-    menu_column          column id: slug of the column's first genre, e.g. country (progressions.json menu_columns puts Bluegrass there)
-    menu_genre_slug      genre slug, e.g. bluegrass
-    menu_progression_id  progression id, e.g. jazz-ii-v-i
-    genre, progression, chord_type   the names shown
-  SYNC: the markup and classes match build_reference.py (CLASS_MENU*, MENU_ID, MENU_COLUMNS, type_menu) and reference.css.
-  GitHub Pages Liquid only: site.pages, where_exp, sort, group_by, escape. No plugins.
+  Chord reference menu, written entirely from the data files and the pages' own content:
+    site.data.progressions       genres (order), progressions (genre, id, name)     DATA/progressions.json
+    site.data.circle_of_fifths   chord_qualities (order, name)                      DATA/circle_of_fifths.json
+    each reference page          genre, progression, chord_type (its content), url
+  (_config.yml sets data_dir: DATA, so site.data reads DATA/.)
+
+  Home page:            {% include reference-menu.html %}
+                        a column per group of genres, a collapsed <details> per progression, a link per chord type.
+  Chord type index:     {% include reference-menu.html chord_type="Major 7th" %}  (written by build_reference.py)
+                        the same columns, a link per progression in that chord type.
+
+  Columns: the grid class below gives 6 columns on wide screens (12 / ref_span). Liquid finds the smallest column height
+  that fits every genre, in order and without splitting one, into that many columns, then fills the columns in order.
+  A genre's height is its number of progressions plus 1 for its heading. Adding a genre re-balances the columns.
+
+  SYNC: classes match reference.css (.ref-menu*) and build_reference.py's CLASS_MENU* list; progression ids match progressions.json.
+  GitHub Pages Liquid only: site.data, site.pages, where, push, size, slugify, escape, downcase. No plugins.
 {%- endcomment -%}
-{%- assign ref_pages = site.pages | where_exp: "p", "p.menu_sort" | sort: "menu_sort" -%}
-{%- assign ref_columns = ref_pages | group_by: "menu_column" -%}
-<div class="ref-menu row" id="reference-menu">
-{% for ref_column in ref_columns -%}
-<div class="ref-menu-col col-12 col-sm-6 col-md-4 col-xl-2" id="reference-menu-{{ ref_column.name }}">
-{% assign ref_genres = ref_column.items | group_by: "genre" -%}
-{% for ref_genre in ref_genres -%}
-<h2 class="ref-menu-genre" id="reference-menu-genre-{{ ref_genre.items[0].menu_genre_slug }}">{{ ref_genre.name | escape }}</h2>
-{% assign ref_progressions = ref_genre.items | group_by: "menu_progression_id" -%}
-{% for ref_progression in ref_progressions -%}
-<details class="ref-menu-group" id="reference-menu-{{ ref_progression.name }}"><summary class="ref-menu-toggle"><h3 class="ref-menu-progression">{{ ref_progression.items[0].progression | escape }}</h3></summary><ul class="ref-menu-list">{% for ref_page in ref_progression.items %}<li class="ref-menu-item"><a class="ref-menu-link" href="{{ ref_page.url }}">{{ ref_page.progression | escape }} in {{ ref_page.chord_type | escape }}</a></li>{% endfor %}</ul></details>
-{% endfor -%}
-{% endfor -%}
+{%- assign ref_span = 2 -%}
+{%- assign ref_cols = 12 | divided_by: ref_span -%}
+{%- assign ref_data = site.data.progressions -%}
+{%- assign ref_heights = "" | split: "" -%}
+{%- assign ref_max = 0 -%}
+{%- assign ref_total = 0 -%}
+{%- for ref_g in ref_data.genres -%}
+  {%- assign ref_n = ref_data.progressions | where: "genre", ref_g | size | plus: 1 -%}
+  {%- assign ref_heights = ref_heights | push: ref_n -%}
+  {%- assign ref_total = ref_total | plus: ref_n -%}
+  {%- if ref_n > ref_max -%}{%- assign ref_max = ref_n -%}{%- endif -%}
+{%- endfor -%}
+{%- assign ref_h = ref_total -%}
+{%- for ref_try in (ref_max..ref_total) -%}
+  {%- assign ref_used = 1 -%}
+  {%- assign ref_fill = 0 -%}
+  {%- for ref_n in ref_heights -%}
+    {%- assign ref_next = ref_fill | plus: ref_n -%}
+    {%- if ref_next > ref_try -%}{%- assign ref_used = ref_used | plus: 1 -%}{%- assign ref_fill = ref_n -%}{%- else -%}{%- assign ref_fill = ref_next -%}{%- endif -%}
+  {%- endfor -%}
+  {%- if ref_used <= ref_cols -%}{%- assign ref_h = ref_try -%}{%- break -%}{%- endif -%}
+{%- endfor -%}
+{%- if include.chord_type -%}{%- assign ref_menu_id = include.chord_type | slugify | prepend: "reference-menu-" -%}{%- else -%}{%- assign ref_menu_id = "reference-menu" -%}{%- endif -%}
+<div class="ref-menu row" id="{{ ref_menu_id }}">
+{%- assign ref_fill = 0 -%}
+{%- for ref_g in ref_data.genres -%}
+  {%- assign ref_n = ref_heights[forloop.index0] -%}
+  {%- assign ref_next = ref_fill | plus: ref_n -%}
+  {%- if forloop.first -%}
+    {%- assign ref_fill = ref_n %}
+<div class="ref-menu-col col-12 col-sm-6 col-md-4 col-xl-{{ ref_span }}" id="{{ ref_menu_id }}-{{ ref_g | slugify }}">
+  {%- elsif ref_next > ref_h -%}
+    {%- assign ref_fill = ref_n %}
 </div>
-{% endfor -%}
+<div class="ref-menu-col col-12 col-sm-6 col-md-4 col-xl-{{ ref_span }}" id="{{ ref_menu_id }}-{{ ref_g | slugify }}">
+  {%- else -%}
+    {%- assign ref_fill = ref_next -%}
+  {%- endif %}
+<h2 class="ref-menu-genre" id="{{ ref_menu_id }}-genre-{{ ref_g | slugify }}">{{ ref_g | escape }}</h2>
+  {%- assign ref_progressions = ref_data.progressions | where: "genre", ref_g -%}
+  {%- if include.chord_type %}
+<ul class="ref-menu-list">
+    {%- for ref_p in ref_progressions -%}
+      {%- assign ref_page = site.pages | where: "genre", ref_g | where: "progression", ref_p.name | where: "chord_type", include.chord_type | first -%}
+      {%- if ref_page -%}<li class="ref-menu-item"><a class="ref-menu-link" href="{{ ref_page.url }}">{{ ref_p.name | escape }}</a></li>{%- endif -%}
+    {%- endfor -%}
+</ul>
+  {%- else -%}
+    {%- for ref_p in ref_progressions -%}
+      {%- assign ref_found = site.pages | where: "genre", ref_g | where: "progression", ref_p.name -%}
+      {%- if ref_found.size > 0 %}
+<details class="ref-menu-group" id="{{ ref_menu_id }}-{{ ref_p.id }}"><summary class="ref-menu-toggle"><h3 class="ref-menu-progression">{{ ref_p.name | escape }}</h3></summary><ul class="ref-menu-list">
+        {%- for ref_q in site.data.circle_of_fifths.chord_qualities -%}
+          {%- assign ref_qname = ref_q[1].name | downcase -%}
+          {%- for ref_page in ref_found -%}
+            {%- assign ref_pname = ref_page.chord_type | downcase -%}
+            {%- if ref_pname == ref_qname -%}<li class="ref-menu-item"><a class="ref-menu-link" href="{{ ref_page.url }}">{{ ref_p.name | escape }} in {{ ref_page.chord_type | escape }}</a></li>{%- endif -%}
+          {%- endfor -%}
+        {%- endfor -%}
+</ul></details>
+      {%- endif -%}
+    {%- endfor -%}
+  {%- endif -%}
+{%- endfor %}
+</div>
 </div>

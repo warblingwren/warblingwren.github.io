@@ -3,6 +3,7 @@ highlighter: rouge
 
 url: "https://warblingwren.com"
 baseurl: ""  
+data_dir: DATA
 
 defaults:
   -

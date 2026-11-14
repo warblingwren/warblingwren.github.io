@@ -4,7 +4,6 @@
   "step": "degree = scale step (1–7), semitones = root distance above the tonic, quality = circle_of_fifths.json chord_qualities id",
   "mode": "major | minor — which keys the progression applies to",
   "version": 1,
-  "menu_columns": "site menu layout: one list of genres per column, top to bottom (build_reference.py); the app ignores it",
   "history": "where the progression comes from, in a sentence or three (sources: progressions-sources.md)",
   "listen_for": "what to listen for when it plays",
   "famous_songs": "[{title, artist}]: songs that use it, each confirmed by two or more sources (progressions-sources.md); empty when none were",
@@ -18,27 +17,6 @@
   "Rock & Roll",
   "Folk",
   "Pop"
- ],
- "menu_columns": [
-  [
-   "Blues"
-  ],
-  [
-   "Jazz"
-  ],
-  [
-   "Country",
-   "Bluegrass"
-  ],
-  [
-   "Rock & Roll"
-  ],
-  [
-   "Folk"
-  ],
-  [
-   "Pop"
-  ]
  ],
  "defaults": {
   "major": "rock-three-chord",

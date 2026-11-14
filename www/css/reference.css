@@ -837,7 +837,7 @@
   color: var(--ref-ink);
 }
 
-/* menu column <div>: one or more genres (progressions.json menu_columns); light vertical line between columns (which column starts a row: BREAKPOINTS) */
+/* menu column <div>: one or more genres, balanced by _includes/reference-menu.html; light vertical line between columns (which column starts a row: BREAKPOINTS) */
 .ref-menu-col {
   margin-bottom: 24px;
   border-left: 1px solid var(--ref-rule);
