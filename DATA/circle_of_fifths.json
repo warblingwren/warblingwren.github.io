@@ -4,7 +4,8 @@
   "order": "clockwise = ascending perfect fifth (dominant); counterclockwise = descending fifth (subdominant)",
   "pitch_class": "C=0 … B=11; matches pitch_registry.json (midi % 12)",
   "sync": "chord_qualities ids/suffixes must match the group ids in www/js/piano-chords.js",
-  "version": 2
+  "version": 2,
+  "chord_suffixes": "every chord name suffix the site writes, including other spellings (°, ø7, +) and chords the app doesn't offer (5, 9, 11, 13): the chord quality it means and its badge colour family (theory-q-<badge>)"
  },
  "chord_qualities": {
   "major": {
@@ -14245,5 +14246,123 @@
    7,
    2
   ]
+ },
+ "chord_suffixes": {
+  "": {
+   "quality": "major",
+   "badge": "major"
+  },
+  "m": {
+   "quality": "minor",
+   "badge": "minor"
+  },
+  "7": {
+   "quality": "dom7",
+   "badge": "dominant"
+  },
+  "maj7": {
+   "quality": "maj7",
+   "badge": "major"
+  },
+  "m7": {
+   "quality": "min7",
+   "badge": "minor"
+  },
+  "6": {
+   "quality": "maj6",
+   "badge": "major"
+  },
+  "m6": {
+   "quality": "min6",
+   "badge": "minor"
+  },
+  "°": {
+   "quality": "dim",
+   "badge": "diminished"
+  },
+  "dim": {
+   "quality": "dim",
+   "badge": "diminished"
+  },
+  "°7": {
+   "quality": "dim7",
+   "badge": "diminished"
+  },
+  "dim7": {
+   "quality": "dim7",
+   "badge": "diminished"
+  },
+  "m7♭5": {
+   "quality": "m7b5",
+   "badge": "diminished"
+  },
+  "ø7": {
+   "quality": "m7b5",
+   "badge": "diminished"
+  },
+  "aug": {
+   "quality": "aug",
+   "badge": "augmented"
+  },
+  "+": {
+   "quality": "aug",
+   "badge": "augmented"
+  },
+  "aug7": {
+   "quality": "aug7",
+   "badge": "augmented"
+  },
+  "7♯5": {
+   "quality": "aug7",
+   "badge": "augmented"
+  },
+  "sus2": {
+   "quality": "sus2",
+   "badge": "suspended"
+  },
+  "sus4": {
+   "quality": "sus4",
+   "badge": "suspended"
+  },
+  "5": {
+   "quality": "power",
+   "badge": "power"
+  },
+  "9": {
+   "quality": "dom9",
+   "badge": "dominant"
+  },
+  "maj9": {
+   "quality": "maj9",
+   "badge": "major"
+  },
+  "m9": {
+   "quality": "min9",
+   "badge": "minor"
+  },
+  "11": {
+   "quality": "dom11",
+   "badge": "dominant"
+  },
+  "m11": {
+   "quality": "min11",
+   "badge": "minor"
+  },
+  "13": {
+   "quality": "dom13",
+   "badge": "dominant"
+  },
+  "7♭9": {
+   "quality": "dom7b9",
+   "badge": "dominant"
+  },
+  "7♯9": {
+   "quality": "dom7s9",
+   "badge": "dominant"
+  },
+  "7♭5": {
+   "quality": "dom7b5",
+   "badge": "dominant"
+  }
  }
 }
