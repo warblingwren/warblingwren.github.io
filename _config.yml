@@ -28,5 +28,6 @@ defaults:
     ## Exclude certain paths
     ##
     exclude:
-      - DATA/
+      - DATA/guitar
+      - DATA/piano
       - www/
