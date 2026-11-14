@@ -5,11 +5,6 @@
     each reference page          genre, progression, chord_type (its content), url
   (_config.yml sets data_dir: DATA, so site.data reads DATA/.)
 
-  Home page:            {% include reference-menu.html %}
-                        a column per group of genres, a collapsed <details> per progression, a link per chord type.
-  Chord type index:     {% include reference-menu.html chord_type="Major 7th" %}  (written by build_reference.py)
-                        the same columns, a link per progression in that chord type.
-
   Columns: the grid class below gives 6 columns on wide screens (12 / ref_span). Liquid finds the smallest column height
   that fits every genre, in order and without splitting one, into that many columns, then fills the columns in order.
   A genre's height is its number of progressions plus 1 for its heading. Adding a genre re-balances the columns.
