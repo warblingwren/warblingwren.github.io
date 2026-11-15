@@ -152,23 +152,24 @@ tags: [
 
 {%- comment -%}
   Glossary terms, A–Z, written by Liquid from the data files:
-    site.data.glossary             learn_more_pages, terms (term, definition, learn_more, cards, play)   DATA/glossary.json
-    site.data.chord_voicings       voicings: label, tones, guitar shape for each card chord               DATA/chord_voicings.json
-    site.data.circle_of_fifths     positions (note spellings, pitch classes, numerals), chord_suffixes   DATA/circle_of_fifths.json
-    site.data.guitar_tuning        tunings: open strings                                                 DATA/guitar_tuning.json
+    site.data.glossary             learn_more_pages, terms (term, definition, learn_more, cards, play)
+    site.data.circle_of_fifths     positions (note spellings, pitch classes, numerals), chord_qualities (intervals), chord_suffixes
+    site.data.guitar_tuning        tunings: open strings (the first tuning, the app's default)
   Definitions are badge markup: {c:Am} chord, {n:C} note, {k:C} key, {r:IV} Roman numeral, [[ … ]] a run.
+  SYNC: chord tones, keyboard window and guitar shape follow build_reference.py (Theory.chord_tones, Drawing, Guitar.first_shape).
 {%- endcomment -%}
 {%- assign gl = site.data.glossary -%}
-{%- assign gl_voicings = site.data.chord_voicings.voicings -%}
 {%- assign gl_circle = site.data.circle_of_fifths -%}
+{%- assign gl_qualities = gl_circle.chord_qualities -%}
 {%- assign gl_suffixes = gl_circle.chord_suffixes -%}
-{%- assign gl_tunings = site.data.guitar_tuning.tunings -%}
+{%- assign gl_tuning = site.data.guitar_tuning.tunings | first -%}
 {%- assign gl_app_version = 1 -%}
 
-{%- comment -%} keyboard and guitar diagram geometry {%- endcomment -%}
+{%- comment -%} keyboard and guitar diagram geometry; chord octave and guitar shape limits {%- endcomment -%}
 {%- assign gl_key_w = 20 -%}{%- assign gl_key_h = 72 -%}{%- assign gl_black_w = 12 -%}{%- assign gl_black_h = 44 -%}
 {%- assign gl_gd_w = 120 -%}{%- assign gl_gd_x0 = 24 -%}{%- assign gl_gd_y0 = 26 -%}{%- assign gl_gd_dy = 22 -%}{%- assign gl_gd_rows = 4 -%}
 {%- assign gl_window_starts = "0,5" | split: "," -%}
+{%- assign gl_chord_octave = 3 -%}{%- assign gl_max_fret = 24 -%}{%- assign gl_max_span = 3 -%}{%- assign gl_max_fingers = 4 -%}
 
 {%- comment -%} note spellings -> pitch classes: every chord tone in circle_of_fifths.json {%- endcomment -%}
 {%- assign gl_note_names = "" | split: "" -%}
@@ -192,7 +193,8 @@ tags: [
   {%- endfor -%}
 {%- endfor -%}
 
-{%- comment -%} Roman numerals -> scale degrees, and the white keys: the C major scale in circle_of_fifths.json {%- endcomment -%}
+{%- comment -%} letters, Roman numerals -> scale degrees, and the white keys: the C major scale in circle_of_fifths.json {%- endcomment -%}
+{%- assign gl_letters_abc = "" | split: "" -%}
 {%- assign gl_romans = "" | split: "" -%}
 {%- assign gl_degrees = "" | split: "" -%}
 {%- assign gl_white_pcs = "" | split: "" -%}
@@ -201,7 +203,23 @@ tags: [
   {%- assign gl_romans = gl_romans | push: gl_r -%}
   {%- assign gl_degrees = gl_degrees | push: gl_deg.degree -%}
   {%- assign gl_white_pcs = gl_white_pcs | push: gl_deg.root_pc -%}
+  {%- assign gl_letters_abc = gl_letters_abc | push: gl_deg.root -%}
 {%- endfor -%}
+
+{%- comment -%} guitar open strings, low -> high, as MIDI notes {%- endcomment -%}
+{%- assign gl_open = "" | split: "" -%}
+{%- assign gl_strings = gl_tuning.open_strings | sort: "string" | reverse -%}
+{%- for gl_s in gl_strings -%}
+  {%- assign gl_s_letter = gl_s.note_ref | slice: 0 -%}
+  {%- assign gl_s_sharps = gl_s.note_ref | split: "#" | size | minus: 1 -%}
+  {%- assign gl_s_oct = gl_s.note_ref | slice: -1 | plus: 0 -%}
+  {%- for gl_lt in gl_letters_abc -%}{%- if gl_lt == gl_s_letter -%}{%- assign gl_s_pc = gl_white_pcs[forloop.index0] -%}{%- endif -%}{%- endfor -%}
+  {%- assign gl_s_pc = gl_s_pc | plus: gl_s_sharps | modulo: 12 -%}
+  {%- assign gl_s_midi = gl_s_oct | plus: 1 | times: 12 | plus: gl_s_pc -%}
+  {%- assign gl_open = gl_open | push: gl_s_midi -%}
+{%- endfor -%}
+{%- assign gl_n_strings = gl_open.size -%}
+{%- assign gl_last_string = gl_n_strings | minus: 1 -%}
 
 {%- comment -%} terms A–Z, and the letters they start with {%- endcomment -%}
 {%- assign gl_terms = gl.terms | sort_natural: "term" -%}
@@ -220,11 +238,60 @@ tags: [
   {%- if gl_first != gl_l -%}{%- continue -%}{%- endif -%}
   {%- assign gl_id = gl_t.term | downcase | replace: "♯", "-sharp" | replace: "♭", "-flat" | slugify | prepend: "glossary-" -%}
 
-  {%- comment -%} everything this entry shows in badge markup: the definition, then each card's numeral, chord and notes {%- endcomment -%}
+  {%- comment -%}
+    each card's chord tones from chord_qualities, voiced from the chord octave; a slash chord puts its bass note lowest.
+    One voice per card, "spelled:pc:midi:rank:semitones" joined by ";" (empty when the quality has no intervals).
+  {%- endcomment -%}
+  {%- assign gl_voices = "" | split: "" -%}
+  {%- assign gl_labels = "" | split: "" -%}
   {%- assign gl_sources = "" | split: "" | push: gl_t.definition -%}
   {%- for gl_card in gl_t.cards -%}
-    {%- assign gl_v = gl_voicings[gl_card.chord] -%}
-    {%- capture gl_notes_markup -%}{%- for gl_tone in gl_v.tones -%}{n:{{ gl_tone.spelled }}}{%- endfor -%}{%- endcapture -%}
+    {%- assign gl_base = gl_card.chord | split: "/" | first -%}
+    {%- assign gl_bass = gl_card.chord | split: "/" -%}{%- if gl_bass.size > 1 -%}{%- assign gl_bass = gl_bass | last -%}{%- else -%}{%- assign gl_bass = "" -%}{%- endif -%}
+    {%- assign gl_root = gl_base | slice: 0 -%}
+    {%- assign gl_acc = gl_base | slice: 1 -%}
+    {%- if gl_acc == "♭" or gl_acc == "♯" -%}{%- assign gl_root = gl_root | append: gl_acc -%}{%- endif -%}
+    {%- assign gl_suffix = gl_base | remove_first: gl_root -%}
+    {%- assign gl_quality = gl_qualities[gl_suffixes[gl_suffix].quality] -%}
+    {%- assign gl_root_pc = 0 -%}{%- assign gl_bass_pc = -1 -%}
+    {%- for gl_name in gl_note_names -%}
+      {%- if gl_name == gl_root -%}{%- assign gl_root_pc = gl_note_pcs[forloop.index0] -%}{%- endif -%}
+      {%- if gl_name == gl_bass -%}{%- assign gl_bass_pc = gl_note_pcs[forloop.index0] -%}{%- endif -%}
+    {%- endfor -%}
+    {%- assign gl_root_letter = gl_root | slice: 0 -%}
+    {%- for gl_lt in gl_letters_abc -%}{%- if gl_lt == gl_root_letter -%}{%- assign gl_root_li = forloop.index0 -%}{%- endif -%}{%- endfor -%}
+    {%- assign gl_mbase = gl_chord_octave | plus: 1 | times: 12 | plus: gl_root_pc -%}
+    {%- assign gl_low_midi = gl_chord_octave | plus: 1 | times: 12 | plus: gl_bass_pc -%}
+    {%- assign gl_low_tone = "" -%}
+    {%- assign gl_rest = "" | split: "" -%}
+    {%- for gl_iv in gl_quality.intervals -%}
+      {%- assign gl_tpc = gl_root_pc | plus: gl_iv.semitones | modulo: 12 -%}
+      {%- assign gl_li = gl_root_li | plus: gl_iv.letters | modulo: 7 -%}
+      {%- assign gl_tletter = gl_letters_abc[gl_li] -%}
+      {%- assign gl_spelled = gl_tletter -%}
+      {%- for gl_name in gl_note_names -%}
+        {%- assign gl_nl = gl_name | slice: 0 -%}
+        {%- if gl_nl == gl_tletter and gl_note_pcs[forloop.index0] == gl_tpc -%}{%- assign gl_spelled = gl_name -%}{%- endif -%}
+      {%- endfor -%}
+      {%- assign gl_tmidi = gl_mbase | plus: gl_iv.semitones -%}
+      {%- if gl_bass != "" and gl_low_tone == "" and gl_tpc == gl_bass_pc -%}
+        {%- assign gl_low_tone = gl_spelled | append: ":" | append: gl_tpc | append: ":" | append: gl_low_midi | append: ":" | append: forloop.index0 | append: ":" | append: gl_iv.semitones -%}
+      {%- else -%}
+        {%- if gl_bass != "" -%}{%- for gl_up in (1..4) -%}{%- if gl_tmidi <= gl_low_midi -%}{%- assign gl_tmidi = gl_tmidi | plus: 12 -%}{%- endif -%}{%- endfor -%}{%- endif -%}
+        {%- assign gl_key = gl_tmidi | plus: 1000 | append: "|" | append: gl_spelled | append: ":" | append: gl_tpc | append: ":" | append: gl_tmidi | append: ":" | append: forloop.index0 | append: ":" | append: gl_iv.semitones -%}
+        {%- assign gl_rest = gl_rest | push: gl_key -%}
+      {%- endif -%}
+    {%- endfor -%}
+    {%- if gl_bass != "" -%}{%- assign gl_rest = gl_rest | sort -%}{%- endif -%}
+    {%- assign gl_voice = "" | split: "" -%}
+    {%- if gl_low_tone != "" -%}{%- assign gl_voice = gl_voice | push: gl_low_tone -%}{%- endif -%}
+    {%- for gl_key in gl_rest -%}{%- assign gl_kt = gl_key | split: "|" | last -%}{%- assign gl_voice = gl_voice | push: gl_kt -%}{%- endfor -%}
+    {%- assign gl_voice_s = gl_voice | join: ";" -%}{%- assign gl_voices = gl_voices | push: gl_voice_s -%}
+    {%- capture gl_label -%}{{ gl_root }} {{ gl_quality.name }} chord{% if gl_bass != "" %} with {{ gl_bass }} in the bass{% endif %}{%- endcapture -%}
+    {%- assign gl_labels = gl_labels | push: gl_label -%}
+
+    {%- comment -%} the card's numeral, chord and notes, in badge markup {%- endcomment -%}
+    {%- capture gl_notes_markup -%}{%- for gl_vt in gl_voice -%}{n:{{ gl_vt | split: ":" | first }}}{%- endfor -%}{%- endcapture -%}
     {%- capture gl_num_markup -%}{%- if gl_card.numeral -%}{r:{{ gl_card.numeral }}}{%- endif -%}{%- endcapture -%}
     {%- capture gl_chord_markup -%}{c:{{ gl_card.chord }}}{%- endcapture -%}
     {%- assign gl_sources = gl_sources | push: gl_num_markup | push: gl_chord_markup | push: gl_notes_markup -%}
@@ -305,14 +372,14 @@ tags: [
 
   {%- capture gl_see -%}
     {%- if gl_t.learn_more -%}<span class="theory-glossary-see">Learn more: {% for gl_slug in gl_t.learn_more -%}
-      <a class="theory-glossary-see-link" href="/theory/{{ gl_slug }}.html">{{ gl.learn_more_pages[gl_slug] | escape }}</a>{% unless forloop.last %} · {% endunless %}
+      <a class="theory-glossary-see-link" href="{{ gl_slug }}.html">{{ gl.learn_more_pages[gl_slug] | escape }}</a>{% unless forloop.last %} · {% endunless %}
     {%- endfor -%}</span>{%- endif -%}
   {%- endcapture -%}
 
   {%- capture gl_play -%}
     {%- for gl_p in gl_t.play -%}
       {%- assign gl_chord = gl_p.chord | replace: "♭", "b" | replace: "♯", "#" | url_encode -%}
-      <p class="theory-try-link"><a class="theory-link" href="{{ site.url }}/?v={{ gl_app_version }}&amp;chord={{ gl_chord }}{% if gl_p.progression %}&amp;prog={{ gl_p.progression | url_encode }}{% endif %}">{{ gl_p.text }}</a></p>
+      <p class="theory-try-link"><a class="theory-link" href="/?v={{ gl_app_version }}&amp;chord={{ gl_chord }}{% if gl_p.progression %}&amp;prog={{ gl_p.progression | url_encode }}{% endif %}">{{ gl_p.text }}</a></p>
     {%- endfor -%}
   {%- endcapture -%}
 
@@ -321,15 +388,34 @@ tags: [
     {%- capture gl_chart -%}
 <div class="theory-chart theory-chart-grid theory-chart-small" id="{{ gl_id }}-chart">
       {%- for gl_card in gl_t.cards -%}
-        {%- assign gl_v = gl_voicings[gl_card.chord] -%}
         {%- assign gl_at = forloop.index0 | times: 3 | plus: 1 -%}
         {%- assign gl_at_chord = gl_at | plus: 1 -%}
         {%- assign gl_at_notes = gl_at | plus: 2 -%}
-        {%- assign gl_midis = gl_v.tones | map: "midi" -%}
+        {%- assign gl_label = gl_labels[forloop.index0] -%}
+
+        {%- comment -%} the card's voice -> tone lists {%- endcomment -%}
+        {%- assign gl_t_spelled = "" | split: "" -%}{%- assign gl_t_pc = "" | split: "" -%}{%- assign gl_t_midi = "" | split: "" -%}
+        {%- assign gl_t_rank = "" | split: "" -%}{%- assign gl_t_semi = "" | split: "" -%}
+        {%- assign gl_vts = gl_voices[forloop.index0] | split: ";" -%}
+        {%- for gl_vt in gl_vts -%}
+          {%- assign gl_f5 = gl_vt | split: ":" -%}
+          {%- assign gl_t_spelled = gl_t_spelled | push: gl_f5[0] -%}
+          {%- assign gl_n = gl_f5[1] | plus: 0 -%}{%- assign gl_t_pc = gl_t_pc | push: gl_n -%}
+          {%- assign gl_n = gl_f5[2] | plus: 0 -%}{%- assign gl_t_midi = gl_t_midi | push: gl_n -%}
+          {%- assign gl_n = gl_f5[3] | plus: 0 -%}{%- assign gl_t_rank = gl_t_rank | push: gl_n -%}
+          {%- assign gl_n = gl_f5[4] | plus: 0 -%}{%- assign gl_t_semi = gl_t_semi | push: gl_n -%}
+        {%- endfor -%}
+        {%- assign gl_octaves = 1 -%}
+        {%- assign gl_piano = "" -%}
+        {%- assign gl_piano_quirk = "" -%}
+        {%- assign gl_guitar = "" -%}
+
+        {%- if gl_t_midi.size > 0 -%}
+        {%- assign gl_midis = gl_t_midi -%}
         {%- assign gl_lowest = gl_midis | sort | first -%}
         {%- assign gl_highest = gl_midis | sort | last -%}
         {%- assign gl_span = gl_highest | minus: gl_lowest -%}
-        {%- if gl_span >= 12 -%}{%- assign gl_octaves = 2 -%}{%- else -%}{%- assign gl_octaves = 1 -%}{%- endif -%}
+        {%- if gl_span >= 12 -%}{%- assign gl_octaves = 2 -%}{%- endif -%}
 
         {%- comment -%} keyboard window: one octave from C or F with the fewest notes moved (nearest the chord's middle), or two octaves as voiced {%- endcomment -%}
         {%- if gl_octaves == 1 -%}
@@ -379,7 +465,7 @@ tags: [
 
         {%- assign gl_key_pcs = "" | split: "" -%}
         {%- for gl_n in gl_keys -%}{%- assign gl_kpc = gl_n | modulo: 12 -%}{%- assign gl_key_pcs = gl_key_pcs | push: gl_kpc -%}{%- endfor -%}
-        {%- assign gl_names = gl_v.tones | map: "spelled" | join: " " -%}
+        {%- assign gl_names = gl_t_spelled | join: " " -%}
         {%- assign gl_end = gl_octaves | times: 12 | plus: gl_start | minus: 1 -%}
         {%- assign gl_whites = "" -%}
         {%- assign gl_blacks = "" -%}
@@ -389,66 +475,162 @@ tags: [
           {%- assign gl_oct = gl_m | divided_by: 12 | minus: 1 | at_least: 0 | at_most: 8 -%}
           {%- if gl_octaves == 2 -%}{%- if gl_keys contains gl_m -%}{%- assign gl_in = true -%}{%- else -%}{%- assign gl_in = false -%}{%- endif -%}
           {%- else -%}{%- if gl_key_pcs contains gl_mpc -%}{%- assign gl_in = true -%}{%- else -%}{%- assign gl_in = false -%}{%- endif -%}{%- endif -%}
-          {%- assign gl_tone = nil -%}
-          {%- for gl_n in gl_keys -%}{%- if gl_n == gl_m -%}{%- assign gl_tone = gl_v.tones[forloop.index0] -%}{%- endif -%}{%- endfor -%}
+          {%- assign gl_ti = -1 -%}
+          {%- for gl_n in gl_keys -%}{%- if gl_n == gl_m -%}{%- assign gl_ti = forloop.index0 -%}{%- endif -%}{%- endfor -%}
           {%- if gl_white_pcs contains gl_mpc -%}
             {%- assign gl_x = gl_white_index | times: gl_key_w -%}
             {%- capture gl_whites -%}{{ gl_whites }}<rect class="theory-piano-white theory-oct-{{ gl_oct }}{% if gl_in %} theory-piano-chord{% endif %}" x="{{ gl_x }}" y="0" width="{{ gl_key_w }}" height="{{ gl_key_h }}"/>
-              {%- if gl_tone -%}<text class="theory-piano-label{% if gl_tone.rank == 0 %} theory-chord-root{% endif %}" x="{{ gl_key_w | divided_by: 2.0 | plus: gl_x }}" y="{{ gl_key_h | minus: 9 }}">{{ gl_tone.spelled }}</text>{%- endif -%}
+              {%- if gl_ti >= 0 -%}<text class="theory-piano-label{% if gl_t_rank[gl_ti] == 0 %} theory-chord-root{% endif %}" x="{{ gl_key_w | divided_by: 2.0 | plus: gl_x }}" y="{{ gl_key_h | minus: 9 }}">{{ gl_t_spelled[gl_ti] }}</text>{%- endif -%}
             {%- endcapture -%}
             {%- assign gl_white_index = gl_white_index | plus: 1 -%}
           {%- else -%}
             {%- assign gl_x = gl_white_index | times: gl_key_w | minus: 6.0 -%}
             {%- capture gl_blacks -%}{{ gl_blacks }}<rect class="theory-piano-black theory-oct-{{ gl_oct }}{% if gl_in %} theory-piano-chord{% endif %}" x="{{ gl_x }}" y="0" width="{{ gl_black_w }}" height="{{ gl_black_h }}"/>
-              {%- if gl_tone -%}
-                {%- assign gl_cx = gl_x | plus: 6.0 -%}{%- assign gl_cy = gl_black_h | minus: 9 -%}{%- assign gl_rank = gl_tone.rank | at_most: 3 -%}
-                <circle class="theory-piano-mark theory-oct-{{ gl_oct }} theory-role-{{ gl_rank }}{% if gl_tone.rank == 0 %} theory-chord-root{% endif %}" cx="{{ gl_cx }}" cy="{{ gl_cy }}" r="7"/><text class="theory-piano-mark-label" x="{{ gl_cx }}" y="{{ gl_cy }}">{{ gl_tone.spelled }}</text>
+              {%- if gl_ti >= 0 -%}
+                {%- assign gl_cx = gl_x | plus: 6.0 -%}{%- assign gl_cy = gl_black_h | minus: 9 -%}{%- assign gl_rank = gl_t_rank[gl_ti] | at_most: 3 -%}
+                <circle class="theory-piano-mark theory-oct-{{ gl_oct }} theory-role-{{ gl_rank }}{% if gl_t_rank[gl_ti] == 0 %} theory-chord-root{% endif %}" cx="{{ gl_cx }}" cy="{{ gl_cy }}" r="7"/><text class="theory-piano-mark-label" x="{{ gl_cx }}" y="{{ gl_cy }}">{{ gl_t_spelled[gl_ti] }}</text>
               {%- endif -%}
             {%- endcapture -%}
           {%- endif -%}
         {%- endfor -%}
-        {%- assign gl_piano_quirk = "" -%}
+        {%- capture gl_piano -%}<svg class="theory-piano" viewBox="0 0 {{ gl_octaves | times: 7 | times: gl_key_w }} {{ gl_key_h }}" role="img" aria-label="{{ gl_label }} on the piano: {{ gl_names }}">{{ gl_whites }}{{ gl_blacks }}</svg>{%- endcapture -%}
         {%- if gl_octaves == 1 -%}
           {%- assign gl_low_key = gl_keys | sort | first | modulo: 12 -%}
-          {%- if gl_low_key != gl_v.tones[0].pc -%}{%- capture gl_piano_quirk -%}<span class="theory-quirk" title="Quirky shape: inverted to fit one octave: the lowest key is not the chord&#x27;s bass">✦ inverted</span>{%- endcapture -%}{%- endif -%}
+          {%- if gl_low_key != gl_t_pc[0] -%}{%- capture gl_piano_quirk -%}<span class="theory-quirk" title="Quirky shape: inverted to fit one octave: the lowest key is not the chord&#x27;s bass">✦ inverted</span>{%- endcapture -%}{%- endif -%}
         {%- endif -%}
 
-        {%- comment -%} guitar diagram: the voicing's shape on its tuning's open strings {%- endcomment -%}
-        {%- assign gl_shape = gl_v.guitar -%}
-        {%- capture gl_guitar -%}
-          {%- if gl_shape == nil -%}<span class="theory-guitar-none">—</span>
-          {%- else -%}
-            {%- assign gl_tuning = gl_tunings | where: "name", gl_shape.tuning | first -%}
-            {%- assign gl_open = "" | split: "" -%}
-            {%- for gl_s in gl_tuning.open_strings -%}
-              {%- assign gl_ref = gl_s.note_ref | replace: "#", "♯" -%}
-              {%- assign gl_letter = gl_ref | slice: 0 -%}
-              {%- assign gl_sharp = gl_ref | slice: 1 -%}
-              {%- if gl_sharp == "♯" -%}{%- assign gl_letter = gl_letter | append: "♯" -%}{%- assign gl_oct_ref = gl_ref | slice: 2, 3 -%}{%- else -%}{%- assign gl_oct_ref = gl_ref | slice: 1, 3 -%}{%- endif -%}
-              {%- for gl_name in gl_note_names -%}{%- if gl_name == gl_letter -%}{%- assign gl_spc = gl_note_pcs[forloop.index0] -%}{%- endif -%}{%- endfor -%}
-              {%- assign gl_smidi = gl_oct_ref | plus: 1 | times: 12 | plus: gl_spc -%}
-              {%- assign gl_open = gl_open | push: gl_smidi -%}
+        {%- comment -%}
+          guitar shape: the lowest-scoring playable shape on the first tuning. Every tone sounds (a 4-note chord or bigger may drop
+          its perfect 5th, a 13th chord its 11th), the chord's bass is the lowest note, no muted string between sounding strings,
+          fretted notes within the span limit, fingers within the finger limit (one barre over the lowest fret when it saves fingers).
+          Searched by lowest fret (w), first and last sounding strings (a, z); ties go to the shape listed first, string by string.
+        {%- endcomment -%}
+        {%- assign gl_tone_pcs = gl_t_pc | uniq -%}
+        {%- assign gl_omit = "" | split: "" -%}
+        {%- if gl_t_pc.size >= 4 -%}{%- for gl_s7 in gl_t_semi -%}{%- if gl_s7 == 7 and gl_t_rank[forloop.index0] > 0 -%}{%- assign gl_omit = gl_omit | push: forloop.index0 -%}{%- endif -%}{%- endfor -%}{%- endif -%}
+        {%- if gl_t_semi contains 21 -%}{%- for gl_s7 in gl_t_semi -%}{%- if gl_s7 == 17 -%}{%- assign gl_omit = gl_omit | push: forloop.index0 -%}{%- endif -%}{%- endfor -%}{%- endif -%}
+        {%- assign gl_needed = gl_tone_pcs.size -%}
+        {%- if gl_t_pc.size > 4 -%}{%- assign gl_needed = gl_needed | minus: gl_omit.size -%}{%- endif -%}
+        {%- assign gl_needed = gl_needed | at_least: 3 -%}
+        {%- assign gl_best = nil -%}
+        {%- for gl_w in (0..gl_max_fret) -%}
+          {%- assign gl_w_top = gl_w | plus: gl_max_span | at_most: gl_max_fret -%}
+          {%- assign gl_opts = "" | split: "" -%}
+          {%- for gl_om in gl_open -%}
+            {%- assign gl_o = "" | split: "" -%}
+            {%- assign gl_opc = gl_om | modulo: 12 -%}
+            {%- if gl_tone_pcs contains gl_opc -%}{%- assign gl_o = gl_o | push: 0 -%}{%- endif -%}
+            {%- if gl_w > 0 -%}{%- for gl_f in (gl_w..gl_w_top) -%}{%- assign gl_fpc = gl_om | plus: gl_f | modulo: 12 -%}{%- if gl_tone_pcs contains gl_fpc -%}{%- assign gl_o = gl_o | push: gl_f -%}{%- endif -%}{%- endfor -%}{%- endif -%}
+            {%- assign gl_o = gl_o | join: "," -%}{%- assign gl_opts = gl_opts | push: gl_o -%}
+          {%- endfor -%}
+          {%- for gl_a in (0..gl_last_string) -%}
+            {%- assign gl_z0 = gl_a | plus: gl_needed | minus: 1 -%}
+            {%- if gl_z0 > gl_last_string -%}{%- continue -%}{%- endif -%}
+            {%- for gl_z in (gl_z0..gl_last_string) -%}
+              {%- assign gl_total = 1 -%}
+              {%- for gl_i in (gl_a..gl_z) -%}{%- assign gl_cnt = gl_opts[gl_i] | split: "," | size -%}{%- assign gl_total = gl_total | times: gl_cnt -%}{%- endfor -%}
+              {%- if gl_total == 0 -%}{%- continue -%}{%- endif -%}
+              {%- assign gl_combos = gl_total | minus: 1 -%}
+              {%- for gl_c in (0..gl_combos) -%}
+                {%- assign gl_frets = "" | split: "" -%}
+                {%- assign gl_rest_c = gl_c -%}
+                {%- assign gl_has_w = false -%}
+                {%- for gl_i in (0..gl_last_string) -%}
+                  {%- if gl_i < gl_a or gl_i > gl_z -%}{%- assign gl_frets = gl_frets | push: -1 -%}{%- continue -%}{%- endif -%}
+                  {%- assign gl_o = gl_opts[gl_i] | split: "," -%}
+                  {%- assign gl_pick = gl_rest_c | modulo: gl_o.size -%}
+                  {%- assign gl_rest_c = gl_rest_c | divided_by: gl_o.size -%}
+                  {%- assign gl_f = gl_o[gl_pick] | plus: 0 -%}
+                  {%- if gl_f == gl_w -%}{%- assign gl_has_w = true -%}{%- endif -%}
+                  {%- assign gl_frets = gl_frets | push: gl_f -%}
+                {%- endfor -%}
+                {%- unless gl_has_w -%}{%- continue -%}{%- endunless -%}
+
+                {%- comment -%} every tone sounds, unless it may be dropped; the bass is lowest {%- endcomment -%}
+                {%- assign gl_smidis = "" | split: "" -%}{%- assign gl_spcs = "" | split: "" -%}
+                {%- for gl_i in (gl_a..gl_z) -%}{%- assign gl_sm = gl_open[gl_i] | plus: gl_frets[gl_i] -%}{%- assign gl_smpc = gl_sm | modulo: 12 -%}{%- assign gl_smidis = gl_smidis | push: gl_sm -%}{%- assign gl_spcs = gl_spcs | push: gl_smpc -%}{%- endfor -%}
+                {%- assign gl_ok = true -%}{%- assign gl_omitted = 0 -%}
+                {%- for gl_tp in gl_t_pc -%}
+                  {%- if gl_spcs contains gl_tp -%}{%- continue -%}{%- endif -%}
+                  {%- if gl_omit contains forloop.index0 -%}{%- assign gl_omitted = gl_omitted | plus: 1 -%}{%- else -%}{%- assign gl_ok = false -%}{%- endif -%}
+                {%- endfor -%}
+                {%- unless gl_ok -%}{%- continue -%}{%- endunless -%}
+                {%- assign gl_bass_now = gl_smidis | sort | first | modulo: 12 -%}
+                {%- if gl_bass_now != gl_t_pc[0] -%}{%- continue -%}{%- endif -%}
+
+                {%- comment -%} fingers, with one barre over the lowest fret when it saves fingers {%- endcomment -%}
+                {%- assign gl_fretted = "" | split: "" -%}{%- assign gl_zeros = 0 -%}
+                {%- for gl_f in gl_frets -%}{%- if gl_f > 0 -%}{%- assign gl_fretted = gl_fretted | push: gl_f -%}{%- elsif gl_f == 0 -%}{%- assign gl_zeros = gl_zeros | plus: 1 -%}{%- endif -%}{%- endfor -%}
+                {%- assign gl_fingers = gl_fretted.size -%}{%- assign gl_barre = false -%}{%- assign gl_flow = 0 -%}{%- assign gl_fhigh = 0 -%}
+                {%- if gl_fretted.size > 0 -%}
+                  {%- assign gl_flow = gl_fretted | sort | first -%}{%- assign gl_fhigh = gl_fretted | sort | last -%}
+                  {%- assign gl_ba = -1 -%}{%- assign gl_bz = -1 -%}{%- assign gl_at_low = 0 -%}{%- assign gl_above = 0 -%}
+                  {%- for gl_f in gl_frets -%}
+                    {%- if gl_f == gl_flow -%}{%- if gl_ba < 0 -%}{%- assign gl_ba = forloop.index0 -%}{%- endif -%}{%- assign gl_bz = forloop.index0 -%}{%- assign gl_at_low = gl_at_low | plus: 1 -%}{%- endif -%}
+                    {%- if gl_f > gl_flow -%}{%- assign gl_above = gl_above | plus: 1 -%}{%- endif -%}
+                  {%- endfor -%}
+                  {%- if gl_at_low >= 2 -%}
+                    {%- assign gl_with_barre = gl_above | plus: 1 -%}
+                    {%- assign gl_covered = true -%}
+                    {%- for gl_i in (gl_ba..gl_bz) -%}{%- if gl_frets[gl_i] < gl_flow -%}{%- assign gl_covered = false -%}{%- endif -%}{%- endfor -%}
+                    {%- if gl_covered and gl_with_barre < gl_fretted.size -%}{%- assign gl_fingers = gl_with_barre -%}{%- assign gl_barre = true -%}{%- endif -%}
+                  {%- endif -%}
+                {%- endif -%}
+                {%- if gl_fingers > gl_max_fingers -%}{%- continue -%}{%- endif -%}
+
+                {%- comment -%} score: low on the neck, few fingers, small span, many strings, open strings; doubled notes and dropped notes cost {%- endcomment -%}
+                {%- assign gl_fspan = gl_fhigh | minus: gl_flow -%}
+                {%- if gl_fhigh <= 4 -%}{%- assign gl_score = 0 -%}{%- else -%}{%- assign gl_score = gl_flow | times: 3 | plus: 20 -%}{%- endif -%}
+                {%- assign gl_sounding = gl_z | minus: gl_a | plus: 1 -%}
+                {%- assign gl_dupes = gl_smidis | uniq | size -%}{%- assign gl_dupes = gl_smidis.size | minus: gl_dupes -%}
+                {%- assign gl_score = gl_flow | times: 1.5 | plus: gl_score | plus: gl_fingers -%}
+                {%- assign gl_score = gl_fspan | times: 1.5 | plus: gl_score -%}
+                {%- if gl_fspan == 3 -%}{%- assign gl_score = gl_score | plus: 2 -%}{%- endif -%}
+                {%- assign gl_score = gl_sounding | times: 2 | minus: gl_score | times: -1 -%}
+                {%- assign gl_score = gl_zeros | times: 0.5 | minus: gl_score | times: -1 -%}
+                {%- if gl_barre -%}{%- assign gl_score = gl_score | plus: 1 -%}{%- endif -%}
+                {%- assign gl_score = gl_dupes | times: 2.5 | plus: gl_score -%}
+                {%- assign gl_score = gl_omitted | times: 3 | plus: gl_score -%}
+                {%- capture gl_order -%}{%- for gl_f in gl_frets -%}{{ gl_f | plus: 101 }}{%- endfor -%}{%- endcapture -%}
+
+                {%- assign gl_take = false -%}
+                {%- if gl_best == nil -%}{%- assign gl_take = true -%}
+                {%- elsif gl_score < gl_best_score -%}{%- assign gl_take = true -%}
+                {%- elsif gl_score == gl_best_score -%}
+                  {%- if gl_flow < gl_best_low -%}{%- assign gl_take = true -%}
+                  {%- elsif gl_flow == gl_best_low and gl_order < gl_best_order -%}{%- assign gl_take = true -%}{%- endif -%}
+                {%- endif -%}
+                {%- if gl_take -%}
+                  {%- assign gl_best = gl_frets -%}{%- assign gl_best_score = gl_score -%}{%- assign gl_best_low = gl_flow -%}{%- assign gl_best_high = gl_fhigh -%}
+                  {%- assign gl_best_order = gl_order -%}{%- assign gl_best_barre = gl_barre -%}{%- assign gl_best_ba = gl_ba -%}{%- assign gl_best_bz = gl_bz -%}
+                {%- endif -%}
+              {%- endfor -%}
             {%- endfor -%}
-            {%- assign gl_frets = gl_shape.frets -%}
-            {%- assign gl_n_strings = gl_frets.size -%}
-            {%- if gl_shape.high <= 4 -%}{%- assign gl_base = 1 -%}{%- else -%}{%- assign gl_base = gl_shape.low -%}{%- endif -%}
+          {%- endfor -%}
+        {%- endfor -%}
+
+        {%- comment -%} guitar diagram: the shape on the tuning's open strings {%- endcomment -%}
+        {%- capture gl_guitar -%}
+          {%- if gl_best == nil -%}<span class="theory-guitar-none">—</span>
+          {%- else -%}
+            {%- assign gl_frets = gl_best -%}
+            {%- if gl_best_high <= 4 -%}{%- assign gl_fbase = 1 -%}{%- else -%}{%- assign gl_fbase = gl_best_low -%}{%- endif -%}
             {%- assign gl_gaps = gl_n_strings | minus: 1 -%}
             {%- assign gl_dx = gl_gd_w | minus: gl_gd_x0 | minus: 12 | times: 1.0 | divided_by: gl_gaps -%}
             {%- assign gl_last = gl_gaps | times: gl_dx | plus: gl_gd_x0 | round: 1 -%}
             {%- assign gl_x0 = gl_gd_x0 | times: 1.0 | round: 1 -%}
             {%- assign gl_bottom = gl_gd_rows | times: gl_gd_dy | plus: gl_gd_y0 -%}
-            {%- assign gl_text = "" | split: "" -%}
-            {%- for gl_f in gl_frets -%}{%- if gl_f < 0 -%}{%- assign gl_text = gl_text | push: "x" -%}{%- else -%}{%- assign gl_fs = gl_f | append: "" -%}{%- assign gl_text = gl_text | push: gl_fs -%}{%- endif -%}{%- endfor -%}
-            <svg class="theory-guitar" viewBox="0 0 {{ gl_gd_w }} {{ gl_bottom | plus: 6 }}" role="img" aria-label="{{ gl_v.label }} guitar chord ({{ gl_shape.tuning }} tuning): {{ gl_text | join: " " }}">
+            {%- assign gl_ftext = "" | split: "" -%}
+            {%- for gl_f in gl_frets -%}{%- if gl_f < 0 -%}{%- assign gl_ftext = gl_ftext | push: "x" -%}{%- else -%}{%- assign gl_fs = gl_f | append: "" -%}{%- assign gl_ftext = gl_ftext | push: gl_fs -%}{%- endif -%}{%- endfor -%}
+            <svg class="theory-guitar" viewBox="0 0 {{ gl_gd_w }} {{ gl_bottom | plus: 6 }}" role="img" aria-label="{{ gl_label }} guitar chord ({{ gl_tuning.name }} tuning): {{ gl_ftext | join: " " }}">
             {%- for gl_r in (0..gl_gd_rows) -%}{%- assign gl_fy = gl_r | times: gl_gd_dy | plus: gl_gd_y0 -%}<line class="theory-guitar-fret" x1="{{ gl_x0 }}" y1="{{ gl_fy }}" x2="{{ gl_last }}" y2="{{ gl_fy }}"/>{%- endfor -%}
             {%- for gl_f in gl_frets -%}{%- assign gl_sx = forloop.index0 | times: gl_dx | plus: gl_gd_x0 | round: 1 -%}<line class="theory-guitar-string" x1="{{ gl_sx }}" y1="{{ gl_gd_y0 }}" x2="{{ gl_sx }}" y2="{{ gl_bottom }}"/>{%- endfor -%}
-            {%- if gl_base == 1 -%}<rect class="theory-guitar-nut" x="{{ gl_x0 | minus: 1 }}" y="{{ gl_gd_y0 | minus: 4 }}" width="{{ gl_last | minus: gl_x0 | plus: 2 | round: 1 }}" height="4"/>
-            {%- else -%}{%- assign gl_by = 0.5 | times: gl_gd_dy | plus: gl_gd_y0 | round: 1 -%}<text class="theory-guitar-base" x="{{ gl_x0 | minus: 7 }}" y="{{ gl_by }}">{{ gl_base }}fr</text>
+            {%- if gl_fbase == 1 -%}<rect class="theory-guitar-nut" x="{{ gl_x0 | minus: 1 }}" y="{{ gl_gd_y0 | minus: 4 }}" width="{{ gl_last | minus: gl_x0 | plus: 2 | round: 1 }}" height="4"/>
+            {%- else -%}{%- assign gl_by = 0.5 | times: gl_gd_dy | plus: gl_gd_y0 | round: 1 -%}<text class="theory-guitar-base" x="{{ gl_x0 | minus: 7 }}" y="{{ gl_by }}">{{ gl_fbase }}fr</text>
             {%- endif -%}
-            {%- if gl_shape.barre -%}
-              {%- assign gl_bf = gl_shape.barre[0] -%}{%- assign gl_ba = gl_shape.barre[1] -%}{%- assign gl_bz = gl_shape.barre[2] -%}
-              {%- assign gl_bxa = gl_ba | times: gl_dx | plus: gl_gd_x0 | round: 1 -%}{%- assign gl_bxz = gl_bz | times: gl_dx | plus: gl_gd_x0 | round: 1 -%}
-              {%- assign gl_byf = gl_bf | minus: gl_base | plus: 0.5 | times: gl_gd_dy | plus: gl_gd_y0 | round: 1 -%}
+            {%- if gl_best_barre -%}
+              {%- assign gl_bxa = gl_best_ba | times: gl_dx | plus: gl_gd_x0 | round: 1 -%}{%- assign gl_bxz = gl_best_bz | times: gl_dx | plus: gl_gd_x0 | round: 1 -%}
+              {%- assign gl_byf = gl_best_low | minus: gl_fbase | plus: 0.5 | times: gl_gd_dy | plus: gl_gd_y0 | round: 1 -%}
               <rect class="theory-guitar-barre" x="{{ gl_bxa | minus: 8 | round: 1 }}" y="{{ gl_byf | minus: 7 | round: 1 }}" width="{{ gl_bxz | minus: gl_bxa | plus: 16 | round: 1 }}" height="14" rx="7"/>
             {%- endif -%}
             {%- assign gl_sounded = "" | split: "" -%}
@@ -460,37 +642,38 @@ tags: [
               {%- assign gl_dmidi = gl_open[forloop.index0] | plus: gl_f -%}
               {%- assign gl_dpc = gl_dmidi | modulo: 12 -%}
               {%- assign gl_sounded = gl_sounded | push: gl_dpc -%}
-              {%- assign gl_dtone = gl_v.tones | where: "pc", gl_dpc | first -%}
+              {%- assign gl_di = 0 -%}
+              {%- for gl_tp in gl_t_pc -%}{%- if gl_tp == gl_dpc -%}{%- assign gl_di = forloop.index0 -%}{%- break -%}{%- endif -%}{%- endfor -%}
               {%- assign gl_doct = gl_dmidi | divided_by: 12 | minus: 1 | at_least: 0 | at_most: 8 -%}
-              {%- assign gl_drank = gl_dtone.rank | at_most: 3 -%}
-              {%- if gl_f == 0 -%}{%- assign gl_dy = gl_gd_y0 | minus: 13 -%}{%- else -%}{%- assign gl_dy = gl_f | minus: gl_base | plus: 0.5 | times: gl_gd_dy | plus: gl_gd_y0 | round: 1 -%}{%- endif -%}
-              <g class="theory-guitar-dot theory-oct-{{ gl_doct }} theory-role-{{ gl_drank }}{% if gl_f == 0 %} theory-guitar-open{% endif %}{% if gl_dtone.rank == 0 %} theory-chord-root{% endif %}"><circle class="theory-guitar-dot-circle" cx="{{ gl_sx }}" cy="{{ gl_dy }}" r="{% if gl_f == 0 %}7{% else %}9{% endif %}"/><text class="theory-guitar-dot-label" x="{{ gl_sx }}" y="{{ gl_dy }}">{{ gl_dtone.spelled }}</text></g>
+              {%- assign gl_drank = gl_t_rank[gl_di] | at_most: 3 -%}
+              {%- if gl_f == 0 -%}{%- assign gl_dy = gl_gd_y0 | minus: 13 -%}{%- else -%}{%- assign gl_dy = gl_f | minus: gl_fbase | plus: 0.5 | times: gl_gd_dy | plus: gl_gd_y0 | round: 1 -%}{%- endif -%}
+              <g class="theory-guitar-dot theory-oct-{{ gl_doct }} theory-role-{{ gl_drank }}{% if gl_f == 0 %} theory-guitar-open{% endif %}{% if gl_t_rank[gl_di] == 0 %} theory-chord-root{% endif %}"><circle class="theory-guitar-dot-circle" cx="{{ gl_sx }}" cy="{{ gl_dy }}" r="{% if gl_f == 0 %}7{% else %}9{% endif %}"/><text class="theory-guitar-dot-label" x="{{ gl_sx }}" y="{{ gl_dy }}">{{ gl_t_spelled[gl_di] }}</text></g>
             {%- endfor -%}
             </svg>
             {%- comment -%} quirky shape: 3 strings or fewer, up the neck, or a left-out 5th / 11th {%- endcomment -%}
-            {%- assign gl_tone_pcs = gl_v.tones | map: "pc" | uniq -%}
             {%- if gl_tone_pcs.size >= 3 and gl_sounding <= 3 -%}
               <span class="theory-quirk" title="Quirky shape: played on {{ gl_sounding }} strings only">✦ {{ gl_sounding }} strings</span>
-            {%- elsif gl_shape.high > 4 -%}
-              <span class="theory-quirk" title="Quirky shape: the first playable shape sits up the neck, from fret {{ gl_shape.low }}">✦ up the neck</span>
+            {%- elsif gl_best_high > 4 -%}
+              <span class="theory-quirk" title="Quirky shape: the first playable shape sits up the neck, from fret {{ gl_best_low }}">✦ up the neck</span>
             {%- else -%}
               {%- assign gl_dropped = "" | split: "" -%}
-              {%- for gl_tone in gl_v.tones -%}
-                {%- unless gl_sounded contains gl_tone.pc -%}
-                  {%- if gl_tone.semitones == 7 -%}{%- assign gl_dropped = gl_dropped | push: "5th" -%}
-                  {%- elsif gl_tone.semitones == 17 -%}{%- assign gl_dropped = gl_dropped | push: "11th" -%}
+              {%- for gl_tp in gl_t_pc -%}
+                {%- unless gl_sounded contains gl_tp -%}
+                  {%- if gl_t_semi[forloop.index0] == 7 -%}{%- assign gl_dropped = gl_dropped | push: "5th" -%}
+                  {%- elsif gl_t_semi[forloop.index0] == 17 -%}{%- assign gl_dropped = gl_dropped | push: "11th" -%}
                   {%- else -%}{%- assign gl_dropped = gl_dropped | push: "a note" -%}{%- endif -%}
                 {%- endunless -%}
               {%- endfor -%}
               {%- if gl_dropped.size > 0 -%}<span class="theory-quirk" title="Quirky shape: the {{ gl_dropped | join: " and the " }} is left out">✦ no {{ gl_dropped | join: " or " }}</span>{%- endif -%}
             {%- endif -%}
           {%- endif -%}
-        {%- endcapture %}
+        {%- endcapture -%}
+        {%- endif %}
 <div class="theory-chart-chord{% if gl_octaves == 2 %} theory-chart-chord-wide{% endif %}" id="{{ gl_id }}-chart-{{ forloop.index }}">
 <div class="theory-chart-position">{{ gl_html[gl_at] }}</div>
 <div class="theory-chart-name">{{ gl_html[gl_at_chord] }}</div>
 <div class="theory-chart-notes">{{ gl_html[gl_at_notes] }}</div>
-<div class="theory-chart-piano"><svg class="theory-piano" viewBox="0 0 {{ gl_octaves | times: 7 | times: gl_key_w }} {{ gl_key_h }}" role="img" aria-label="{{ gl_v.label }} on the piano: {{ gl_names }}">{{ gl_whites }}{{ gl_blacks }}</svg>{{ gl_piano_quirk }}</div>
+<div class="theory-chart-piano">{{ gl_piano }}{{ gl_piano_quirk }}</div>
 <div class="theory-chart-guitar">{{ gl_guitar }}</div>
 </div>
       {%- endfor %}

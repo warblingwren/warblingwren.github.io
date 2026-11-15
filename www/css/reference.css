@@ -825,7 +825,7 @@
 .ref-role-3 { --ref-dot: var(--ref-r3); --ref-dot-fg: var(--ref-r3-fg); }
 
 /*
- * **************************************************************** HOME PAGE MENU (reference-menu.html)
+ * **************************************************************** HOME PAGE MENU
  * Bootstrap .row of six genre columns (col-12 col-sm-6 col-md-4 col-xl-2), full width of its parent.
 */
 
@@ -837,7 +837,7 @@
   color: var(--ref-ink);
 }
 
-/* menu column <div>: one or more genres, balanced by _includes/reference-menu.html; light vertical line between columns (which column starts a row: BREAKPOINTS) */
+/* menu column <div>: one or more genres, balanced by Liquid; light vertical line between columns (which column starts a row: BREAKPOINTS) */
 .ref-menu-col {
   margin-bottom: 24px;
   border-left: 1px solid var(--ref-rule);
