@@ -252,7 +252,8 @@ tags: [
     {%- assign gl_acc = gl_base | slice: 1 -%}
     {%- if gl_acc == "♭" or gl_acc == "♯" -%}{%- assign gl_root = gl_root | append: gl_acc -%}{%- endif -%}
     {%- assign gl_suffix = gl_base | remove_first: gl_root -%}
-    {%- assign gl_quality = gl_qualities[gl_suffixes[gl_suffix].quality] -%}
+    {%- assign gl_quality_id = gl_suffixes[gl_suffix].quality -%}
+    {%- assign gl_quality = gl_qualities[gl_quality_id] -%}
     {%- assign gl_root_pc = 0 -%}{%- assign gl_bass_pc = -1 -%}
     {%- for gl_name in gl_note_names -%}
       {%- if gl_name == gl_root -%}{%- assign gl_root_pc = gl_note_pcs[forloop.index0] -%}{%- endif -%}
