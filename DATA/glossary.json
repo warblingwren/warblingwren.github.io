@@ -1,0 +1,1394 @@
+{
+ "meta": {
+  "description": "Music theory glossary (theory/glossary.html): one entry per term, shown A–Z",
+  "definition": "plain text with badge markup: {c:Am} chord, {n:C} note, {k:C} key, {r:IV} Roman numeral, [[ … ]] a run kept on one line",
+  "learn_more": "slugs of theory pages (/theory/<slug>.html); the link text is learn_more_pages[slug]",
+  "cards": "chord cards on the keyboard and guitar: [{numeral or null, chord}]; each chord is in chord_voicings.json",
+  "play": "Warbling Wren links: [{text, chord, progression id or null}]"
+ },
+ "learn_more_pages": {
+  "chord-functions": "What Each Chord Does",
+  "root-motion": "Root Motion",
+  "circle-of-fifths": "The Circle of Fifths",
+  "cadences": "Cadences",
+  "progression-relationships": "How Chord Progressions Are Related"
+ },
+ "terms": [
+  {
+   "term": "Accidental",
+   "definition": "A sharp (♯), flat (♭) or natural (♮) sign written in front of a note to raise, lower or restore it for that bar, beyond what the key signature says."
+  },
+  {
+   "term": "Aeolian cadence",
+   "definition": "The ending [[{r:♭VI} → {r:♭VII} → {r:I}]] in a major key ([[{c:A♭} → {c:B♭} → {c:C}]] in {k:C}): two chords borrowed from the parallel minor, climbing by step into a major home chord. Triumphant; common in rock and video game music.",
+   "learn_more": [
+    "cadences"
+   ]
+  },
+  {
+   "term": "Aeolian mode",
+   "definition": "Another name for the natural minor scale. On {n:A} it is all white keys: [[{n:A} {n:B} {n:C} {n:D} {n:E} {n:F} {n:G}]]. On {n:C} it is [[{n:C} {n:D} {n:E♭} {n:F} {n:G} {n:A♭} {n:B♭}]].",
+   "learn_more": [
+    "circle-of-fifths"
+   ],
+   "play": [
+    {
+     "text": "Hear i–VI–VII in Warbling Wren",
+     "chord": "Am",
+     "progression": "rock-aeolian"
+    }
+   ]
+  },
+  {
+   "term": "Altered chord",
+   "definition": "A chord with one or more notes changed from what the key normally gives it. Turning {r:ii} ({c:Dm}) into {r:II7} ({c:D7}) is an alteration: {n:F} becomes {n:F♯} and a 7th is added.",
+   "learn_more": [
+    "chord-functions"
+   ]
+  },
+  {
+   "term": "Amen cadence",
+   "definition": "Another name for the plagal cadence, [[{r:IV} → {r:I}]] ([[{c:F} → {c:C}]] in {k:C}), from the two chords sung on \"A–men\" at the end of many hymns.",
+   "learn_more": [
+    "cadences"
+   ]
+  },
+  {
+   "term": "Andalusian cadence",
+   "definition": "The four-chord descent [[{r:i} – {r:VII} – {r:VI} – {r:V}]] in a minor key: [[{c:Am} – {c:G} – {c:F} – {c:E}]] in {k:A} minor. The sound of flamenco and Spanish folk music. It ends on the {r:V} chord, with the bass sinking a half step from {n:F} to {n:E}.",
+   "learn_more": [
+    "cadences",
+    "progression-relationships"
+   ],
+   "play": [
+    {
+     "text": "Hear the Andalusian cadence in Warbling Wren",
+     "chord": "Am",
+     "progression": "folk-andalusian"
+    }
+   ]
+  },
+  {
+   "term": "Antecedent and consequent",
+   "definition": "The two halves of a musical question and answer. The antecedent phrase ends on a weaker cadence (often a half cadence), and the consequent answers it with a stronger one (usually an authentic cadence). Together they form a period.",
+   "learn_more": [
+    "cadences"
+   ]
+  },
+  {
+   "term": "Arpeggio",
+   "definition": "The notes of a chord played one after another instead of all at once, as in [[{n:C} – {n:E} – {n:G} – {n:C}]]. From the Italian for \"like a harp\"."
+  },
+  {
+   "term": "Augmented 7th chord",
+   "definition": "An augmented chord with a minor 7th added: [[{n:C} – {n:E} – {n:G♯} – {n:B♭}]]. Written {c:Caug7} or {c:C7♯5}. A tense dominant-type chord that pulls strongly to the next chord.",
+   "cards": [
+    {
+     "numeral": null,
+     "chord": "Caug7"
+    }
+   ],
+   "play": [
+    {
+     "text": "Explore C augmented 7th in Warbling Wren",
+     "chord": "Caug7",
+     "progression": null
+    }
+   ]
+  },
+  {
+   "term": "Augmented chord",
+   "definition": "A three-note chord with a major 3rd and a raised (augmented) 5th: [[{n:C} – {n:E} – {n:G♯}]]. It sounds unsettled and dreamlike, and it splits the octave into three equal parts. Written {c:C+} or {c:Caug}.",
+   "cards": [
+    {
+     "numeral": null,
+     "chord": "Caug"
+    }
+   ],
+   "play": [
+    {
+     "text": "Explore C augmented in Warbling Wren",
+     "chord": "Caug",
+     "progression": null
+    }
+   ]
+  },
+  {
+   "term": "Authentic cadence",
+   "definition": "The ending [[{r:V} → {r:I}]] ([[{c:G} → {c:C}]] in {k:C}): the strongest, most final cadence. The leading tone ({n:B}) rises to the home note, and the bass falls a fifth. Called a perfect cadence in British usage.",
+   "learn_more": [
+    "cadences",
+    "chord-functions"
+   ]
+  },
+  {
+   "term": "Axis progression",
+   "definition": "The four-chord loop [[{r:I} – {r:V} – {r:vi} – {r:IV}]] ([[{c:C} – {c:G} – {c:Am} – {c:F}]] in {k:C}), behind many pop songs. Its rotations, such as [[{r:vi} – {r:IV} – {r:I} – {r:V}]], use the same four chords starting from a different point.",
+   "learn_more": [
+    "progression-relationships"
+   ],
+   "play": [
+    {
+     "text": "Hear I–V–vi–IV in Warbling Wren",
+     "chord": "C",
+     "progression": "pop-axis"
+    }
+   ]
+  },
+  {
+   "term": "Backdoor cadence",
+   "definition": "A jazz ending that reaches {r:I} from the \"wrong\" side: [[{r:♭VII7} → {r:I}]], often as [[{r:iv7} → {r:♭VII7} → {r:I}]] ([[{c:Fm7} → {c:B♭7} → {c:C}]] in {k:C}). A softer alternative to [[{r:ii} – {r:V} – {r:I}]].",
+   "learn_more": [
+    "cadences"
+   ]
+  },
+  {
+   "term": "Bar",
+   "definition": "One unit of musical time, holding a set number of beats (four, in most popular music). Also called a measure. The 12-bar blues is twelve of these."
+  },
+  {
+   "term": "Bass note",
+   "definition": "The lowest note sounding in a chord. Usually it is the root, but not always: {c:C/E} is a {c:C} chord with {n:E} in the bass.",
+   "learn_more": [
+    "root-motion"
+   ]
+  },
+  {
+   "term": "Beat",
+   "definition": "The steady pulse you tap your foot to. Beats are grouped into bars."
+  },
+  {
+   "term": "Blues",
+   "definition": "An African-American musical form and style from the early 1900s, built on dominant 7th chords, the 12-bar form and bent \"blue\" notes. The root of rock & roll, R&B and much of jazz.",
+   "learn_more": [
+    "progression-relationships"
+   ],
+   "play": [
+    {
+     "text": "Hear the 8-bar blues in Warbling Wren",
+     "chord": "C7",
+     "progression": "blues-8-bar"
+    }
+   ]
+  },
+  {
+   "term": "Borrowed chord",
+   "definition": "A chord taken from a closely related scale rather than the song's own key, usually from the parallel major or minor. {r:♭VII} ({c:B♭} in {k:C}) and minor {r:iv} ({c:Fm} in {k:C}) are common borrowed chords. Also called modal mixture.",
+   "learn_more": [
+    "chord-functions"
+   ]
+  },
+  {
+   "term": "Cadence",
+   "definition": "The last two chords of a phrase, where the music pauses or stops. Different cadences feel like a full stop, a comma, a question or a surprise.",
+   "learn_more": [
+    "cadences"
+   ]
+  },
+  {
+   "term": "Cadential six-four",
+   "definition": "A {r:I} chord with the 5th in the bass ({c:C/G} in {k:C}), placed just before {r:V} in a cadence. It works as a decoration of {r:V}: the upper notes then fall by step into the {r:V} chord.",
+   "learn_more": [
+    "cadences"
+   ],
+   "cards": [
+    {
+     "numeral": "I6/4",
+     "chord": "C/G"
+    }
+   ]
+  },
+  {
+   "term": "Canon progression",
+   "definition": "The progression behind Pachelbel's Canon in D: [[{r:I} – {r:V} – {r:vi} – {r:iii} – {r:IV}]] ([[{c:C} – {c:G} – {c:Am} – {c:Em} – {c:F}]] in {k:C}), usually continuing [[{r:I} – {r:IV} – {r:V}]]. Its roots repeat a down-a-fourth, up-a-step pattern.",
+   "learn_more": [
+    "root-motion",
+    "progression-relationships"
+   ],
+   "play": [
+    {
+     "text": "Hear the Canon progression in Warbling Wren",
+     "chord": "C",
+     "progression": "folk-canon"
+    }
+   ]
+  },
+  {
+   "term": "Cents",
+   "definition": "The unit for measuring small differences in pitch: 100 cents to a half step, 1200 to an octave. Tuning differences of a few cents are audible to trained ears.",
+   "learn_more": [
+    "circle-of-fifths"
+   ]
+  },
+  {
+   "term": "Chord",
+   "definition": "Three or more notes sounded together. The basic chord, a triad, stacks every other note of a scale: [[{n:C} – {n:E} – {n:G}]].",
+   "learn_more": [
+    "chord-functions"
+   ]
+  },
+  {
+   "term": "Chord function",
+   "definition": "The job a chord does in a key: home (tonic), away (subdominant) or tension (dominant). Function depends on a chord's place in the key, not just its type.",
+   "learn_more": [
+    "chord-functions"
+   ]
+  },
+  {
+   "term": "Chord progression",
+   "definition": "A series of chords played in order, usually repeated, such as [[{r:I} – {r:IV} – {r:V}]].",
+   "learn_more": [
+    "progression-relationships"
+   ]
+  },
+  {
+   "term": "Chord quality",
+   "definition": "The type of chord, set by the distances between its notes: major, minor, diminished, augmented, dominant 7th, and so on."
+  },
+  {
+   "term": "Chord tone",
+   "definition": "Any note that belongs to the current chord. For {c:C} ([[{n:C} – {n:E} – {n:G}]]), the chord tones are {n:C}, {n:E} and {n:G}. Notes outside the chord are non-chord tones."
+  },
+  {
+   "term": "Chromatic",
+   "definition": "Using notes outside the key, or moving by half steps. A chromatic scale plays all 12 notes in order. The opposite of diatonic.",
+   "learn_more": [
+    "root-motion"
+   ]
+  },
+  {
+   "term": "Chromatic mediant",
+   "definition": "A chord whose root is a third away from the current chord and has the same quality, but which belongs to a different key: [[{c:C} → {c:E}]], or [[{c:C} → {c:A♭}]]. They share one note, and the change sounds colourful and cinematic.",
+   "learn_more": [
+    "root-motion",
+    "progression-relationships"
+   ]
+  },
+  {
+   "term": "Circle of fifths",
+   "definition": "A circular map of the 12 keys, each a fifth from its neighbours. It shows key signatures, relative minors, the chords of each key and how closely keys are related.",
+   "learn_more": [
+    "circle-of-fifths"
+   ]
+  },
+  {
+   "term": "Circle progression",
+   "definition": "A progression whose roots move down by fifths, one step at a time around the circle of fifths: [[{r:iii} – {r:vi} – {r:ii} – {r:V} – {r:I}]].",
+   "learn_more": [
+    "root-motion",
+    "circle-of-fifths"
+   ],
+   "play": [
+    {
+     "text": "Hear iii–vi–ii–V in Warbling Wren",
+     "chord": "Cmaj7",
+     "progression": "jazz-iii-vi-ii-v"
+    }
+   ]
+  },
+  {
+   "term": "Closely related keys",
+   "definition": "The keys nearest a given key on the circle of fifths: its relative, the keys one step either side, and their relatives. For {k:C} major: {k:A} minor, {k:G} major, {k:E} minor, {k:F} major and {k:D} minor.",
+   "learn_more": [
+    "circle-of-fifths"
+   ]
+  },
+  {
+   "term": "Common tone",
+   "definition": "A note shared by two chords. Common tones can be held still while the other notes move, which makes a chord change sound smooth.",
+   "learn_more": [
+    "root-motion"
+   ]
+  },
+  {
+   "term": "Consonance",
+   "definition": "A combination of notes that sounds stable and at rest, such as a major or minor chord. The opposite of dissonance."
+  },
+  {
+   "term": "Contrary motion",
+   "definition": "Two musical lines moving in opposite directions, one up and one down. Common at cadences and an important part of good voice leading.",
+   "learn_more": [
+    "root-motion"
+   ]
+  },
+  {
+   "term": "Deceptive cadence",
+   "definition": "The ending [[{r:V} → {r:vi}]] ([[{c:G} → {c:Am}]] in {k:C}). The music sets up home, then lands somewhere else. Called an interrupted cadence in British usage.",
+   "learn_more": [
+    "cadences"
+   ]
+  },
+  {
+   "term": "Degree",
+   "definition": "A note's position in a scale, numbered from 1 (the home note). In {k:C} major, {n:E} is the 3rd degree and {n:G} is the 5th. Roman numerals name the chords built on each degree.",
+   "learn_more": [
+    "chord-functions"
+   ]
+  },
+  {
+   "term": "Diatonic",
+   "definition": "Using only the notes of the key. The diatonic chords of {k:C} major are {c:C}, {c:Dm}, {c:Em}, {c:F}, {c:G}, {c:Am} and {c:B°}. The opposite of chromatic.",
+   "learn_more": [
+    "chord-functions"
+   ]
+  },
+  {
+   "term": "Diminished 7th chord",
+   "definition": "A diminished chord with another minor 3rd on top: [[{n:B} – {n:D} – {n:F} – {n:A♭}]]. Every note is three half steps from the next, so it splits the octave into four equal parts. Written {c:B°7} or {c:Bdim7}.",
+   "cards": [
+    {
+     "numeral": null,
+     "chord": "B°7"
+    }
+   ],
+   "play": [
+    {
+     "text": "Explore B diminished 7th in Warbling Wren",
+     "chord": "Bdim7",
+     "progression": null
+    }
+   ]
+  },
+  {
+   "term": "Diminished chord",
+   "definition": "A three-note chord of two minor 3rds: [[{n:B} – {n:D} – {n:F}]]. Tense and unstable, it is the {r:vii°} chord of a major key. Written {c:B°} or {c:Bdim}.",
+   "learn_more": [
+    "chord-functions"
+   ],
+   "cards": [
+    {
+     "numeral": "vii°",
+     "chord": "B°"
+    }
+   ],
+   "play": [
+    {
+     "text": "Explore B diminished in Warbling Wren",
+     "chord": "Bdim",
+     "progression": null
+    }
+   ]
+  },
+  {
+   "term": "Dissonance",
+   "definition": "A combination of notes that sounds tense and wants to move on, such as the tritone in a dominant 7th chord. Dissonance resolving to consonance is what drives harmony forward.",
+   "learn_more": [
+    "chord-functions"
+   ]
+  },
+  {
+   "term": "Dominant",
+   "definition": "The 5th degree of a scale, and the chord built on it: {r:V} ({c:G} in {k:C}). The tension chord, which pulls strongly back to the tonic.",
+   "learn_more": [
+    "chord-functions"
+   ]
+  },
+  {
+   "term": "Dominant 7th chord",
+   "definition": "A major chord with a minor 7th added: [[{n:G} – {n:B} – {n:D} – {n:F}]]. Written {c:G7}. Its 3rd and 7th form a tritone that wants to resolve, which makes it the strongest pull home in music. In the blues, every chord is a dominant 7th.",
+   "learn_more": [
+    "chord-functions"
+   ],
+   "cards": [
+    {
+     "numeral": "V7",
+     "chord": "G7"
+    }
+   ],
+   "play": [
+    {
+     "text": "Explore G7 in Warbling Wren",
+     "chord": "G7",
+     "progression": null
+    }
+   ]
+  },
+  {
+   "term": "Dorian mode",
+   "definition": "A minor scale with a raised 6th: on {n:D}, the white keys [[{n:D} {n:E} {n:F} {n:G} {n:A} {n:B} {n:C}]]. On {n:C} it is [[{n:C} {n:D} {n:E♭} {n:F} {n:G} {n:A} {n:B♭}]]. Brighter than natural minor; common in jazz, funk and folk.",
+   "learn_more": [
+    "circle-of-fifths"
+   ]
+  },
+  {
+   "term": "Double sharp and double flat",
+   "definition": "Signs that raise (𝄪) or lower (𝄫) a note by two half steps. They appear when a note has to keep its letter name, as in the 7th of a diminished 7th chord."
+  },
+  {
+   "term": "Drop D tuning",
+   "definition": "Guitar tuning with the lowest string lowered from {n:E} to {n:D} ([[{n:D} {n:A} {n:D} {n:G} {n:B} {n:E}]]). It gives a deeper bass and lets you play power chords on the bottom three strings with one finger."
+  },
+  {
+   "term": "Enharmonic",
+   "definition": "Two names for the same pitch, such as {n:F♯} and {n:G♭}, or {n:C♯} and {n:D♭}. Which name is used depends on the key.",
+   "learn_more": [
+    "circle-of-fifths"
+   ]
+  },
+  {
+   "term": "Equal temperament",
+   "definition": "The tuning system used by pianos and fretted instruments, which divides the octave into 12 exactly equal half steps. It makes every key equally in tune, at the cost of fifths slightly narrower than pure.",
+   "learn_more": [
+    "circle-of-fifths"
+   ]
+  },
+  {
+   "term": "Evaded cadence",
+   "definition": "A cadence that is set up but sidestepped at the last moment, for example [[{r:V} → {r:I6}]] ([[{c:G} → {c:C/E}]]) instead of a root-position [[{r:V} → {r:I}]].",
+   "learn_more": [
+    "cadences"
+   ]
+  },
+  {
+   "term": "Extended chord",
+   "definition": "A chord with notes stacked beyond the 7th: 9ths, 11ths and 13ths. {c:C9} is [[{n:C} – {n:E} – {n:G} – {n:B♭} – {n:D}]]. Common in jazz, funk and R&B.",
+   "cards": [
+    {
+     "numeral": null,
+     "chord": "C9"
+    }
+   ]
+  },
+  {
+   "term": "Fifth",
+   "definition": "The distance from one note to the note five letter names above it, counting the first: {n:C} up to {n:G}. Seven half steps. The most stable interval after the octave, and the basis of the circle of fifths and of power chords.",
+   "learn_more": [
+    "root-motion",
+    "circle-of-fifths"
+   ]
+  },
+  {
+   "term": "Fifties progression",
+   "definition": "The progression [[{r:I} – {r:vi} – {r:IV} – {r:V}]] ([[{c:C} – {c:Am} – {c:F} – {c:G}]] in {k:C}), the doo-wop sound of countless 1950s songs. Also called the '50s progression.",
+   "learn_more": [
+    "root-motion",
+    "progression-relationships"
+   ],
+   "play": [
+    {
+     "text": "Hear I–vi–IV–V in Warbling Wren",
+     "chord": "C",
+     "progression": "rock-50s"
+    }
+   ]
+  },
+  {
+   "term": "Figured bass",
+   "definition": "Numbers written with a bass note to show which chord to play above it. In Roman-numeral analysis they mark inversions: {r:I6} is first inversion (3rd in the bass, {c:C/E} in {k:C}) and {r:I6/4} is second inversion (5th in the bass, {c:C/G}).",
+   "learn_more": [
+    "cadences"
+   ]
+  },
+  {
+   "term": "Flat",
+   "definition": "The sign ♭, which lowers a note by a half step. {n:B♭} is a half step below {n:B}."
+  },
+  {
+   "term": "Fourth",
+   "definition": "The distance from one note to the note four letter names above it: {n:C} up to {n:F}. Five half steps. Going up a fourth lands on the same note name as going down a fifth.",
+   "learn_more": [
+    "root-motion"
+   ]
+  },
+  {
+   "term": "Fret",
+   "definition": "A metal strip across a guitar's neck. Pressing a string just behind a fret shortens it and raises its pitch. Each fret is one half step."
+  },
+  {
+   "term": "Fretboard",
+   "definition": "The front of a guitar's neck, where you press the strings against the frets. Also called the fingerboard."
+  },
+  {
+   "term": "Functional harmony",
+   "definition": "The idea that every chord in a key does one of three jobs: tonic (T, home), subdominant (S, away) or dominant (D, tension). Named and lettered by the German theorist Hugo Riemann in the late 1800s. The usual order is T → S → D → T.",
+   "learn_more": [
+    "chord-functions"
+   ]
+  },
+  {
+   "term": "Fundamental bass",
+   "definition": "The line formed by the roots of a progression's chords, whether or not they are actually played in the bass. An idea from Jean-Philippe Rameau (1722), and the basis of Roman-numeral analysis.",
+   "learn_more": [
+    "root-motion"
+   ]
+  },
+  {
+   "term": "Guide tones",
+   "definition": "The 3rd and 7th of a chord: the two notes that define its quality. In {c:G7} they are {n:B} and {n:F}. Jazz players outline changes by moving guide tones smoothly from chord to chord.",
+   "learn_more": [
+    "root-motion"
+   ]
+  },
+  {
+   "term": "Half cadence",
+   "definition": "A phrase ending on the {r:V} chord ([[{c:C} → {c:G}]], or [[{c:F} → {c:G}]] in {k:C}). It sounds open and unfinished, like a comma or a question. Called an imperfect cadence in British usage.",
+   "learn_more": [
+    "cadences"
+   ]
+  },
+  {
+   "term": "Half step",
+   "definition": "The smallest distance in Western music: from one piano key to the very next one, black or white, or one fret on a guitar. Also called a semitone.",
+   "learn_more": [
+    "chord-functions"
+   ]
+  },
+  {
+   "term": "Half-diminished chord",
+   "definition": "A diminished chord with a minor 7th: [[{n:B} – {n:D} – {n:F} – {n:A}]]. Written {c:Bø7} or {c:Bm7♭5}. The {r:vii} chord of a major key, and the {r:ii} chord of a minor key (as in the minor [[{r:ii} – {r:V} – {r:i}]]).",
+   "learn_more": [
+    "progression-relationships"
+   ],
+   "cards": [
+    {
+     "numeral": "viiø7",
+     "chord": "Bm7♭5"
+    }
+   ],
+   "play": [
+    {
+     "text": "Explore Bm7♭5 in Warbling Wren",
+     "chord": "Bm7♭5",
+     "progression": null
+    }
+   ]
+  },
+  {
+   "term": "Harmonic minor",
+   "definition": "The natural minor scale with its 7th degree raised a half step. In {k:A}: [[{n:A} {n:B} {n:C} {n:D} {n:E} {n:F} {n:G♯} {n:A}]]. The raised note makes the {r:V} chord major ({c:E} instead of {c:Em}), giving minor keys a strong pull home.",
+   "learn_more": [
+    "chord-functions"
+   ]
+  },
+  {
+   "term": "Harmonic rhythm",
+   "definition": "How often the chords change. A song can have a fast melody over slow harmonic rhythm, or the reverse. Harmonic rhythm often speeds up approaching a cadence.",
+   "learn_more": [
+    "cadences"
+   ]
+  },
+  {
+   "term": "Harmony",
+   "definition": "Notes sounding together, and the way chords follow one another. Melody is the tune; harmony is what supports it."
+  },
+  {
+   "term": "Imperfect authentic cadence",
+   "definition": "A [[{r:V} → {r:I}]] ending that is less final than a perfect authentic cadence, because a chord is inverted, the melody ends on the 3rd or 5th, or {r:vii°} replaces {r:V}.",
+   "learn_more": [
+    "cadences"
+   ]
+  },
+  {
+   "term": "Interval",
+   "definition": "The distance between two notes, named by counting letter names (a third, a fifth) and measured exactly in half steps.",
+   "learn_more": [
+    "root-motion"
+   ]
+  },
+  {
+   "term": "Inversion",
+   "definition": "A chord with a note other than the root in the bass. {c:C/E} ({n:E} in the bass) is first inversion; {c:C/G} ({n:G} in the bass) is second inversion.",
+   "learn_more": [
+    "root-motion"
+   ],
+   "cards": [
+    {
+     "numeral": null,
+     "chord": "C/E"
+    },
+    {
+     "numeral": null,
+     "chord": "C/G"
+    }
+   ]
+  },
+  {
+   "term": "Inverted",
+   "definition": "On a keyboard diagram, a “✦ inverted” tag means the chord is drawn with a note other than its root at the bottom, so all its notes fit in one octave. The notes are the same, in a different order: {c:C} drawn [[{n:E} {n:G} {n:C}]] is an inversion, {c:C/E}.",
+   "learn_more": [
+    "root-motion"
+   ]
+  },
+  {
+   "term": "Ionian mode",
+   "definition": "Another name for the major scale. On {n:C}: [[{n:C} {n:D} {n:E} {n:F} {n:G} {n:A} {n:B}]].",
+   "learn_more": [
+    "circle-of-fifths"
+   ]
+  },
+  {
+   "term": "Key",
+   "definition": "The home base of a piece of music: its home note and the scale built on it. A song in {k:C} major keeps returning to {n:C} and uses mainly the notes of the {k:C} major scale.",
+   "learn_more": [
+    "circle-of-fifths"
+   ]
+  },
+  {
+   "term": "Key signature",
+   "definition": "The sharps or flats written at the start of each line of music, showing which notes are raised or lowered throughout. {k:G} major has one sharp ({n:F♯}); {k:F} major has one flat ({n:B♭}).",
+   "learn_more": [
+    "circle-of-fifths"
+   ]
+  },
+  {
+   "term": "Leading tone",
+   "definition": "The 7th degree of a major (or harmonic minor) scale, a half step below the home note: {n:B} in {k:C} major, {n:G♯} in {k:A} minor. It pulls strongly up to the tonic, and gives the {r:V} chord its drive.",
+   "learn_more": [
+    "chord-functions",
+    "cadences"
+   ]
+  },
+  {
+   "term": "Leading-tone chord",
+   "definition": "The diminished chord built on the leading tone: {r:vii°} ({c:B°} in {k:C}). It contains the same tritone ({n:B} and {n:F}) as {c:G7}, so it does the dominant's job.",
+   "learn_more": [
+    "chord-functions"
+   ],
+   "cards": [
+    {
+     "numeral": "vii°",
+     "chord": "B°"
+    }
+   ]
+  },
+  {
+   "term": "Locrian mode",
+   "definition": "The darkest mode, with a lowered 2nd and 5th: on {n:B}, the white keys [[{n:B} {n:C} {n:D} {n:E} {n:F} {n:G} {n:A}]]. Rare as a home key, because its tonic chord is diminished.",
+   "learn_more": [
+    "circle-of-fifths"
+   ]
+  },
+  {
+   "term": "Lydian mode",
+   "definition": "The brightest mode, a major scale with a raised 4th: on {n:F}, the white keys [[{n:F} {n:G} {n:A} {n:B} {n:C} {n:D} {n:E}]]. On {n:C} it is [[{n:C} {n:D} {n:E} {n:F♯} {n:G} {n:A} {n:B}]]. Dreamy and floating; common in film music.",
+   "learn_more": [
+    "circle-of-fifths"
+   ]
+  },
+  {
+   "term": "Major 6th chord",
+   "definition": "A major chord with a major 6th added: [[{n:C} – {n:E} – {n:G} – {n:A}]]. Written {c:C6}. Sweet and settled; common in swing and country endings.",
+   "cards": [
+    {
+     "numeral": null,
+     "chord": "C6"
+    }
+   ],
+   "play": [
+    {
+     "text": "Explore C6 in Warbling Wren",
+     "chord": "C6",
+     "progression": null
+    }
+   ]
+  },
+  {
+   "term": "Major 7th chord",
+   "definition": "A major chord with a major 7th added: [[{n:C} – {n:E} – {n:G} – {n:B}]]. Written {c:Cmaj7}. Smooth and lush; the home chord of the jazz [[{r:ii} – {r:V} – {r:I}]].",
+   "learn_more": [
+    "progression-relationships"
+   ],
+   "cards": [
+    {
+     "numeral": "Imaj7",
+     "chord": "Cmaj7"
+    }
+   ],
+   "play": [
+    {
+     "text": "Explore Cmaj7 in Warbling Wren",
+     "chord": "Cmaj7",
+     "progression": null
+    }
+   ]
+  },
+  {
+   "term": "Major chord",
+   "definition": "A three-note chord with a major 3rd and a perfect 5th: [[{n:C} – {n:E} – {n:G}]]. Bright and stable.",
+   "learn_more": [
+    "chord-functions"
+   ],
+   "cards": [
+    {
+     "numeral": "I",
+     "chord": "C"
+    }
+   ],
+   "play": [
+    {
+     "text": "Explore C major in Warbling Wren",
+     "chord": "C",
+     "progression": null
+    }
+   ]
+  },
+  {
+   "term": "Major scale",
+   "definition": "The seven-note scale of whole and half steps in the pattern W W H W W W H: [[{n:C} {n:D} {n:E} {n:F} {n:G} {n:A} {n:B} {n:C}]]. The basis of major keys.",
+   "learn_more": [
+    "circle-of-fifths"
+   ]
+  },
+  {
+   "term": "Maximally even",
+   "definition": "A set of notes spread as evenly as possible around the octave. The major scale is the maximally even way to choose seven notes from twelve, which is why it is seven neighbours in a row on the circle of fifths.",
+   "learn_more": [
+    "circle-of-fifths"
+   ]
+  },
+  {
+   "term": "Measure",
+   "definition": "Another name for a bar."
+  },
+  {
+   "term": "Mediant",
+   "definition": "The 3rd degree of a scale, and the chord built on it: {r:iii} ({c:Em} in {k:C}).",
+   "learn_more": [
+    "chord-functions"
+   ]
+  },
+  {
+   "term": "Melodic minor",
+   "definition": "A minor scale with raised 6th and 7th degrees going up ([[{n:A} {n:B} {n:C} {n:D} {n:E} {n:F♯} {n:G♯} {n:A}]]), traditionally returning to natural minor coming down. Jazz uses the ascending form in both directions."
+  },
+  {
+   "term": "Melody",
+   "definition": "A sequence of single notes heard as a tune. The part you sing."
+  },
+  {
+   "term": "Metric weight",
+   "definition": "How strong a beat is. The first beat of a bar is the strongest. Chords that land on strong beats sound more important, which is often what decides which chord a loop treats as home.",
+   "learn_more": [
+    "progression-relationships"
+   ]
+  },
+  {
+   "term": "Minor 6th chord",
+   "definition": "A minor chord with a major 6th added: [[{n:A} – {n:C} – {n:E} – {n:F♯}]]. Written {c:Am6}. Moody and sophisticated; common in jazz and gypsy jazz.",
+   "cards": [
+    {
+     "numeral": null,
+     "chord": "Am6"
+    }
+   ],
+   "play": [
+    {
+     "text": "Explore Am6 in Warbling Wren",
+     "chord": "Am6",
+     "progression": null
+    }
+   ]
+  },
+  {
+   "term": "Minor 7th chord",
+   "definition": "A minor chord with a minor 7th added: [[{n:D} – {n:F} – {n:A} – {n:C}]]. Written {c:Dm7}. Mellow and open; the {r:ii} chord of the jazz [[{r:ii} – {r:V} – {r:I}]].",
+   "learn_more": [
+    "progression-relationships"
+   ],
+   "cards": [
+    {
+     "numeral": "ii7",
+     "chord": "Dm7"
+    }
+   ],
+   "play": [
+    {
+     "text": "Explore Dm7 in Warbling Wren",
+     "chord": "Dm7",
+     "progression": null
+    }
+   ]
+  },
+  {
+   "term": "Minor chord",
+   "definition": "A three-note chord with a minor 3rd and a perfect 5th: [[{n:A} – {n:C} – {n:E}]]. Darker than a major chord.",
+   "learn_more": [
+    "chord-functions"
+   ],
+   "cards": [
+    {
+     "numeral": "vi",
+     "chord": "Am"
+    }
+   ],
+   "play": [
+    {
+     "text": "Explore A minor in Warbling Wren",
+     "chord": "Am",
+     "progression": null
+    }
+   ]
+  },
+  {
+   "term": "Minor plagal cadence",
+   "definition": "The ending [[{r:iv} → {r:I}]] in a major key ([[{c:Fm} → {c:C}]] in {k:C}), using the minor {r:iv} chord borrowed from the parallel minor. Its {n:A♭} sinks a half step to {n:G}, giving a bittersweet close.",
+   "learn_more": [
+    "cadences"
+   ]
+  },
+  {
+   "term": "Minor scale",
+   "definition": "Usually the natural minor scale: whole and half steps in the pattern W H W W H W W. [[{n:A} {n:B} {n:C} {n:D} {n:E} {n:F} {n:G} {n:A}]], or [[{n:C} {n:D} {n:E♭} {n:F} {n:G} {n:A♭} {n:B♭} {n:C}]]. See also harmonic minor and melodic minor.",
+   "learn_more": [
+    "circle-of-fifths"
+   ]
+  },
+  {
+   "term": "Mixolydian cadence",
+   "definition": "The ending [[{r:♭VII} → {r:I}]] ([[{c:B♭} → {c:C}]] in {k:C}): a rising whole step into home with no leading tone. Bright and final, without the classical pull of [[{r:V} → {r:I}]].",
+   "learn_more": [
+    "cadences"
+   ]
+  },
+  {
+   "term": "Mixolydian mode",
+   "definition": "A major scale with a lowered 7th: on {n:G}, the white keys [[{n:G} {n:A} {n:B} {n:C} {n:D} {n:E} {n:F}]]. On {n:C} it is [[{n:C} {n:D} {n:E} {n:F} {n:G} {n:A} {n:B♭}]]. The source of the {r:♭VII} chord heard all over classic rock.",
+   "learn_more": [
+    "chord-functions",
+    "circle-of-fifths"
+   ],
+   "play": [
+    {
+     "text": "Hear I–♭VII–IV in Warbling Wren",
+     "chord": "C",
+     "progression": "rock-mixolydian"
+    }
+   ]
+  },
+  {
+   "term": "Modal mixture",
+   "definition": "Another name for using borrowed chords: mixing in chords from the parallel major or minor.",
+   "learn_more": [
+    "chord-functions"
+   ]
+  },
+  {
+   "term": "Mode",
+   "definition": "One of seven scales made by starting the major scale's pattern on a different degree: Ionian, Dorian, Phrygian, Lydian, Mixolydian, Aeolian and Locrian. Each has its own mood, from bright to dark.",
+   "learn_more": [
+    "circle-of-fifths"
+   ]
+  },
+  {
+   "term": "Modulation",
+   "definition": "Changing key within a piece. Moving to a neighbouring key on the circle of fifths sounds smooth; moving far away sounds dramatic.",
+   "learn_more": [
+    "circle-of-fifths"
+   ]
+  },
+  {
+   "term": "Natural",
+   "definition": "The sign ♮, which cancels a sharp or flat and restores the plain note."
+  },
+  {
+   "term": "Neo-Riemannian theory",
+   "definition": "A way of describing chord changes as small moves between triads that keep two notes in common. The three basic moves are P (parallel, {c:C} ↔ {c:Cm}), R (relative, {c:C} ↔ {c:Am}) and L (leading-tone exchange, {c:C} ↔ {c:Em}).",
+   "learn_more": [
+    "progression-relationships"
+   ]
+  },
+  {
+   "term": "Non-chord tone",
+   "definition": "A note in the melody that does not belong to the current chord, such as a passing note or a suspension. Non-chord tones add movement and colour."
+  },
+  {
+   "term": "Note",
+   "definition": "A single musical sound with a pitch and a length. Also the written symbol for it."
+  },
+  {
+   "term": "Octave",
+   "definition": "The distance from one note to the next note with the same name, higher or lower: {n:C} to the next {n:C}. Twelve half steps. The higher note vibrates exactly twice as fast."
+  },
+  {
+   "term": "Open string",
+   "definition": "A guitar string played without pressing any fret. In standard tuning the open strings are [[{n:E} {n:A} {n:D} {n:G} {n:B} {n:E}]]."
+  },
+  {
+   "term": "Open tuning",
+   "definition": "A guitar tuning in which the open strings sound a chord, such as open G ([[{n:D} {n:G} {n:D} {n:G} {n:B} {n:D}]]). Popular for slide guitar and folk."
+  },
+  {
+   "term": "Parallel keys",
+   "definition": "A major and minor key with the same home note, such as {k:C} major and {k:C} minor. They have different key signatures ({k:C} minor has three flats).",
+   "learn_more": [
+    "circle-of-fifths",
+    "progression-relationships"
+   ]
+  },
+  {
+   "term": "Parallel motion",
+   "definition": "Two lines moving in the same direction by the same interval. Parallel fifths and octaves are avoided in traditional voice leading because they make the parts lose their independence.",
+   "learn_more": [
+    "root-motion"
+   ]
+  },
+  {
+   "term": "Passing tone",
+   "definition": "A non-chord tone that connects two chord tones by step, such as {n:D} between {n:C} and {n:E}."
+  },
+  {
+   "term": "Pedal point",
+   "definition": "A note, usually in the bass, held or repeated while the chords above it change.",
+   "learn_more": [
+    "root-motion"
+   ]
+  },
+  {
+   "term": "Pentatonic scale",
+   "definition": "A five-note scale. The major pentatonic leaves out the 4th and 7th of the major scale ([[{n:C} {n:D} {n:E} {n:G} {n:A}]]); the minor pentatonic is the same notes from the relative minor ([[{n:A} {n:C} {n:D} {n:E} {n:G}]]). The basis of countless blues, rock and folk melodies.",
+   "learn_more": [
+    "circle-of-fifths"
+   ]
+  },
+  {
+   "term": "Perfect authentic cadence",
+   "definition": "The most final ending: [[{r:V} → {r:I}]] with both chords in root position and the home note in the melody on the last chord.",
+   "learn_more": [
+    "cadences"
+   ]
+  },
+  {
+   "term": "Period",
+   "definition": "A pair of phrases that sound like a question and its answer: an antecedent ending on a weaker cadence, then a consequent ending on a strong one.",
+   "learn_more": [
+    "cadences"
+   ]
+  },
+  {
+   "term": "Phrase",
+   "definition": "A musical sentence: a short passage that ends with a cadence. Phrases are often four or eight bars long.",
+   "learn_more": [
+    "cadences"
+   ]
+  },
+  {
+   "term": "Phrygian cadence",
+   "definition": "A minor-key half cadence, [[{r:iv6} → {r:V}]] ([[{c:Dm/F} → {c:E}]] in {k:A} minor), in which the bass sinks a half step onto the {r:V} chord. Solemn and ancient-sounding.",
+   "learn_more": [
+    "cadences"
+   ]
+  },
+  {
+   "term": "Phrygian dominant",
+   "definition": "The scale of harmonic minor started on its 5th note: on {n:E}, [[{n:E} {n:F} {n:G♯} {n:A} {n:B} {n:C} {n:D}]]. It is the sound of the Andalusian cadence heard with its last chord ({c:E}) as home, and is common in flamenco and Middle Eastern music.",
+   "learn_more": [
+    "cadences"
+   ]
+  },
+  {
+   "term": "Phrygian mode",
+   "definition": "A minor scale with a lowered 2nd: on {n:E}, the white keys [[{n:E} {n:F} {n:G} {n:A} {n:B} {n:C} {n:D}]]. On {n:C} it is [[{n:C} {n:D♭} {n:E♭} {n:F} {n:G} {n:A♭} {n:B♭}]]. Dark and Spanish-sounding. In flamenco, the Andalusian cadence is often heard as ending on the home chord of this mode.",
+   "learn_more": [
+    "cadences",
+    "circle-of-fifths"
+   ]
+  },
+  {
+   "term": "Picardy third",
+   "definition": "Ending a minor-key piece on a major tonic chord: {c:A} instead of {c:Am}. The raised 3rd ({n:C♯} instead of {n:C}) gives a moment of light at the end.",
+   "learn_more": [
+    "cadences"
+   ]
+  },
+  {
+   "term": "Pitch",
+   "definition": "How high or low a note sounds, set by how fast it vibrates."
+  },
+  {
+   "term": "Pitch class",
+   "definition": "All notes with the same name, in any octave: every {n:C}, from the lowest to the highest, belongs to pitch class {n:C}. Theorists often number them {n:C} = 0 up to {n:B} = 11.",
+   "learn_more": [
+    "circle-of-fifths"
+   ]
+  },
+  {
+   "term": "Plagal cadence",
+   "definition": "The ending [[{r:IV} → {r:I}]] ([[{c:F} → {c:C}]] in {k:C}). Warm and calm, with no leading tone. Also called the Amen cadence.",
+   "learn_more": [
+    "cadences"
+   ]
+  },
+  {
+   "term": "Power chord",
+   "definition": "A root and its fifth, often with the root doubled an octave up ([[{n:C} – {n:G} – {n:C}]]). Written {c:C5}. With no 3rd, it is neither major nor minor; the backbone of rock and metal guitar.",
+   "cards": [
+    {
+     "numeral": null,
+     "chord": "C5"
+    }
+   ]
+  },
+  {
+   "term": "Predominant",
+   "definition": "Another name for the subdominant function: chords such as {r:IV} and {r:ii} that lead into the dominant.",
+   "learn_more": [
+    "chord-functions"
+   ]
+  },
+  {
+   "term": "Pythagorean comma",
+   "definition": "The small gap, about a quarter of a semitone, between twelve pure fifths and seven octaves. Equal temperament spreads it across all twelve fifths so the circle of fifths closes.",
+   "learn_more": [
+    "circle-of-fifths"
+   ]
+  },
+  {
+   "term": "Quick change",
+   "definition": "A 12-bar blues variant that moves to {r:IV7} in bar 2 before returning to {r:I7}.",
+   "learn_more": [
+    "progression-relationships"
+   ],
+   "play": [
+    {
+     "text": "Hear the quick-change blues in Warbling Wren",
+     "chord": "C7",
+     "progression": "blues-quick-change"
+    }
+   ]
+  },
+  {
+   "term": "Ragtime progression",
+   "definition": "A chain of dominant 7th chords falling by fifths into home: [[{r:III7} – {r:VI7} – {r:II7} – {r:V7} – {r:I}]] ([[{c:E7} – {c:A7} – {c:D7} – {c:G7} – {c:C}]] in {k:C}). Each chord is the secondary dominant of the next.",
+   "learn_more": [
+    "circle-of-fifths",
+    "progression-relationships"
+   ]
+  },
+  {
+   "term": "Reharmonisation",
+   "definition": "Choosing new chords to go under an existing melody. Common tools are substitution, secondary dominants, tritone substitution and adding chords in front by falling fifths.",
+   "learn_more": [
+    "root-motion",
+    "progression-relationships"
+   ]
+  },
+  {
+   "term": "Relative key",
+   "definition": "A major and a minor key that share the same notes and key signature, such as {k:C} major and {k:A} minor. The relative minor's home note is the 6th degree of the major scale.",
+   "learn_more": [
+    "circle-of-fifths",
+    "progression-relationships"
+   ]
+  },
+  {
+   "term": "Resolution",
+   "definition": "The move from a tense chord or note to a stable one, such as {c:G7} to {c:C}, or {n:B} rising to {n:C}.",
+   "learn_more": [
+    "chord-functions"
+   ]
+  },
+  {
+   "term": "Retrograde motion",
+   "definition": "Root motion that runs clockwise around the circle of fifths (up a fifth), against the usual flow toward home: [[{r:IV} → {r:I}]] or [[{r:♭VII} → {r:IV} → {r:I}]]. Weak in classical terms, but central to rock, gospel and modal music.",
+   "learn_more": [
+    "circle-of-fifths"
+   ]
+  },
+  {
+   "term": "Rhythm changes",
+   "definition": "The chord progression of George Gershwin's \"I Got Rhythm\", one of the most-used frameworks in jazz. Its A section is built on the [[{r:I} – {r:vi} – {r:ii} – {r:V}]] turnaround.",
+   "learn_more": [
+    "progression-relationships"
+   ],
+   "play": [
+    {
+     "text": "Hear the I–vi–ii–V turnaround from B♭maj7, the usual key of \"I Got Rhythm\"",
+     "chord": "B♭maj7",
+     "progression": "jazz-i-vi-ii-v"
+    }
+   ]
+  },
+  {
+   "term": "Roman numerals",
+   "definition": "Numbers {r:I} to {r:VII} naming chords by the scale degree of their root. Uppercase is major ({r:I}, {r:IV}, {r:V}), lowercase is minor ({r:ii}, {r:iii}, {r:vi}), and ° marks diminished. They let one progression be described in every key.",
+   "learn_more": [
+    "chord-functions"
+   ]
+  },
+  {
+   "term": "Root",
+   "definition": "The note a chord is built on and named after: {n:C} is the root of [[{n:C} – {n:E} – {n:G}]].",
+   "learn_more": [
+    "root-motion"
+   ]
+  },
+  {
+   "term": "Root motion",
+   "definition": "How far the root moves from one chord to the next: by a fifth (strong), a third (gentle) or a step (bold).",
+   "learn_more": [
+    "root-motion"
+   ]
+  },
+  {
+   "term": "Root position",
+   "definition": "A chord with its root in the bass.",
+   "learn_more": [
+    "root-motion"
+   ]
+  },
+  {
+   "term": "Rotation",
+   "definition": "The same loop of chords started from a different point. [[{r:vi} – {r:IV} – {r:I} – {r:V}]] is a rotation of [[{r:I} – {r:V} – {r:vi} – {r:IV}]].",
+   "learn_more": [
+    "progression-relationships"
+   ],
+   "play": [
+    {
+     "text": "Hear vi–IV–I–V in Warbling Wren",
+     "chord": "C",
+     "progression": "pop-vi-iv-i-v"
+    }
+   ]
+  },
+  {
+   "term": "Scale",
+   "definition": "A set of notes arranged in order of pitch, which a key or melody is built from. Major, minor, pentatonic and the modes are all scales.",
+   "learn_more": [
+    "circle-of-fifths"
+   ]
+  },
+  {
+   "term": "Secondary dominant",
+   "definition": "A dominant chord aimed at a chord other than the tonic. In {k:C}, {c:D7} is the \"{r:V} of {r:V}\": it pulls to {c:G}. Written {r:V/V}, or {r:II7}.",
+   "learn_more": [
+    "chord-functions",
+    "progression-relationships"
+   ],
+   "play": [
+    {
+     "text": "Hear I–II7–V7 in Warbling Wren",
+     "chord": "C",
+     "progression": "country-i-ii7-v7"
+    }
+   ]
+  },
+  {
+   "term": "Semitone",
+   "definition": "Another name for a half step."
+  },
+  {
+   "term": "Sequence",
+   "definition": "A musical pattern repeated at a different pitch, such as a chain of chords falling by fifths.",
+   "learn_more": [
+    "root-motion"
+   ]
+  },
+  {
+   "term": "Seventh chord",
+   "definition": "A triad with one more note stacked on top, a 7th above the root. The main types are major 7th, dominant 7th, minor 7th, half-diminished and diminished 7th."
+  },
+  {
+   "term": "Sharp",
+   "definition": "The sign ♯, which raises a note by a half step. {n:F♯} is a half step above {n:F}."
+  },
+  {
+   "term": "Shuffle",
+   "definition": "A bouncing rhythmic feel in which each beat is split long-short. The classic feel of the blues."
+  },
+  {
+   "term": "Slash chord",
+   "definition": "A chord written with a specific bass note after a slash: {c:C/E} means a {c:C} chord with {n:E} in the bass.",
+   "learn_more": [
+    "root-motion"
+   ]
+  },
+  {
+   "term": "Strong, weak and superstrong progressions",
+   "definition": "Arnold Schoenberg's names for root motion. Strong: down a fifth or a third ([[{c:C} → {c:F}]], [[{c:C} → {c:Am}]]). Weak: up a fifth or a third ([[{c:C} → {c:G}]], [[{c:C} → {c:Em}]]). Superstrong: by a step ([[{c:F} → {c:G}]]).",
+   "learn_more": [
+    "root-motion"
+   ]
+  },
+  {
+   "term": "Subdominant",
+   "definition": "The 4th degree of a scale, and the chord built on it: {r:IV} ({c:F} in {k:C}). The \"away\" function, which leads from home toward tension.",
+   "learn_more": [
+    "chord-functions"
+   ]
+  },
+  {
+   "term": "Submediant",
+   "definition": "The 6th degree of a scale, and the chord built on it: {r:vi} ({c:Am} in {k:C}). It often stands in for the tonic.",
+   "learn_more": [
+    "chord-functions"
+   ]
+  },
+  {
+   "term": "Substitution",
+   "definition": "Replacing a chord with another that does a similar job, usually because they share notes. {c:Am} can substitute for {c:C}, and {c:Dm} for {c:F}.",
+   "learn_more": [
+    "progression-relationships"
+   ]
+  },
+  {
+   "term": "Subtonic",
+   "definition": "The 7th degree of the natural minor scale, a whole step below the home note, and the chord built on it: {r:VII} ({c:G} in {k:A} minor). It leads home more gently than the dominant.",
+   "learn_more": [
+    "chord-functions"
+   ]
+  },
+  {
+   "term": "Supertonic",
+   "definition": "The 2nd degree of a scale, and the chord built on it: {r:ii} ({c:Dm} in {k:C}).",
+   "learn_more": [
+    "chord-functions"
+   ]
+  },
+  {
+   "term": "Suspended chord",
+   "definition": "A chord in which the 3rd is replaced by the 2nd (sus2: [[{n:C} – {n:D} – {n:G}]]) or the 4th (sus4: [[{n:C} – {n:F} – {n:G}]]). Neither major nor minor, it sounds open and waiting to resolve.",
+   "cards": [
+    {
+     "numeral": null,
+     "chord": "Csus2"
+    },
+    {
+     "numeral": null,
+     "chord": "Csus4"
+    }
+   ],
+   "play": [
+    {
+     "text": "Explore Csus2 in Warbling Wren",
+     "chord": "Csus2",
+     "progression": null
+    },
+    {
+     "text": "Explore Csus4 in Warbling Wren",
+     "chord": "Csus4",
+     "progression": null
+    }
+   ]
+  },
+  {
+   "term": "Suspension",
+   "definition": "A note held over from one chord into the next, clashing briefly before it steps down to a chord tone (a 4 – 3 suspension).",
+   "learn_more": [
+    "cadences"
+   ]
+  },
+  {
+   "term": "Swing",
+   "definition": "A rhythmic feel, central to jazz, in which pairs of eighth notes are played long-short."
+  },
+  {
+   "term": "Tempo",
+   "definition": "The speed of the beat, usually given in beats per minute (BPM)."
+  },
+  {
+   "term": "Third",
+   "definition": "The distance from one note to the note three letter names above it. A major third is four half steps ([[{n:C} – {n:E}]]); a minor third is three ([[{n:C} – {n:E♭}]]). The third decides whether a chord is major or minor.",
+   "learn_more": [
+    "root-motion"
+   ]
+  },
+  {
+   "term": "Time signature",
+   "definition": "The two numbers at the start of a piece that show how many beats are in a bar, and which note value gets the beat. 4/4 means four quarter-note beats per bar."
+  },
+  {
+   "term": "Tonic",
+   "definition": "The home note of a key, and the chord built on it: {r:I} ({c:C} in {k:C} major). It sounds settled and at rest.",
+   "learn_more": [
+    "chord-functions"
+   ]
+  },
+  {
+   "term": "Tonicisation",
+   "definition": "Briefly treating a chord other than the tonic as home, usually by putting its secondary dominant in front of it, without actually changing key. {c:D7} → {c:G} tonicises {c:G} in {k:C}.",
+   "learn_more": [
+    "chord-functions"
+   ]
+  },
+  {
+   "term": "Tonnetz",
+   "definition": "A grid of notes, first drawn by Leonhard Euler in 1739, with fifths along one direction and thirds along the others. Triads form triangles, so related chords sit side by side.",
+   "learn_more": [
+    "circle-of-fifths"
+   ]
+  },
+  {
+   "term": "Transposition",
+   "definition": "Moving a piece of music to a different key, keeping all its relationships the same. Roman numerals make transposing easy.",
+   "learn_more": [
+    "circle-of-fifths"
+   ]
+  },
+  {
+   "term": "Triad",
+   "definition": "A three-note chord built from a root, a 3rd and a 5th. There are four kinds: major, minor, diminished and augmented.",
+   "learn_more": [
+    "chord-functions"
+   ]
+  },
+  {
+   "term": "Tritone",
+   "definition": "The interval of three whole steps (six half steps), such as [[{n:B} – {n:F}]]. It divides the octave exactly in half and is the most unstable interval, the tension at the heart of the dominant 7th chord.",
+   "learn_more": [
+    "chord-functions"
+   ]
+  },
+  {
+   "term": "Tritone substitution",
+   "definition": "Replacing a dominant 7th chord with the dominant 7th a tritone away: {c:D♭7} instead of {c:G7} before {c:C}. Both contain the same tritone ({n:F} and {n:B}/{n:C♭}), so the resolution still works, with a chromatic bass.",
+   "learn_more": [
+    "root-motion",
+    "circle-of-fifths"
+   ]
+  },
+  {
+   "term": "Tuning",
+   "definition": "The notes a guitar's open strings are set to. Standard tuning is [[{n:E} {n:A} {n:D} {n:G} {n:B} {n:E}]], low to high."
+  },
+  {
+   "term": "Turnaround",
+   "definition": "A short chord pattern at the end of a section that leads back to the beginning, such as the last two bars of the 12-bar blues, or [[{r:I} – {r:vi} – {r:ii} – {r:V}]].",
+   "learn_more": [
+    "progression-relationships"
+   ],
+   "play": [
+    {
+     "text": "Hear I–vi–ii–V in Warbling Wren",
+     "chord": "Cmaj7",
+     "progression": "jazz-i-vi-ii-v"
+    }
+   ]
+  },
+  {
+   "term": "Twelve-bar blues",
+   "definition": "The most common blues form: twelve bars of {r:I7}, {r:IV7} and {r:V7}, arranged as four bars of {r:I7}, two of {r:IV7}, two of {r:I7}, then [[{r:V7} – {r:IV7} – {r:I7} – {r:V7}]].",
+   "learn_more": [
+    "progression-relationships"
+   ],
+   "play": [
+    {
+     "text": "Hear the 12-bar blues in Warbling Wren",
+     "chord": "C7",
+     "progression": "blues-12-bar"
+    }
+   ]
+  },
+  {
+   "term": "Unison",
+   "definition": "Two or more parts playing exactly the same note."
+  },
+  {
+   "term": "Voice leading",
+   "definition": "The way the individual notes of each chord move to the notes of the next. Good voice leading keeps common tones still and moves the rest by small steps.",
+   "learn_more": [
+    "root-motion"
+   ]
+  },
+  {
+   "term": "Voicing",
+   "definition": "The way the notes of a chord are arranged: which octave each note is in, which is on top, and which is doubled. The same chord can be voiced many ways on piano or guitar."
+  },
+  {
+   "term": "Whole step",
+   "definition": "Two half steps: {n:C} to {n:D}, or two frets on a guitar. Also called a whole tone.",
+   "learn_more": [
+    "chord-functions"
+   ]
+  }
+ ]
+}
