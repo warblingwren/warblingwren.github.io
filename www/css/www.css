@@ -26,6 +26,11 @@
   --ww-home-hover-bg: var(--ws-field);
   --ww-home-focus: var(--ws-focus);
 
+  /* footer home link (.footer .aboutlink) */
+  --ww-about-ink: var(--ws-ink);
+  --ww-about-hover-bg: var(--ws-field);
+  --ww-about-focus: var(--ws-focus);
+
   /* about page (.about) */
   --ab-ink: var(--ws-ink);
   --ab-ink-soft: var(--ws-ink-soft);
@@ -409,6 +414,32 @@ ul.checklist li {
 .footer .homelink a:focus-visible {
     box-shadow: 0 0 0 4px var(--ww-home-focus);
 }
+
+/* about link, bottom-left: <div class="aboutlink"><a ...>About</a></div> */
+.footer .aboutlink {
+    text-align: left;
+    margin-top: 24px;
+}
+.footer .aboutlink a {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--ws-hit);
+    min-width: var(--ws-hit);
+    padding: 0 12px;
+    border-radius: 22px;
+    color: var(--ww-home-ink);
+    font-weight: 600;
+    text-decoration: none;
+}
+.footer .aboutlink a:hover {
+    background: var(--ww-home-hover-bg);
+    text-decoration: underline;
+}
+/* the global *:focus rule removes outlines: keyboard focus needs its own ring */
+.footer .aboutlink a:focus-visible {
+    box-shadow: 0 0 0 4px var(--ww-home-focus);
+}
+
 .footer .bottom-center {}
 .footer .bottom-right {}
 
