@@ -1214,7 +1214,7 @@
 }
 .theory .theory-staff {
   display: block;
-  width: 100%;
+  max-width: 100%;     /* the svg's width attribute is its natural size: shrink to fit, never stretch */
   height: auto;
   overflow: visible;
 }
