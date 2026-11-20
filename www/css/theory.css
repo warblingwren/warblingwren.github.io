@@ -853,6 +853,14 @@
   border-radius: 8px;
 }
 .theory .theory-interval-guitar .theory-fretmap { min-width: 0; max-width: 220px; margin: 0 auto; }
+.theory .theory-fretmap-figure-small .theory-fretmap { max-width: 540px; }
+.theory .theory-fretmap-string-name {
+  fill: var(--theory-fretmap-label);
+  font-size: 9px;
+  font-weight: 700;
+  text-anchor: middle;
+  dominant-baseline: central;
+}
 .theory .theory-fretmap-fret { stroke: var(--theory-fretmap-fret); stroke-width: 1.5; }
 .theory .theory-fretmap-nut { fill: var(--theory-fretmap-nut); }
 .theory .theory-fretmap-string { stroke: var(--theory-fretmap-string); stroke-width: 1; }
