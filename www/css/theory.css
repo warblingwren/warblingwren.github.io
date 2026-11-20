@@ -742,6 +742,17 @@
   padding: 0;
   list-style: none;
 }
+/* a Try it with one row per card (tryit_rows): each card beside its own text, a dashed rule between rows */
+.theory .theory-try-row + .theory-try-row {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px dashed var(--theory-accent);
+}
+.theory .theory-try-summary {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 2px solid var(--theory-accent);
+}
 .theory .theory-try-point {
   margin: 0 0 10px;
 }
