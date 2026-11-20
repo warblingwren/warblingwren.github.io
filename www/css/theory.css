@@ -83,6 +83,18 @@
   --theory-gd-barre: rgba(29, 29, 31, 0.18);
   --theory-card-w: 128px;         /* one chord card in a Try it row */
   /* circle of fifths drawings (build_theory.py Circles): fills, and the arrows and lines drawn in the same family */
+  /* staff notation (build_theory.py Staff): a soft accent page, lavender lines, cyan clefs */
+  --theory-staff-bg: #f4fbfc;     /* accent 50 */
+  --theory-staff-line: #b9c3e8;   /* indigo 100-200 */
+  --theory-staff-bar: #9fa8da;    /* indigo 200 */
+  --theory-staff-ink: #00838f;    /* cyan 800: clefs, key signature, accidentals */
+  --theory-staff-halo: #ffffff;   /* the ring round each note head */
+  /* note lines (build_theory.py note_line): half steps in a straight line */
+  --theory-noteline-white: #ffffff;
+  --theory-noteline-black: #eef1f6;   /* the black-key columns, softly shaded */
+  --theory-noteline-grid: #e1e5ec;
+  --theory-noteline-row: #c9d3e0;
+  --theory-noteline-span: #00838f;    /* cyan 800: the bracket over an interval */
   --theory-circle-plain: #ffffff;
   --theory-circle-line: #d5dae1;
   --theory-circle-label: #303030;
@@ -1189,6 +1201,88 @@
 .theory .theory-circle-head-c, .theory .theory-circle-dot-c { fill: var(--theory-circle-c-stroke); }
 .theory .theory-circle-note { font-size: 13px; font-weight: 700; dominant-baseline: central; }
 .theory .theory-circle-defs, .theory .theory-circle-marker { overflow: visible; }
+
+/* ---------------------------------------------------------------- STAFF (build_theory.py Staff) */
+/* chords as whole notes; note heads take the octave and role colours of the keyboard and guitar drawings */
+.theory .theory-staff-figure {
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border: 1px solid var(--theory-circle-line);
+  border-radius: 12px;
+  background: var(--theory-staff-bg);
+  text-align: left;
+}
+.theory .theory-staff {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+.theory .theory-staff-line { stroke: var(--theory-staff-line); stroke-width: 1.2; }
+.theory .theory-staff-ledger { stroke: var(--theory-staff-bar); stroke-width: 1.6; stroke-linecap: round; }
+.theory .theory-staff-barline, .theory .theory-staff-system { stroke: var(--theory-staff-bar); stroke-width: 1.4; }
+.theory .theory-staff-barline-end { stroke: var(--theory-staff-bar); stroke-width: 4; }
+.theory .theory-staff-clef, .theory .theory-staff-signature, .theory .theory-staff-accidental { fill: var(--theory-staff-ink); }
+.theory .theory-staff-note-head {
+  fill: var(--theory-dot);
+  stroke: var(--theory-staff-halo);
+  stroke-width: 1.6;
+  filter: drop-shadow(0 1px 1.5px rgba(48, 48, 48, 0.28));
+}
+.theory .theory-staff-note.theory-chord-root .theory-staff-note-head { stroke: var(--theory-ink); stroke-width: 1.8; }
+.theory .theory-staff-note-label {
+  fill: var(--theory-dot-fg);
+  font-size: 7px;
+  font-weight: 800;
+  text-anchor: middle;
+  dominant-baseline: central;
+  pointer-events: none;
+}
+.theory .theory-staff-voice {
+  stroke: var(--theory-dot);
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-dasharray: 1 5;
+  opacity: 0.75;
+}
+.theory .theory-staff-label { fill: var(--theory-dot); font-size: 13px; font-weight: 800; text-anchor: middle; }
+.theory .theory-staff-caption { margin-top: 8px; font-size: 0.95rem; color: var(--theory-ink-soft); }
+.theory .theory-staff-title { display: block; font-weight: 700; color: var(--theory-ink); }
+
+/* song and work titles */
+.theory .theory-cite { font-style: italic; }
+
+/* ---------------------------------------------------------------- NOTE LINES (build_theory.py note_line) */
+/* the keyboard straightened out: every half step the same width, rows stacked on shared columns */
+.theory .theory-noteline-figure {
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border: 1px solid var(--theory-circle-line);
+  border-radius: 12px;
+  background: var(--theory-paper);
+  text-align: left;
+}
+.theory .theory-noteline-scroll { overflow-x: auto; }
+.theory .theory-noteline { display: block; width: 100%; min-width: 500px; height: auto; }
+.theory .theory-noteline-cell { stroke: var(--theory-noteline-grid); stroke-width: 1; }
+.theory .theory-noteline-cell-white { fill: var(--theory-noteline-white); }
+.theory .theory-noteline-cell-black { fill: var(--theory-noteline-black); }
+.theory .theory-noteline-name { fill: var(--theory-ink-soft); font-size: 11px; font-weight: 700; text-anchor: middle; }
+.theory .theory-noteline-name-black { font-size: 8px; font-weight: 600; }
+.theory .theory-noteline-label { fill: var(--theory-ink); font-size: 12px; font-weight: 800; text-anchor: end; dominant-baseline: central; }
+.theory .theory-noteline-row { stroke: var(--theory-noteline-row); stroke-width: 1.5; stroke-dasharray: 2 4; }
+.theory .theory-noteline-span { fill: none; stroke: var(--theory-noteline-span); stroke-width: 1.8; stroke-linejoin: round; }
+.theory .theory-noteline-span-label { fill: var(--theory-noteline-span); font-size: 10px; font-weight: 700; text-anchor: middle; }
+.theory .theory-noteline-dot-circle {
+  fill: var(--theory-dot);
+  stroke: var(--theory-staff-halo);
+  stroke-width: 1.6;
+  filter: drop-shadow(0 1px 1.5px rgba(48, 48, 48, 0.25));
+}
+.theory .theory-noteline-dot.theory-chord-root .theory-noteline-dot-circle { stroke: var(--theory-ink); stroke-width: 1.8; }
+.theory .theory-noteline-dot-label { fill: var(--theory-dot-fg); font-size: 9px; font-weight: 800; text-anchor: middle; dominant-baseline: central; }
+.theory .theory-noteline-link { stroke: var(--theory-dot); stroke-width: 2.4; stroke-linecap: round; stroke-dasharray: 1 5; opacity: 0.8; }
+.theory .theory-noteline-caption { margin-top: 8px; font-size: 0.95rem; color: var(--theory-ink-soft); }
 
 /* ---------------------------------------------------------------- BREAKPOINTS (theory) */
 @media (max-width: 991.98px) {
