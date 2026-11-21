@@ -950,7 +950,8 @@
 .theory .theory-scale-notes { display: flex; flex-wrap: wrap; gap: 6px 10px; margin-bottom: 10px; }
 .theory .theory-scale-note { display: inline-flex; flex-direction: column; align-items: center; gap: 2px; }
 .theory .theory-scale-degree { color: var(--theory-ink-soft); font-size: 0.8125rem; font-weight: 700; }
-.theory .theory-scale-piano .theory-piano { max-width: 360px; margin: 0 0 10px; }
+.theory .theory-scale-piano .theory-piano { max-width: none; margin: 0 0 10px; }   /* scale charts: keyboard and neck fill the column */
+.theory .theory-scale .theory-fretmap { max-width: none; }
 
 /* beat_grid: bars of beats to count; accented beats shaded, swing eighths drawn long-short */
 .theory .theory-beats { margin: 8px 0 20px; }
