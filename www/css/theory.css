@@ -95,6 +95,7 @@
   --theory-noteline-grid: #e1e5ec;
   --theory-noteline-row: #c9d3e0;
   --theory-noteline-span: #00838f;    /* cyan 800: the bracket over an interval */
+  --theory-scale-panel: #f2f8fa;    /* the tinted ground behind a scale's details and keyboard */
   --theory-circle-plain: #ffffff;
   --theory-circle-line: #d5dae1;
   --theory-circle-label: #303030;
@@ -950,7 +951,27 @@
 .theory .theory-scale-notes { display: flex; flex-wrap: wrap; gap: 6px 10px; margin-bottom: 10px; }
 .theory .theory-scale-note { display: inline-flex; flex-direction: column; align-items: center; gap: 2px; }
 .theory .theory-scale-degree { color: var(--theory-ink-soft); font-size: 0.8125rem; font-weight: 700; }
-.theory .theory-scale-piano .theory-piano { max-width: none; margin: 0 0 10px; }   /* scale charts: keyboard and neck fill the column */
+/* top panel: the scale's details beside its keyboard, on a tinted ground; the neck fills the width below */
+.theory .theory-scale-top {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+  gap: 18px;
+  align-items: center;
+  margin-bottom: 12px;
+  padding: 14px 16px;
+  border-radius: var(--theory-radius);
+  background: var(--theory-scale-panel);
+}
+.theory .theory-scale-info .theory-scale-notes { margin-bottom: 12px; }
+.theory .theory-scale-steps { font-size: 0.9375rem; font-weight: 700; letter-spacing: 0.06em; color: var(--theory-ink); }
+.theory .theory-scale-steps-label {
+  margin-right: 6px;
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--theory-ink-soft);
+}
+.theory .theory-scale-piano .theory-piano { max-width: none; margin: 0; }
 .theory .theory-scale .theory-fretmap { max-width: none; }
 
 /* beat_grid: bars of beats to count; accented beats shaded, swing eighths drawn long-short */
@@ -1283,7 +1304,7 @@
   text-align: left;
 }
 .theory .theory-noteline-scroll { overflow-x: auto; }
-.theory .theory-noteline { display: block; width: 100%; min-width: 500px; height: auto; }
+.theory .theory-noteline { display: block; max-width: 100%; min-width: 500px; height: auto; }   /* natural size; scrolls on phones */
 .theory .theory-noteline-cell { stroke: var(--theory-noteline-grid); stroke-width: 1; }
 .theory .theory-noteline-cell-white { fill: var(--theory-noteline-white); }
 .theory .theory-noteline-cell-black { fill: var(--theory-noteline-black); }
@@ -1307,8 +1328,12 @@
 /* ---------------------------------------------------------------- BREAKPOINTS (theory) */
 @media (max-width: 991.98px) {
   .theory .theory-chart-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  /* tablets: chord cards and their text stack, so the text never squeezes into a narrow column beside the cards */
+  .theory .theory-split,
+  .theory .theory-try .theory-split { grid-template-columns: minmax(0, 1fr); }
 }
 @media (max-width: 767.98px) {
+  .theory .theory-scale-top { grid-template-columns: 1fr; }   /* phones: details above the keyboard */
   .theory { font-size: 1rem; }
   .theory .theory-circle-split,
   .theory .theory-circle-split-flip,
