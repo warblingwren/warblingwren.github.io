@@ -1290,6 +1290,17 @@
 .theory .theory-staff-caption { margin-top: 8px; font-size: 0.95rem; color: var(--theory-ink-soft); }
 .theory .theory-staff-title { display: block; font-weight: 700; color: var(--theory-ink); }
 
+/* staff pairs (staff_keys, staff_neck): a staff with its keyboard or guitar neck underneath, read together */
+.theory .theory-staff-pair .theory-staff-instrument { margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--theory-staff-line); }
+.theory .theory-staff-pair .theory-keymap { min-width: 560px; max-width: 760px; }   /* build_theory.py STAFF_PAIR_KEYS; scrolls on phones */
+.theory .theory-staff-pair .theory-fretmap { max-width: 600px; }                        /* build_theory.py STAFF_PAIR_NECK */
+.theory .theory-staff-pair .theory-fretmap-figure { margin: 0; padding: 0; border: 0; background: none; box-shadow: none; }
+/* keys marked on a keyboard map: the key takes the note's octave and role colour, like the staff note above it */
+.theory .theory-keymap-white.theory-keymap-on { fill: var(--theory-dot); }
+.theory .theory-keymap-label.theory-keymap-label-on { fill: var(--theory-dot-fg); font-weight: 800; }
+.theory .theory-keymap-dot-circle { fill: var(--theory-dot); stroke: var(--theory-staff-halo); stroke-width: 1.4; }
+.theory .theory-keymap-dot-label { fill: var(--theory-dot-fg); font-size: 6.5px; font-weight: 800; text-anchor: middle; dominant-baseline: central; }
+
 /* song and work titles */
 .theory .theory-cite { font-style: italic; }
 
