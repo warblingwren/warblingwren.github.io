@@ -1418,7 +1418,12 @@
   stroke-width: 5px;
   paint-order: stroke;
 }
-.theory .theory-tab-label { fill: var(--theory-ink-soft); font-size: 11px; font-weight: 700; text-anchor: middle; }
+/* the badges under the tab: a note badge under a single note, a chord badge under a chord, as everywhere on the site */
+.theory .theory-tab-badge { fill: none; }
+.theory .theory-tab-badge-ring { fill: var(--theory-paper); stroke: var(--theory-c, var(--theory-ink)); stroke-width: 2; }
+.theory .theory-tab-badge-note-text { fill: var(--theory-c, var(--theory-ink)); font-size: 9.5px; font-weight: 800; text-anchor: middle; dominant-baseline: central; }
+.theory .theory-tab-badge-pill { fill: var(--theory-c, var(--theory-ink)); }
+.theory .theory-tab-badge-chord-text { fill: #ffffff; font-size: 10.5px; font-weight: 700; text-anchor: middle; dominant-baseline: central; }
 
 /* piano_roll(): a keyboard on its end down the left, time across, each note a bar */
 .theory {
