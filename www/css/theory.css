@@ -1095,11 +1095,24 @@
   font-weight: 700;
 }
 
-/* bar_cards(): the enhanced chord chart: the same numbered bars, a full chord card in each */
-.theory .theory-bars-enhanced .theory-bars-grid { gap: 10px; }
-.theory .theory-bars-card { align-items: stretch; padding: 24px 6px 6px; }
-.theory .theory-bars-card .theory-chart-chord { flex: 1 1 auto; padding: 0 2px 4px; border: none; box-shadow: none; }
-.theory .theory-bars-card .theory-chart-position:empty { display: none; }
+/* bar_cards(): the enhanced chord chart: one card per different chord as a header row, then the plain grid of badges */
+.theory .theory-bars-enhanced {    /* the header and the grid framed as one figure */
+  padding: 14px;
+  border: 1px solid var(--theory-circle-line);
+  border-radius: 12px;
+  background: var(--theory-staff-bg);
+}
+.theory .theory-bars-chords {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  padding-bottom: 14px;
+  border-bottom: 1px dashed var(--theory-line);
+}
+.theory .theory-bars-chords .theory-chart-chord { flex: 0 0 var(--theory-card-w); width: var(--theory-card-w); }
+.theory .theory-bars-chords .theory-chart-position:empty { display: none; }
 
 /* ---------------------------------------------------------------- circles (build_theory.py Circles) */
 /* a section's opening: heading and text | circle, half and half, the circle on alternating sides (circle_split);
@@ -1595,7 +1608,6 @@
   .theory .theory-try .theory-split { grid-template-columns: minmax(0, 1fr); }
 }
 @media (max-width: 767.98px) {
-  .theory .theory-bars-enhanced.theory-bars-per-4 .theory-bars-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }   /* enhanced chart: two cards to a line on phones */
   .theory .theory-shapes { grid-template-columns: minmax(0, 1fr); }   /* shape cards: one to a row on phones */
   .theory .theory-scale-top { grid-template-columns: 1fr; }   /* phones: details above the keyboard */
   .theory { font-size: 1rem; }
