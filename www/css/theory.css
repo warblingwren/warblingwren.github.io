@@ -1437,13 +1437,154 @@
 .theory .theory-roll-note { fill: none; }
 .theory .theory-notation-symbol-body { fill: none; }
 
+/* ornaments and grace notes in symbol() */
+.theory .theory-notation-grace { fill: var(--theory-ink); }
+.theory .theory-notation-mordent { stroke-width: 2; }
+
+/* fingering(): a finger number on a key, 1 = thumb .. 5 = little finger */
+.theory .theory-keymap-finger-circle { fill: #ffffff; stroke: var(--theory-ink); stroke-width: 1; }
+.theory .theory-keymap-finger-label { fill: var(--theory-ink); font-size: 8px; font-weight: 800; text-anchor: middle; dominant-baseline: central; }
+.theory .theory-keymap-finger { pointer-events: none; }
+
+/* polyrhythm(): one row per hand on a shared grid, and the rhythm the two make together */
+.theory {
+  --theory-poly-upper: #00838f;    /* cyan 800: the right hand */
+  --theory-poly-lower: #3949ab;    /* indigo 600: the left hand */
+  --theory-poly-both: #303030;     /* both hands at once */
+}
+.theory .theory-poly-cell { fill: #ffffff; stroke: var(--theory-noteline-grid); stroke-width: 1; }
+.theory .theory-poly-cell-next { fill: var(--theory-field); }
+.theory .theory-poly-row { stroke: var(--theory-noteline-row); stroke-width: 1; stroke-dasharray: 2 3; }
+.theory .theory-poly-label { fill: var(--theory-ink); font-size: 12px; font-weight: 700; text-anchor: end; dominant-baseline: central; }
+.theory .theory-poly-head { fill: var(--theory-ink-soft); font-size: 9px; text-anchor: middle; }
+.theory .theory-poly-upper { --theory-poly-dot: var(--theory-poly-upper); }
+.theory .theory-poly-lower { --theory-poly-dot: var(--theory-poly-lower); }
+.theory .theory-poly-both { --theory-poly-dot: var(--theory-poly-both); }
+.theory .theory-poly-dot { fill: var(--theory-poly-dot); stroke: #ffffff; stroke-width: 1.5; }
+.theory .theory-poly-num { fill: #ffffff; font-size: 11px; font-weight: 800; text-anchor: middle; dominant-baseline: central; }
+.theory .theory-poly-hit { fill: none; }
+.theory .theory-poly-faded { opacity: 0.35; }
+
+/* routine(): a timed practice session; each block as wide as its minutes (build_theory.py ROUTINE_SPAN steps) */
+.theory {
+  --theory-routine-technique: #00838f;   /* cyan 800 */
+  --theory-routine-reading: #3949ab;     /* indigo 600 */
+  --theory-routine-repertoire: #c2185b;  /* pink 700 */
+  --theory-routine-creative: #2e7d32;    /* green 800 */
+}
+.theory .theory-routine {
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border: 1px solid var(--theory-circle-line);
+  border-radius: 12px;
+  background: var(--theory-staff-bg);
+}
+.theory .theory-routine-legend { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-bottom: 10px; }
+.theory .theory-routine-key { font-size: 0.8rem; font-weight: 700; color: var(--theory-ink-soft); }
+.theory .theory-routine-key::before {
+  content: "";
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-right: 6px;
+  border-radius: 3px;
+  background: var(--theory-routine-colour);
+  vertical-align: -1px;
+}
+.theory .theory-routine-kind-technique { --theory-routine-colour: var(--theory-routine-technique); }
+.theory .theory-routine-kind-reading { --theory-routine-colour: var(--theory-routine-reading); }
+.theory .theory-routine-kind-repertoire { --theory-routine-colour: var(--theory-routine-repertoire); }
+.theory .theory-routine-kind-creative { --theory-routine-colour: var(--theory-routine-creative); }
+.theory .theory-routine-bar { display: flex; gap: 6px; }
+.theory .theory-routine-block {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  padding: 10px 12px;
+  border-top: 5px solid var(--theory-routine-colour);
+  border-radius: 8px;
+  background: var(--theory-paper);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+.theory .theory-routine-time { font-size: 0.75rem; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; color: var(--theory-routine-colour); }
+.theory .theory-routine-label { font-weight: 700; color: var(--theory-ink); line-height: 1.3; }
+.theory .theory-routine-detail { font-size: 0.9rem; color: var(--theory-ink-soft); line-height: 1.45; }
+.theory .theory-routine-span-5 { flex: 5 1 0; }
+.theory .theory-routine-span-10 { flex: 10 1 0; }
+.theory .theory-routine-span-15 { flex: 15 1 0; }
+.theory .theory-routine-span-20 { flex: 20 1 0; }
+.theory .theory-routine-span-25 { flex: 25 1 0; }
+.theory .theory-routine-span-30 { flex: 30 1 0; }
+.theory .theory-routine-span-35 { flex: 35 1 0; }
+.theory .theory-routine-span-40 { flex: 40 1 0; }
+.theory .theory-routine-span-45 { flex: 45 1 0; }
+
+/* fretboard_map barres and regions: one finger laid across several strings; brackets over stretches of the neck (CAGED shapes) */
+.theory .theory-fretmap-barre { fill: var(--theory-ink); opacity: 0.22; }
+.theory {
+  --theory-region-0: #e53935;   /* the C shape: C's badge red family */
+  --theory-region-1: #2e7d32;
+  --theory-region-2: #00796b;
+  --theory-region-3: #3949ab;
+  --theory-region-4: #8e24aa;
+  --theory-region-5: #e53935;
+}
+.theory .theory-fretmap-region-0 { --theory-region: var(--theory-region-0); }
+.theory .theory-fretmap-region-1 { --theory-region: var(--theory-region-1); }
+.theory .theory-fretmap-region-2 { --theory-region: var(--theory-region-2); }
+.theory .theory-fretmap-region-3 { --theory-region: var(--theory-region-3); }
+.theory .theory-fretmap-region-4 { --theory-region: var(--theory-region-4); }
+.theory .theory-fretmap-region-5 { --theory-region: var(--theory-region-5); }
+.theory .theory-fretmap-region { fill: none; stroke: var(--theory-region); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.theory .theory-fretmap-region-label { fill: var(--theory-region); font-size: 10px; font-weight: 800; text-anchor: middle; }
+
+/* shape_cards(): one card per shape, two to a row: a numbered heading, the drawing, then what it is and how to use it */
+.theory .theory-shapes {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin: 8px 0 20px;
+}
+.theory .theory-shape-card {
+  display: flex;
+  flex-direction: column;
+  padding: 14px 16px 16px;
+  border: 1px solid var(--theory-circle-line);
+  border-radius: 12px;
+  background: var(--theory-paper);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+.theory .theory-shape-title { display: flex; align-items: center; gap: 10px; margin: 0 0 10px; font-size: 1.02rem; font-weight: 700; color: var(--theory-ink); }
+.theory .theory-shape-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--theory-ink);
+  color: #ffffff;
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+.theory .theory-shape-figure { display: flex; justify-content: center; padding: 6px 0 10px; border-bottom: 1px dashed var(--theory-line); overflow-x: auto; }
+.theory .theory-shape-figure .theory-fretmap-natural.theory-fretmap-long { min-width: 0; }
+.theory .theory-shape-body { padding-top: 10px; font-size: 0.95rem; line-height: 1.6; color: var(--theory-ink); }
+.theory .theory-shape-text { margin: 0 0 6px; }
+.theory .theory-shape-text:last-child { margin-bottom: 0; }
+
 @media (max-width: 991.98px) {
+  .theory .theory-routine-bar { flex-direction: column; }   /* routine blocks stack: no narrow text columns */
+  .theory .theory-routine-block { flex: none; }
   .theory .theory-chart-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   /* tablets: chord cards and their text stack, so the text never squeezes into a narrow column beside the cards */
   .theory .theory-split,
   .theory .theory-try .theory-split { grid-template-columns: minmax(0, 1fr); }
 }
 @media (max-width: 767.98px) {
+  .theory .theory-shapes { grid-template-columns: minmax(0, 1fr); }   /* shape cards: one to a row on phones */
   .theory .theory-scale-top { grid-template-columns: 1fr; }   /* phones: details above the keyboard */
   .theory { font-size: 1rem; }
   .theory .theory-circle-split,
